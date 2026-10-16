@@ -186,4 +186,85 @@
     .reactbar { display: none; flex-wrap: wrap; gap: 3px; max-width: 46cqw; }
     .reactbar.show { display: flex; }
     .reactbar button { font-size: clamp(.95rem, 4cqh, 1.3rem); border: 1px solid rgba(255,255,255,.15); background: rgba(8,7,16,.78); border-radius: .6rem; padding: .1rem .3rem; cursor: pointer; }
+
+    /* ═════════════ Visual upgrade ═════════════ */
+
+    /* Ambient backdrop: the board's own art, blurred and dimmed, fills the space around the board. */
+    .ambient { position: absolute; inset: -12%; background-size: cover; background-position: center; filter: blur(34px) saturate(1.5) brightness(.5); transform: scale(1.15); z-index: 0; animation: ambientDrift 40s ease-in-out infinite alternate; }
+    @keyframes ambientDrift { from { transform: scale(1.15) translate(-1.5%, -1%); } to { transform: scale(1.25) translate(1.5%, 1%); } }
+    .vignette { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at center, transparent 45%, rgba(5,4,12,.72) 100%); }
+    .fizz { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+    .fizz i {
+        position: absolute; bottom: -30px; left: var(--l); width: var(--s); height: var(--s); border-radius: 50%; opacity: 0; font-style: normal;
+        border: 1.5px solid rgba(255,255,255,.3); background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.4), rgba(255,255,255,.04) 62%);
+        animation: fizzRise var(--d) linear var(--w) infinite;
+    }
+    .fizz i.em { border: none; background: none; font-size: var(--s); line-height: 1; }
+    @keyframes fizzRise { 0% { transform: translate(0,0) scale(.6); opacity: 0; } 10% { opacity: .85; } 50% { transform: translate(12px,-52cqh) scale(1); } 100% { transform: translate(-10px,-112cqh) scale(1.12); opacity: 0; } }
+    .board-wrap { z-index: 2; box-shadow: 0 0 0 2px rgba(255,255,255,.12), 0 0 60px rgba(245,158,11,.22), 0 30px 70px rgba(0,0,0,.6); }
+
+    /* Tokens: glossy, with a bobbing marker over whoever's turn it is */
+    .token { background: radial-gradient(circle at 30% 24%, rgba(255,255,255,.6), transparent 46%), var(--c, #f59e0b); border-width: 3px; box-shadow: 0 5px 10px rgba(0,0,0,.6), 0 0 0 2px var(--c, #f59e0b); }
+    .token.active::before { content: '▼'; position: absolute; top: -1.45em; left: 50%; transform: translateX(-50%); color: #fff; font-size: calc(var(--d) * .42); text-shadow: 0 2px 6px rgba(0,0,0,.7); animation: markerBob .8s ease-in-out infinite; }
+    @keyframes markerBob { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-5px); } }
+    .token.landed { animation: tokenLand .45s ease; }
+    @keyframes tokenLand { 0% { transform: translate(calc(-50% + var(--ox, 0px)), calc(-50% + var(--oy, 0px))) scale(1); } 40% { transform: translate(calc(-50% + var(--ox, 0px)), calc(-50% + var(--oy, 0px))) scale(1.35, .75); } 70% { transform: translate(calc(-50% + var(--ox, 0px)), calc(-50% + var(--oy, 0px))) scale(.9, 1.15); } 100% { transform: translate(calc(-50% + var(--ox, 0px)), calc(-50% + var(--oy, 0px))) scale(1); } }
+    .ripple { position: absolute; width: 4%; aspect-ratio: 1; border-radius: 50%; border: 3px solid rgba(255,255,255,.9); transform: translate(-50%,-50%) scale(.4); pointer-events: none; z-index: 18; animation: rippleOut .9s ease-out forwards; }
+    @keyframes rippleOut { to { transform: translate(-50%,-50%) scale(2.6); opacity: 0; border-width: 1px; } }
+    .rollpop {
+        position: absolute; z-index: 46; pointer-events: none; transform: translate(-50%,-50%); font-weight: 900; font-size: clamp(1.4rem, 8cqh, 2.6rem); color: #fff;
+        text-shadow: 0 0 14px var(--c, #f59e0b), 0 3px 8px rgba(0,0,0,.8); animation: rollPop 1.2s ease-out forwards; white-space: nowrap;
+    }
+    @keyframes rollPop { 0% { opacity: 0; transform: translate(-50%,-20%) scale(.3); } 25% { opacity: 1; transform: translate(-50%,-90%) scale(1.25); } 100% { opacity: 0; transform: translate(-50%,-220%) scale(1); } }
+
+    /* Turn splash */
+    .splash { position: absolute; left: 0; right: 0; top: 38%; z-index: 48; text-align: center; pointer-events: none; animation: splashIn 1.25s cubic-bezier(.2,.9,.3,1) forwards; }
+    .splash b {
+        display: inline-block; padding: .35em 1.1em; border-radius: 999px; font-size: clamp(1rem, 6.2cqh, 2rem); font-weight: 900; color: #fff;
+        background: linear-gradient(90deg, transparent, rgba(8,7,16,.88) 18%, rgba(8,7,16,.88) 82%, transparent); border-top: 2px solid var(--c); border-bottom: 2px solid var(--c); text-shadow: 0 2px 8px rgba(0,0,0,.6);
+    }
+    @keyframes splashIn { 0% { opacity: 0; transform: translateX(-30%) scale(.9); } 22% { opacity: 1; transform: none; } 78% { opacity: 1; } 100% { opacity: 0; transform: translateX(30%); } }
+
+    /* Players: avatar ringed by progress to the finish */
+    .pl { padding: 2px 8px 2px 2px; background: linear-gradient(135deg, rgba(20,18,36,.85), rgba(8,7,16,.7)); box-shadow: 0 4px 12px rgba(0,0,0,.35); }
+    .pl .ring { --d: clamp(26px, 7.4cqh, 40px); width: var(--d); height: var(--d); border-radius: 50%; padding: 3px; box-sizing: border-box; flex-shrink: 0; background: conic-gradient(var(--c) calc(var(--p) * 1%), rgba(255,255,255,.16) 0); }
+    .pl .ring .av { width: 100%; height: 100%; border: none; background: color-mix(in srgb, var(--c) 32%, #14121f); font-size: calc(var(--d) * .5); }
+    .pl .info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .pl .bar { display: none; height: 4px; width: 9cqw; max-width: 90px; border-radius: 3px; background: rgba(255,255,255,.14); overflow: hidden; }
+    .pl .bar b { display: block; height: 100%; background: var(--c); border-radius: 3px; transition: width .6s ease; }
+    .pl.cur { box-shadow: 0 0 0 1px var(--c), 0 0 18px color-mix(in srgb, var(--c) 55%, transparent); background: linear-gradient(135deg, color-mix(in srgb, var(--c) 28%, #14121f), rgba(8,7,16,.8)); border-color: var(--c); transform: translateX(4px); }
+    .pl.cur .bar { display: block; }
+    @media (min-width: 720px) and (min-height: 380px) { .pl .bar { display: block; } }
+
+    /* Turn banner picks up the active player's colour */
+    .turn-banner { border-left: 4px solid var(--c, rgba(255,255,255,.2)); }
+
+    /* Die: a proper toss */
+    .die-badge.tossing { animation: dieToss .62s ease-in-out; }
+    @keyframes dieToss { 0% { transform: translateY(0) rotate(0); } 30% { transform: translateY(-16px) rotate(-14deg) scale(1.1); } 60% { transform: translateY(0) rotate(10deg); } 80% { transform: translateY(-6px) rotate(-4deg); } 100% { transform: none; } }
+
+    /* Cards: a real playing-card pop-up, tinted by kind */
+    .pcard {
+        --k: #f59e0b; position: relative; width: min(90cqw, 440px); max-height: 94cqh; overflow: hidden auto; text-align: center; border-radius: 1.5rem;
+        background: linear-gradient(165deg, #211d36, #12101e 60%); border: 2px solid var(--k);
+        box-shadow: 0 0 0 5px rgba(255,255,255,.04), 0 0 46px color-mix(in srgb, var(--k) 45%, transparent), 0 28px 70px rgba(0,0,0,.65);
+        animation: cardFlip .6s cubic-bezier(.2,.9,.3,1.15) both;
+    }
+    @keyframes cardFlip { from { opacity: 0; transform: perspective(900px) rotateY(-100deg) scale(.8); } to { opacity: 1; transform: none; } }
+    .pcard::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--k) 38%, transparent), transparent 55%); pointer-events: none; }
+    .pcard .pc-head { position: relative; padding: .45rem; font-size: clamp(.58rem, 2.2cqh, .74rem); font-weight: 900; letter-spacing: .16em; text-transform: uppercase; color: #fff; background: linear-gradient(135deg, var(--k), color-mix(in srgb, var(--k) 55%, #000)); }
+    .pcard .pc-body { position: relative; padding: clamp(.6rem, 3cqh, 1.2rem) clamp(.8rem, 4cqh, 1.5rem) clamp(.7rem, 3cqh, 1.2rem); }
+    .pcard .pc-icon {
+        width: clamp(54px, 22cqh, 96px); height: clamp(54px, 22cqh, 96px); border-radius: 50%; margin: 0 auto .5rem; display: flex; align-items: center; justify-content: center;
+        font-size: clamp(1.8rem, 11cqh, 3.3rem); background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.3), transparent 50%), color-mix(in srgb, var(--k) 40%, #14121f);
+        border: 3px solid var(--k); box-shadow: 0 0 26px color-mix(in srgb, var(--k) 60%, transparent); animation: iconPulse 1.8s ease-in-out infinite;
+    }
+    @keyframes iconPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+    .pcard .pc-text { font-size: clamp(1rem, 5.6cqh, 1.75rem); font-weight: 900; line-height: 1.22; margin: .3rem 0 .6rem; text-shadow: 0 2px 10px rgba(0,0,0,.4); }
+    .pcard .spark { position: absolute; font-size: clamp(.8rem, 3.4cqh, 1.2rem); opacity: .9; animation: twinkle 1.6s ease-in-out infinite; pointer-events: none; }
+    @keyframes twinkle { 0%,100% { transform: scale(.6) rotate(0); opacity: .3; } 50% { transform: scale(1.15) rotate(25deg); opacity: 1; } }
+    .ov-card { background: linear-gradient(165deg, #211d36, #14121f 60%); border-color: rgba(255,255,255,.2); }
+
+    /* Toasts carry the kind of event in a coloured edge */
+    .toast { border-left: 4px solid var(--c, rgba(255,255,255,.35)); border-radius: .9rem; }
 </style>

@@ -35,11 +35,12 @@
   const kindInfo = (k) => C.kinds[k] || { label: k, icon: '🃏', help: '' };
 
   // ───────────────────────── small UI helpers ─────────────────────────
-  function toast(text, ms = 2600) {
+  function toast(text, ms = 2600, color) {
     const box = $('toasts');
     while (box.children.length >= 3) box.firstChild.remove();
     const t = document.createElement('div');
     t.className = 'toast';
+    if (color) t.style.setProperty('--c', color);
     t.innerHTML = text;
     box.appendChild(t);
     setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, ms);
@@ -61,7 +62,7 @@
       if (tokens[p.id]) return;
       const el = document.createElement('div');
       el.className = 'token';
-      el.style.background = p.color;
+      el.style.setProperty('--c', p.color);
       el.innerHTML = `<span>${p.emoji || '🙂'}</span><span class="tname">${esc(p.name)}</span>`;
       BOARD.appendChild(el);
       tokens[p.id] = el;
@@ -117,6 +118,7 @@
       snd('move');
       await sleep(HOP_MS);
     }
+    landed(id);
   }
   async function glide(id, n) {
     const el = tokens[id];
@@ -127,14 +129,40 @@
     layoutTokens();
     await sleep(1050);
     el.classList.remove('glide');
+    landed(id);
+  }
+
+  /** A little squash-and-stretch plus an expanding ring where a token comes to rest. */
+  function landed(id) {
+    const el = tokens[id];
+    if (!el) return;
+    el.classList.remove('landed'); void el.offsetWidth; el.classList.add('landed');
+    const { l, t } = xy(shown[id]);
+    const r = document.createElement('div');
+    r.className = 'ripple'; r.style.left = l + '%'; r.style.top = t + '%';
+    BOARD.appendChild(r);
+    setTimeout(() => r.remove(), 1000);
+  }
+  /** The number rolled, floating up off the roller's token. */
+  function rollPop(id, value) {
+    const { l, t } = xy(shown[id] ?? 0);
+    const r = document.createElement('div');
+    r.className = 'rollpop'; r.style.left = l + '%'; r.style.top = t + '%'; r.style.setProperty('--c', P(id).color);
+    r.textContent = '🎲 ' + value;
+    BOARD.appendChild(r);
+    setTimeout(() => r.remove(), 1300);
   }
 
   // ───────────────────────── the die ─────────────────────────
   const FACE = { 1: [0, 0], 2: [-90, 0], 3: [0, -90], 4: [0, 90], 5: [90, 0], 6: [0, 180] };
   let dieTimer = null;
-  function spinDie() { CUBE.style.transition = 'none'; CUBE.classList.add('spinning'); }
+  function spinDie() {
+    CUBE.style.transition = 'none'; CUBE.classList.add('spinning');
+    DIE.classList.remove('tossing'); void DIE.offsetWidth; DIE.classList.add('tossing');
+  }
   function settleDie(v) {
     CUBE.classList.remove('spinning');
+    DIE.classList.remove('tossing');
     const [x, y] = FACE[v] || FACE[1];
     CUBE.style.transition = 'transform .5s cubic-bezier(.25,1,.5,1)';
     CUBE.style.transform = `rotateX(${720 - 18 + x}deg) rotateY(${1080 + 22 + y}deg)`;
@@ -211,8 +239,8 @@
         snd('roll');
         await sleep(620);
         settleDie(a.roll);
+        rollPop(a.player_id, a.roll);
         await sleep(560);
-        toast(`${esc(P(a.player_id).emoji)} <b>${esc(P(a.player_id).name)}</b> rolled a <b>${a.roll}</b>`, 1800);
         await hop(a.player_id, a.hop_path || []);
         if (a.overshoot) { toast(`Needed exactly ${a.overshoot.needed} — bounced back to ${a.overshoot.bounced_to}`, 2400); await sleep(500); }
         await sleep(280);
@@ -220,13 +248,13 @@
       }
 
       case 'reroll':
-        toast(`🎲 <b>${esc(P(a.player_id).name)}</b> used a Reroll: ${a.from_roll} → ${a.new_roll}`, 2200);
+        toast(`🎲 <b>${esc(P(a.player_id).name)}</b> used a Reroll: ${a.from_roll} → ${a.new_roll}`, 2200, '#6366f1');
         snd('boostArm');
         break;
 
       case 'move': {
         const snake = a.via === 'snake_head';
-        toast(snake ? `🐍 Snake! ${esc(P(a.player_id).name)} slides to ${a.to}` : `🪜 Ladder! ${esc(P(a.player_id).name)} climbs to ${a.to}`, 2200);
+        toast(snake ? `🐍 Snake! ${esc(P(a.player_id).name)} slides to ${a.to}` : `🪜 Ladder! ${esc(P(a.player_id).name)} climbs to ${a.to}`, 2200, snake ? '#dc2626' : '#16a34a');
         snd(snake ? 'snake' : 'ladder');
         await sleep(350);
         await glide(a.player_id, a.to);
@@ -240,7 +268,7 @@
         const t = tokens[a.player_id];
         t && t.classList.add('shieldfx');
         snd('shieldUp');
-        toast(`🛡️ <b>${esc(P(a.player_id).name)}</b> blocked it!`, 2200);
+        toast(`🛡️ <b>${esc(P(a.player_id).name)}</b> blocked it!`, 2200, '#38bdf8');
         await sleep(1500);
         t && t.classList.remove('shieldfx');
         break;
@@ -249,7 +277,7 @@
       case 'duel': await duelOverlay(a); break;
 
       case 'swap': {
-        toast(`🔀 <b>${esc(P(a.a_id).name)}</b> swapped places with <b>${esc(P(a.b_id).name)}</b>`, 2600);
+        toast(`🔀 <b>${esc(P(a.a_id).name)}</b> swapped places with <b>${esc(P(a.b_id).name)}</b>`, 2600, '#8b5cf6');
         snd('mystery');
         await Promise.all([glide(a.a_id, a.a_pos), glide(a.b_id, a.b_pos)]);
         await sleep(250);
@@ -260,7 +288,7 @@
         const name = esc(P(a.player_id).name);
         if (a.power) {
           const cfg = C.powersCfg[a.power];
-          toast(`⚡ <b>${name}</b> grabbed a ${cfg.icon} <b>${cfg.label}</b>${a.spin ? ' (spin)' : ''}`, 2400);
+          toast(`⚡ <b>${name}</b> grabbed a ${cfg.icon} <b>${cfg.label}</b>${a.spin ? ' (spin)' : ''}`, 2400, '#eab308');
           snd('boostArm');
         } else {
           toast(`⚡ ${name} found a power-up — but is already full!`, 2400);
@@ -274,7 +302,7 @@
       case 'win': {
         snd('win');
         confetti();
-        toast(`🏆 <b>${esc(P(a.player_id).name)}</b> reached the finish!`, 3200);
+        toast(`🏆 <b>${esc(P(a.player_id).name)}</b> reached the finish!`, 3200, '#fbbf24');
         await sleep(1400);
         break;
       }
@@ -286,60 +314,67 @@
     }
   }
 
-  /** Every device shows the card; party mode waits for a tap, online auto-closes. */
-  function holdOverlay(id, html, { seconds = 7, buttonLabel = 'Got it' } = {}) {
+  const SPARKS = '<span class="spark" style="left:8%;top:24%">✦</span><span class="spark" style="right:9%;top:32%;animation-delay:.5s">✧</span><span class="spark" style="left:13%;bottom:26%;animation-delay:1s">✧</span><span class="spark" style="right:12%;bottom:32%;animation-delay:.3s">✦</span>';
+
+  /** A playing-card pop-up tinted by what kind of card it is. Every device shows it;
+   *  party mode waits for a tap, online auto-closes after a few seconds. */
+  function holdCard(id, { color = '#f59e0b', head, icon, who = '', text, sub = '', seconds = 7 }) {
     return new Promise((resolve) => {
       const auto = !C.isParty;
-      show(id, `<div class="ov-card">${html}
-        <div class="ov-btns"><button class="obtn" data-ok>${buttonLabel}</button></div>
-        ${auto ? `<div class="autobar" style="animation-duration:${seconds}s"></div>` : ''}</div>`);
+      show(id, `<div class="pcard" style="--k:${color}">
+        <div class="pc-head">${head}</div>${SPARKS}
+        <div class="pc-body">
+          <div class="pc-icon">${icon}</div>
+          ${who ? `<div class="tgt-row">${who}</div>` : ''}
+          <div class="pc-text">${esc(text)}</div>
+          ${sub ? `<div class="ov-sub">${sub}</div>` : ''}
+          <div class="ov-btns"><button class="obtn" data-ok>Got it</button></div>
+          ${auto ? `<div class="autobar" style="animation-duration:${seconds}s"></div>` : ''}
+        </div></div>`);
       let timer = null;
       const done = () => { clearTimeout(timer); hide(id); resolve(); };
       $(id).querySelector('[data-ok]').onclick = done;
       if (auto) timer = setTimeout(done, seconds * 1000);
     });
   }
+  const kindColor = (k) => C.kindColors[k] || '#f59e0b';
 
   function cardOverlay(a) {
     const src = P(a.source_id);
     const targets = (a.target_ids || []).map(P);
     const spin = a.spin ? '🎰 Mystery spin · ' : '';
-    let title;
+    let head;
     let who = '';
     switch (a.kind) {
-      case 'self': title = `${spin}${esc(src.name)}`; who = chip(src); break;
-      case 'pick': title = `${spin}${esc(src.name)} picked`; who = targets.map((t) => chip(t)).join(''); break;
-      case 'everyone': title = `${spin}Everybody!`; who = ''; break;
-      case 'duel': title = `${esc(targets[0]?.name || 'Someone')} lost the duel`; who = targets.map((t) => chip(t)).join(''); break;
-      case 'fact': title = `${spin}Fun fact`; break;
-      case 'blank': title = '🎰 Mystery spin'; break;
-      default: title = 'Card';
+      case 'self': head = `${spin}${esc(src.name)}`; who = chip(src); break;
+      case 'pick': head = `${spin}${esc(src.name)} picked`; who = targets.map((t) => chip(t)).join(''); break;
+      case 'everyone': head = `${spin}Everybody!`; break;
+      case 'duel': head = `${esc(targets[0]?.name || 'Someone')} lost the duel`; who = targets.map((t) => chip(t)).join(''); break;
+      case 'fact': head = `${spin}Fun fact`; break;
+      case 'blank': head = '🎰 Mystery spin'; break;
+      default: head = 'Card';
     }
     snd(a.kind === 'fact' ? 'notify' : (a.kind === 'self' || a.kind === 'duel' || a.kind === 'pick') ? 'decisionPing' : 'mystery');
-    return holdOverlay('ovCard', `
-      <div class="ov-icon">${esc(a.icon || '🃏')}</div>
-      <div class="ov-title">${title}</div>
-      ${who ? `<div class="tgt-row">${who}</div>` : ''}
-      <div class="ov-text">${esc(a.text)}</div>`);
+    return holdCard('ovCard', { color: a.kind === 'blank' || a.spin ? kindColor('spin') : kindColor(a.kind), head, icon: esc(a.icon || '🃏'), who, text: a.text });
   }
 
   function ruleOverlay(a) {
     snd('mystery');
-    return holdOverlay('ovCard', `
-      <div class="ov-icon">${esc(a.icon || '📜')}</div>
-      <div class="ov-title">${a.spin ? '🎰 Mystery spin · ' : ''}New table rule</div>
-      <div class="ov-text">${esc(a.text)}</div>
-      <div class="ov-sub">Applies to everyone until the next rule square.</div>`, { seconds: 8 });
+    return holdCard('ovCard', {
+      color: kindColor('rule'), head: `${a.spin ? '🎰 Mystery spin · ' : ''}New table rule`, icon: esc(a.icon || '📜'),
+      text: a.text, sub: 'Applies to everyone until the next rule square.', seconds: 8,
+    });
   }
 
   async function duelOverlay(a) {
     const A = P(a.a_id), B = P(a.b_id), loser = P(a.loser_id);
     snd('roll');
-    show('ovCard', `<div class="ov-card">
-      <div class="ov-icon">⚔️</div><div class="ov-title">Duel!</div>
-      <div class="tgt-row">${chip(A)}<b style="align-self:center;font-size:1.4rem;">${a.a_roll}</b><span style="align-self:center;">vs</span><b style="align-self:center;font-size:1.4rem;">${a.b_roll}</b>${chip(B)}</div>
-      <div class="ov-text">${esc(loser.name)} loses!</div></div>`);
-    await sleep(2400);
+    show('ovCard', `<div class="pcard" style="--k:${kindColor('duel')}">
+      <div class="pc-head">Duel!</div>${SPARKS}
+      <div class="pc-body"><div class="pc-icon">⚔️</div>
+        <div class="tgt-row">${chip(A)}<b style="align-self:center;font-size:1.5rem;">${a.a_roll}</b><span style="align-self:center;">vs</span><b style="align-self:center;font-size:1.5rem;">${a.b_roll}</b>${chip(B)}</div>
+        <div class="pc-text">${esc(loser.name)} loses!</div></div></div>`);
+    await sleep(2600);
     hide('ovCard');
   }
 
@@ -369,8 +404,24 @@
   }
 
   // ───────────────────────── drawing the table ─────────────────────────
+  let lastTurn = S.room.current_player_id;
+  function splash(p, mine) {
+    const el = document.createElement('div');
+    el.className = 'splash'; el.style.setProperty('--c', p.color);
+    el.innerHTML = `<b>${p.emoji || '🎲'} ${mine ? 'Your turn!' : esc(p.name) + "'s turn"}</b>`;
+    ST.appendChild(el);
+    setTimeout(() => el.remove(), 1300);
+  }
+
   function render() {
     S = latest;
+    if (S.room.status === 'active' && S.room.current_player_id !== lastTurn && !S.pending) {
+      const p = P(S.room.current_player_id);
+      const mine = !C.isParty && S.room.current_player_id === C.meId;
+      splash(p, mine);
+      if (mine) snd('notify');
+    }
+    lastTurn = S.room.current_player_id;
     ensureTokens();
     syncTokens();
     renderHudTl();
@@ -401,10 +452,11 @@
       const out = p.status === 'left';
       const won = p.status === 'won';
       const pw = (p.powers.shield ? `🛡️${p.powers.shield} ` : '') + (p.powers.reroll ? `🎲${p.powers.reroll}` : '');
-      return `<div class="pl ${cur ? 'cur' : ''} ${out ? 'out' : ''}" style="${cur ? '' : ''}">
-        <div class="av" style="background:${p.color}">${won ? '🏆' : (p.emoji || '🙂')}</div>
-        <span class="nm">${esc(p.name)}${p.id === C.meId ? ' (you)' : ''}</span>
-        <span class="ps">${p.position}/${r.tile_count}</span>
+      const pct = won ? 100 : Math.round((p.position / r.tile_count) * 100);
+      return `<div class="pl ${cur ? 'cur' : ''} ${out ? 'out' : ''}" style="--c:${p.color}">
+        <div class="ring" style="--p:${pct}"><div class="av">${won ? '🏆' : (p.emoji || '🙂')}</div></div>
+        <div class="info"><span class="nm">${esc(p.name)}${p.id === C.meId ? ' (you)' : ''}</span>
+          <i class="bar"><b style="width:${pct}%"></b></i></div>
         <span class="pw">${pw}</span></div>`;
     }).join('');
   }
@@ -434,6 +486,8 @@
       else if (mine) { html = '🎲 Your turn — roll!' + secs(turnLeft); cls = 'mine'; }
       else html = `⏳ <b>${esc(cur.name)}</b> is playing…` + secs(turnLeft);
     }
+    const curP = r.status === 'active' ? P(S.pending ? S.pending.actor_id : r.current_player_id) : null;
+    if (curP) b.style.setProperty('--c', curP.color); else b.style.removeProperty('--c');
     b.className = 'turn-banner ' + cls;
     b.innerHTML = html;
     DIE.disabled = !(r.status === 'active' && !S.pending && mine && !rolling && !busy);
@@ -694,6 +748,18 @@
   }
 
   // ───────────────────────── go ─────────────────────────
+  (function fizz() {
+    const box = $('fizz'); if (!box) return;
+    const family = C.mode && C.mode.label === 'Family';
+    const em = ['🎈', '⭐', '🎉', '🫧', '✨'];
+    for (let i = 0; i < 18; i++) {
+      const el = document.createElement('i');
+      if (family) { el.className = 'em'; el.textContent = em[i % em.length]; }
+      el.style.cssText = `--l:${Math.random() * 96 + 2}%;--s:${family ? 16 + Math.random() * 14 : 8 + Math.random() * 22}px;--d:${9 + Math.random() * 10}s;--w:-${Math.random() * 18}s`;
+      box.appendChild(el);
+    }
+  })();
+
   ensureTokens();
   render();
   if (!C.isParty) setTimeout(poll, 1400);

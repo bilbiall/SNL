@@ -15,6 +15,11 @@
 <body>
 <div class="stage" id="stage">
 
+    {{-- Atmosphere: the board's own art, blurred, behind everything; bubbles drift up in front of it. --}}
+    <div class="ambient" style="background-image:url('{{ $board->imageUrl() }}')"></div>
+    <div class="vignette"></div>
+    <div class="fizz" id="fizz"></div>
+
     {{-- The board. Tokens are added here by snl-play.js and positioned as % of this box. --}}
     <div class="board-wrap" id="boardWrap">
         <img src="{{ $board->imageUrl() }}" alt="{{ $board->name }} board" draggable="false">
@@ -92,6 +97,7 @@ window.SNL = {
     state: @json($state),
     mode: @json($mode),
     kinds: @json($tileKinds),
+    kindColors: @json(collect(config('snl.tile_kinds'))->map(fn ($k) => $k['color'])),
     powersCfg: @json(config('snl.powers')),
     timing: @json($timing),
     boardName: @json($board->name),
