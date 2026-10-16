@@ -51,14 +51,19 @@ const bg = (h) => `
 <defs>
   <radialGradient id="g" cx="50%" cy="36%" r="78%"><stop offset="0" stop-color="${h.bg[0]}"/><stop offset="1" stop-color="${h.bg[1]}"/></radialGradient>
   <pattern id="d" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#000" opacity=".13"/></pattern>
+  <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(h.suit, 36)}"/><stop offset="1" stop-color="${shade(h.suit, -30)}"/></linearGradient>
+  <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(h.cape || h.suit, 26)}"/><stop offset="1" stop-color="${shade(h.cape || h.suit, -34)}"/></linearGradient>
+  <radialGradient id="ck" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ff5c8a" stop-opacity=".5"/><stop offset="1" stop-color="#ff5c8a" stop-opacity="0"/></radialGradient>
+  <filter id="stk" x="-15%" y="-15%" width="130%" height="130%"><feMorphology in="SourceAlpha" operator="dilate" radius="3" result="d"/><feFlood flood-color="#ffffff"/><feComposite in2="d" operator="in" result="o"/><feDropShadow in="o" dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity=".35" result="s"/><feMerge><feMergeNode in="s"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 </defs>
 <rect width="128" height="128" fill="url(#g)"/>
 <g opacity=".13" fill="#fff">${Array.from({ length: 14 }, (_, i) => { const a = (Math.PI * 2 / 14) * i, b = a + Math.PI / 14; return `<polygon points="64,62 ${(64 + Math.cos(a) * 120).toFixed(0)},${(62 + Math.sin(a) * 120).toFixed(0)} ${(64 + Math.cos(b) * 120).toFixed(0)},${(62 + Math.sin(b) * 120).toFixed(0)}"/>`; }).join('')}</g>
-<rect width="128" height="128" fill="url(#d)"/>`;
+<rect width="128" height="128" fill="url(#d)"/>
+<g fill="#fff" opacity=".7"><path d="M16 20 l2.2 5.6 5.6 2.2 -5.6 2.2 -2.2 5.6 -2.2 -5.6 -5.6 -2.2 5.6 -2.2z"/><path d="M108 34 l1.8 4.4 4.4 1.8 -4.4 1.8 -1.8 4.4 -1.8 -4.4 -4.4 -1.8 4.4 -1.8z"/><path d="M100 12 l1.4 3.4 3.4 1.4 -3.4 1.4 -1.4 3.4 -1.4 -3.4 -3.4 -1.4 3.4 -1.4z"/></g>`;
 
 const eyes = (h, skin) => {
   const lens = `<ellipse cx="54" cy="58" rx="5.4" ry="4.6" fill="#fff" stroke="${O}" stroke-width="1.6"/><ellipse cx="74" cy="58" rx="5.4" ry="4.6" fill="#fff" stroke="${O}" stroke-width="1.6"/>
-    <circle cx="55.2" cy="59" r="2.5" fill="${O}"/><circle cx="75.2" cy="59" r="2.5" fill="${O}"/><circle cx="56" cy="58" r=".9" fill="#fff"/><circle cx="76" cy="58" r=".9" fill="#fff"/>`;
+    <circle cx="55.2" cy="59" r="3.3" fill="${h.iris || '#2f7be8'}"/><circle cx="75.2" cy="59" r="3.3" fill="${h.iris || '#2f7be8'}"/><circle cx="55.2" cy="59" r="1.8" fill="${O}"/><circle cx="75.2" cy="59" r="1.8" fill="${O}"/><circle cx="56.4" cy="57.6" r="1.2" fill="#fff"/><circle cx="76.4" cy="57.6" r="1.2" fill="#fff"/>`;
   const brow = h.face === 'serious' ? `<path d="M47 51 L60 54 M81 51 L68 54" stroke="${O}" stroke-width="3" stroke-linecap="round"/>`
     : h.face === 'smirk' ? `<path d="M47 52 Q53 49 60 52 M68 53 Q75 49 81 51" stroke="${O}" stroke-width="2.6" stroke-linecap="round" fill="none"/>`
       : `<path d="M47 52 Q53 49 60 52 M68 52 Q75 49 81 52" stroke="${O}" stroke-width="2.6" stroke-linecap="round" fill="none"/>`;
@@ -127,25 +132,32 @@ export function heroSvg(h, skin) {
   const sk = skin.hex;
   const dark = shade(sk, -26);
   const { lens, brow } = eyes(h, sk);
-  const capeLayer = h.cape ? `<path d="M10 128 C12 94 34 80 64 80 C94 80 116 94 118 128Z" fill="${h.cape}" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/><path d="M26 128 C28 104 44 92 64 92 C84 92 100 104 102 128Z" fill="${shade(h.cape, 18)}" opacity=".5"/>` : '';
+  const capeLayer = h.cape ? `<path d="M10 128 C12 94 34 80 64 80 C94 80 116 94 118 128Z" fill="url(#cg)" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/><path d="M26 128 C28 104 44 92 64 92 C84 92 100 104 102 128Z" fill="${shade(h.cape, 18)}" opacity=".5"/>` : '';
   // hair that falls behind the head (drawn under it) for the long-hair heroes
   const backHair = ['circlet', 'storm-hair', 'cowl-star'].includes(h.front) ? '' : '';
   const maskedFront = ['cowl-ears', 'cowl-fins', 'cowl-star', 'cat-cowl', 'wing-helm', 'hood-mask', 'flame-hair'].includes(h.front);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" shape-rendering="geometricPrecision">
 ${bg(h)}
+<g filter="url(#stk)">
 ${capeLayer}
-<path d="M12 128 C14 102 36 92 64 92 C92 92 114 102 116 128Z" fill="${h.suit}" stroke="${O}" stroke-width="2.6" stroke-linejoin="round"/>
+<path d="M12 128 C14 102 36 92 64 92 C92 92 114 102 116 128Z" fill="url(#sg)" stroke="${O}" stroke-width="2.6" stroke-linejoin="round"/>
+<path d="M26 106 Q38 97 54 95" stroke="#fff" stroke-width="3" opacity=".28" fill="none" stroke-linecap="round"/>
 <path d="M12 128 C14 112 22 104 34 99 C32 108 32 118 34 128Z M116 128 C114 112 106 104 94 99 C96 108 96 118 94 128Z" fill="${h.trim}" opacity=".55"/>
 <rect x="52" y="78" width="24" height="20" rx="6" fill="${dark}" stroke="${O}" stroke-width="2.4"/>
 <path d="M50 94 C56 100 72 100 78 94 L82 100 C72 108 56 108 46 100Z" fill="${h.trim}" stroke="${O}" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="64" cy="113" r="14" fill="${h.emblem[1]}" opacity=".28"/>
 ${EMBLEM[h.emblem[0]](h.emblem[1])}
 <ellipse cx="40.5" cy="60" rx="4.2" ry="6.2" fill="${sk}" stroke="${O}" stroke-width="2.2"/><ellipse cx="87.5" cy="60" rx="4.2" ry="6.2" fill="${sk}" stroke="${O}" stroke-width="2.2"/>
 <ellipse cx="64" cy="58" rx="24" ry="27.5" fill="${sk}" stroke="${O}" stroke-width="2.6"/>
+<ellipse cx="57" cy="46" rx="12" ry="6" fill="#fff" opacity=".22"/>
+<ellipse cx="46" cy="68" rx="5.6" ry="3.6" fill="url(#ck)"/><ellipse cx="82" cy="68" rx="5.6" ry="3.6" fill="url(#ck)"/>
 <path d="M61 62 L59 69 L64 70" stroke="${dark}" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 ${maskedFront ? '' : lens}
 ${maskedFront ? '' : brow}
 ${mouth(h, sk)}
 ${FRONT[h.front](h)}
+<path d="M48 36 Q58 30 72 33" stroke="#fff" stroke-width="3" fill="none" opacity=".3" stroke-linecap="round"/>
+</g>
 </svg>`;
   return svg;
 }

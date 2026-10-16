@@ -43,7 +43,7 @@
             <button type="button" data-f="m">Men</button>
         </div>
         <div class="avp-grid" id="avpGrid"></div>
-        <div class="avp-lbl">Skin shade</div>
+        <div class="avp-lbl" id="avpSwLbl">Skin shade</div>
         <div class="avp-skins" id="avpSkins"></div>
         <button type="button" class="btn btn-primary btn-block" id="avpDone" style="margin-top:.8rem;">Done</button>
     </div>
@@ -67,14 +67,16 @@ window.SNLAvatars = (function () {
         var cur = LOOKS.find(function (l) { return l.id === st.look; }) || LOOKS[0];
         var col = R.collections.find(function (c) { return c.id === st.col; }) || R.collections[0];
         el('avpPrev').src = url(st.look + '-' + st.skin);
-        el('avpName').textContent = cur.label + ' · ' + R.skins.find(function (s) { return s.id === st.skin; }).label;
+        var sw = col.swatches || R.skins;
+        el('avpName').textContent = cur.label + ' · ' + (sw.find(function (s) { return s.id === st.skin; }) || sw[0]).label;
+        el('avpSwLbl').textContent = col.swatchLabel || 'Skin shade';
         el('avpCols').innerHTML = R.collections.map(function (c) {
             return '<button type="button" data-col="' + c.id + '" class="' + (c.id === st.col ? 'on' : '') + '">' + c.label + '</button>';
         }).join('');
         el('avpGrid').innerHTML = col.looks.filter(function (l) { return st.f === 'all' || l.gender === st.f; }).map(function (l) {
             return '<button type="button" class="avp-look ' + (l.id === st.look ? 'on' : '') + '" data-look="' + l.id + '" title="' + l.label + '"><img src="' + url(l.id + '-' + st.skin) + '" alt="' + l.label + '"><span>' + l.label + '</span></button>';
         }).join('');
-        el('avpSkins').innerHTML = R.skins.map(function (s) {
+        el('avpSkins').innerHTML = sw.map(function (s) {
             return '<button type="button" class="' + (s.id === st.skin ? 'on' : '') + '" data-skin="' + s.id + '" title="' + s.label + '" style="background:' + s.hex + '"></button>';
         }).join('');
         el('avpTabs').querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.dataset.f === st.f); });

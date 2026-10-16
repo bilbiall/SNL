@@ -191,7 +191,7 @@
     },
     {
       "id": "genz",
-      "label": "Gen Z",
+      "label": "Rookie",
       "looks": [
         {
           "id": "g1",
@@ -252,6 +252,176 @@
           "id": "g12",
           "gender": "f",
           "label": "Y2K Bob"
+        }
+      ]
+    },
+    {
+      "id": "bar",
+      "label": "Bar Crew",
+      "looks": [
+        {
+          "id": "c1",
+          "gender": "m",
+          "label": "Bartender"
+        },
+        {
+          "id": "c2",
+          "gender": "f",
+          "label": "Sommelier"
+        },
+        {
+          "id": "c3",
+          "gender": "m",
+          "label": "Brewmaster"
+        },
+        {
+          "id": "c4",
+          "gender": "f",
+          "label": "Mixologist"
+        },
+        {
+          "id": "c5",
+          "gender": "m",
+          "label": "DJ Dropbeat"
+        },
+        {
+          "id": "c6",
+          "gender": "f",
+          "label": "Karaoke Queen"
+        },
+        {
+          "id": "c7",
+          "gender": "m",
+          "label": "Pirate Captain"
+        },
+        {
+          "id": "c8",
+          "gender": "m",
+          "label": "Whiskey Cowboy"
+        },
+        {
+          "id": "c9",
+          "gender": "m",
+          "label": "High Roller"
+        },
+        {
+          "id": "c10",
+          "gender": "f",
+          "label": "Tiki Host"
+        },
+        {
+          "id": "c11",
+          "gender": "m",
+          "label": "Bouncer"
+        },
+        {
+          "id": "c12",
+          "gender": "f",
+          "label": "Bubbly Socialite"
+        }
+      ]
+    },
+    {
+      "id": "party",
+      "label": "Party Animals",
+      "swatchLabel": "Colour",
+      "swatches": [
+        {
+          "id": 1,
+          "label": "Sunset",
+          "hex": "#f59e0b"
+        },
+        {
+          "id": 2,
+          "label": "Ruby",
+          "hex": "#ef4444"
+        },
+        {
+          "id": 3,
+          "label": "Bubblegum",
+          "hex": "#f472b6"
+        },
+        {
+          "id": 4,
+          "label": "Grape",
+          "hex": "#8b5cf6"
+        },
+        {
+          "id": 5,
+          "label": "Ocean",
+          "hex": "#3b82f6"
+        },
+        {
+          "id": 6,
+          "label": "Mint",
+          "hex": "#10b981"
+        },
+        {
+          "id": 7,
+          "label": "Slate",
+          "hex": "#64748b"
+        }
+      ],
+      "looks": [
+        {
+          "id": "a1",
+          "gender": "f",
+          "label": "Foxy Mixologist"
+        },
+        {
+          "id": "a2",
+          "gender": "m",
+          "label": "Beer Bear"
+        },
+        {
+          "id": "a3",
+          "gender": "f",
+          "label": "Sommelier Cat"
+        },
+        {
+          "id": "a4",
+          "gender": "f",
+          "label": "Bubbly Frog"
+        },
+        {
+          "id": "a5",
+          "gender": "m",
+          "label": "Chill Panda"
+        },
+        {
+          "id": "a6",
+          "gender": "m",
+          "label": "Night Owl"
+        },
+        {
+          "id": "a7",
+          "gender": "m",
+          "label": "Bandit Raccoon"
+        },
+        {
+          "id": "a8",
+          "gender": "f",
+          "label": "Lucky Bunny"
+        },
+        {
+          "id": "a9",
+          "gender": "m",
+          "label": "Cowboy Pup"
+        },
+        {
+          "id": "a10",
+          "gender": "m",
+          "label": "Tuxedo Penguin"
+        },
+        {
+          "id": "a11",
+          "gender": "f",
+          "label": "Tiki Monkey"
+        },
+        {
+          "id": "a12",
+          "gender": "m",
+          "label": "Rum Parrot"
         }
       ]
     },

@@ -8,6 +8,8 @@ import { createAvatar } from '@dicebear/core';
 import { pixelArt, lorelei } from '@dicebear/collection';
 import { HEROES, heroSvg } from './lib/heroes.mjs';
 import { GENZ, genzSvg } from './lib/genz.mjs';
+import { BARCREW, barSvg } from './lib/barcrew.mjs';
+import { ANIMAL_ROSTER, COLOURWAYS, animalSvg } from './lib/animals.mjs';
 
 // 90s vaporwave backdrops
 const BG = { pink: 'ff71ce', cyan: '01cdfe', mint: '05ffa1', purple: 'b967ff', yellow: 'fffb96', coral: 'ff9b85' };
@@ -73,6 +75,18 @@ for (const g of GENZ) {
   for (const skin of SKINS) { fs.writeFileSync(`public/avatars/${g.id}-${skin.id}.svg`, genzSvg(g, { hex: '#' + skin.hex })); z++; }
 }
 
+// ── Bar Crew: drinking-game characters with props, drawn in code (scripts/lib/barcrew.mjs) ──
+let bc = 0;
+for (const c of BARCREW) {
+  for (const skin of SKINS) { fs.writeFileSync(`public/avatars/${c.id}-${skin.id}.svg`, barSvg(c, { hex: '#' + skin.hex })); bc++; }
+}
+
+// ── Party Animals: animal mascots with drinks, in 7 neon colourways instead of skin shades (scripts/lib/animals.mjs) ──
+let pa = 0;
+for (const a of ANIMAL_ROSTER) {
+  for (const cw of COLOURWAYS) { fs.writeFileSync(`public/avatars/${a.id}-${cw.id}.svg`, animalSvg(a, cw)); pa++; }
+}
+
 // ── Illustrated: DiceBear "Lorelei" — CC0 1.0, https://www.dicebear.com/styles/lorelei/ ──
 const ILLUS_HAIR = ['ff5ca8', '2b1b14', '7c3aed', '16a34a', '2563eb', 'f59e0b', '0ea5e9', 'ef4444', '8b5a2b', '111827', 'f472b6', '14b8a6'];
 const ILLUS_BG = ['ffd5dc', 'c0aede', 'b6e3f4', 'ffdfbf', 'd1f4d1', 'fde68a'];
@@ -97,8 +111,10 @@ fs.writeFileSync('resources/avatars.json', JSON.stringify({
   collections: [
     { id: 'retro', label: 'Retro 90s', looks: LOOKS.map(({ id, gender, label }) => ({ id, gender, label })) },
     { id: 'heroes', label: 'Heroes', looks: HEROES.map(({ id, gender, label }) => ({ id, gender, label })) },
-    { id: 'genz', label: 'Gen Z', looks: GENZ.map(({ id, gender, label }) => ({ id, gender, label })) },
+    { id: 'genz', label: 'Rookie', looks: GENZ.map(({ id, gender, label }) => ({ id, gender, label })) },
+    { id: 'bar', label: 'Bar Crew', looks: BARCREW.map(({ id, gender, label }) => ({ id, gender, label })) },
+    { id: 'party', label: 'Party Animals', swatchLabel: 'Colour', swatches: COLOURWAYS, looks: ANIMAL_ROSTER.map(({ id, gender, label }) => ({ id, gender, label })) },
     { id: 'illus', label: 'Illustrated', looks: ILLUS.map(({ id, gender, label }) => ({ id, gender, label })) },
   ],
 }, null, 2) + '\n');
-console.log(`Built ${n} retro + ${h} hero + ${z} gen-z + ${il} illustrated avatars (${LOOKS.length + HEROES.length + GENZ.length + ILLUS.length} looks × ${SKINS.length} skin shades) → public/avatars/, resources/avatars.json`);
+console.log(`Built ${n} retro + ${h} hero + ${z} rookie + ${bc} bar-crew + ${pa} party-animal + ${il} illustrated avatars (${LOOKS.length + HEROES.length + GENZ.length + BARCREW.length + ANIMAL_ROSTER.length + ILLUS.length} looks × ${SKINS.length} skin shades) → public/avatars/, resources/avatars.json`);
