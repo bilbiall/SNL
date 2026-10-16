@@ -267,4 +267,66 @@
     @keyframes clockPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
     .pcard .tgt-row .tgt { cursor: pointer; }
     .pcard .watch-secs { color: #9ca3af; }
+
+    /* ═════ Wide screens: two matching sidebars ═════
+       The .side wrappers are invisible on phones. Once the stage is big enough they become real columns of
+       equal width, and the board shrinks to fit between them — so both edges carry the same visual weight. */
+    .pl .pos { display: none; }
+    .side { display: contents; }
+    .feed { display: none; }
+    .feed-h, .feed-list { display: none; }
+
+    @container (min-width: 1000px) and (min-height: 600px) {
+        .board-wrap { --sw: clamp(200px, 15.5cqw, 290px); width: min(calc(100cqw - 2 * var(--sw) - 40px), calc(100cqh * var(--bw) / var(--bh))); }
+
+        .side {
+            --sw: clamp(200px, 15.5cqw, 290px);
+            display: flex; flex-direction: column; gap: 12px; position: absolute; top: 14px; bottom: 14px; width: var(--sw); z-index: 30; pointer-events: none;
+        }
+        .side-l { left: 14px; }
+        .side-r { right: 14px; }
+        .side .hud { position: static; transform: none; inset: auto; max-width: none; width: 100%; pointer-events: auto; }
+        .side-l .hud-tl, .side-l .hud-left, .side-r .feed, .side-r .hud-br, .side-r .hud-bl {
+            box-sizing: border-box; border-radius: 18px; background: linear-gradient(160deg, rgba(24,21,42,.78), rgba(8,7,16,.7));
+            border: 1px solid rgba(255,255,255,.11); backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,.35);
+        }
+
+        /* ── Left: the game card, then every player ── */
+        .side-l .hud-tl { display: flex; flex-direction: column; align-items: stretch; gap: 7px; padding: 12px; flex-shrink: 0; }
+        .side-l .hud-tl .chip { width: 100%; box-sizing: border-box; justify-content: flex-start; padding: .45rem .75rem; font-size: .82rem; border-radius: .8rem; background: rgba(255,255,255,.05); }
+        .side-l .hud-tl .chip .ic { font-size: 1.15em; }
+        .side-l .hud-tl .chip.rule { padding: .55rem .75rem; line-height: 1.35; }
+        .side-l .hud-left { flex: 1; min-height: 0; max-height: none; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-start; gap: 8px; padding: 10px; transform: none; scrollbar-width: thin; }
+        .side-l .pl { width: 100%; box-sizing: border-box; gap: 10px; padding: 6px 12px 6px 6px; border-radius: 14px; }
+        .side-l .pl.cur { transform: none; }
+        .side-l .pl .ring { --d: 46px; }
+        .side-l .pl .info { display: flex; flex: 1; min-width: 0; gap: 4px; }
+        .side-l .pl .nm { max-width: none; font-size: .9rem; }
+        .side-l .pl .pos { display: block; font-size: .68rem; font-weight: 700; color: #9ca3af; }
+        .side-l .pl .bar { display: block; width: 100%; max-width: none; height: 6px; }
+        .side-l .pl .pw { display: flex; font-size: .78rem; gap: 6px; }
+
+        /* ── Right: header buttons, the recent-moves feed, reactions, and the roll dock ── */
+        .side-r .hud-tr { justify-content: flex-end; gap: 9px; flex-shrink: 0; }
+        .side-r .icon-btn { width: 44px; height: 44px; font-size: 1.3rem; }
+        .side-r .feed { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 12px; }
+        .side-r .feed-h { display: block; flex-shrink: 0; font-size: .68rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: #9ca3af; margin-bottom: 8px; }
+        .side-r .feed-list { display: flex; flex: 1; min-height: 0; flex-direction: column; justify-content: flex-end; gap: 6px; overflow: hidden; }
+        .fi { font-size: .8rem; font-weight: 700; line-height: 1.3; padding: .45rem .65rem; border-radius: .7rem; background: rgba(255,255,255,.05); border-left: 3px solid var(--c, #6b7280); animation: feedIn .35s ease both; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+        .fi .ic { color: var(--c, #fff); margin-right: .2em; }
+        @keyframes feedIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .side-r .hud-bl { display: flex; flex-direction: row; align-items: center; padding: 8px; flex-shrink: 0; }
+        .side-r .reactbar { display: flex; flex: 1; max-width: none; justify-content: space-between; }
+        .side-r #reactToggle { display: none; }
+        .side-r .reactbar button { font-size: 1.15rem; padding: .3rem .4rem; }
+        .side-r .hud-br { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 14px; flex-shrink: 0; }
+        .side-r .turn-banner { font-size: .92rem; padding: .6rem .8rem; }
+        .side-r .die-badge { width: 136px; height: 136px; }
+        .side-r .die-scene, .side-r .die-cube { --s: 58px; }
+        .side-r .die-label { font-size: .72rem; }
+        .side-r .die-val { width: 30px; height: 30px; font-size: .95rem; }
+        .side-r .powers { width: 100%; justify-content: center; gap: 8px; }
+        .side-r .pwr { font-size: .95rem; padding: .35rem .9rem; }
+        .toasts { bottom: 4cqh; }
+    }
 </style>

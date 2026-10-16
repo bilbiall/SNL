@@ -95,7 +95,7 @@
         <span class="amp">&amp;</span>
         <span class="w">@foreach(str_split('LIQUOR') as $i => $ch)<span style="--i:{{ $i + 6 }}">{{ $ch }}</span>@endforeach</span>
     </h1>
-    <p class="tag"><x-icon name="dice" /> Roll <x-icon name="self" /> Land <x-icon name="duel" /> Dare</p>
+    <p class="tag"><x-icon name="dice" /> Roll <x-icon name="self" /> Land <x-icon name="cheers" /> Sip</p>
 
     <div class="mini" aria-hidden="true">
         <div class="track">

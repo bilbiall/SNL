@@ -143,7 +143,12 @@ class RoomController extends Controller
 
     public function decide(Request $request, Room $room): JsonResponse
     {
-        $data = $request->validate(['choice' => 'required|in:use,skip,target', 'target_id' => 'nullable|integer']);
+        // Every answer a prompt can take: reroll/shield (use|skip), pick (target), true-or-false (true|false), bluff
+        // (done|call|none), verdict (proved|busted), spotlight (nailed|failed). The engine checks which fits the prompt.
+        $data = $request->validate([
+            'choice'    => 'required|in:use,skip,target,true,false,done,call,none,proved,busted,nailed,failed',
+            'target_id' => 'nullable|integer',
+        ]);
 
         return $this->act($request, $room, function (?Player $me) use ($room, $data) {
             $actorId = $room->isParty()

@@ -27,41 +27,51 @@
         <div id="glow" class="tile-glow"></div>
     </div>
 
-    <div class="hud hud-tl" id="hudTl"></div>
-
-    <div class="hud hud-tr">
-        <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound"><x-icon name="speaker" /></button>
-        <button class="icon-btn" id="menuBtn" type="button" aria-label="Menu"><x-icon name="menu" /></button>
+    {{-- HUD. On phones the two .side wrappers vanish (display:contents) and each piece floats in a corner of the stage.
+         On a wide screen they become two matching sidebars: info + players on the left, controls + moves on the right. --}}
+    <div class="side side-l">
+        <div class="hud hud-tl" id="hudTl"></div>
+        <div class="hud hud-left" id="players"></div>
     </div>
 
-    <div class="hud hud-left" id="players"></div>
-
-    @if($room->isOnline())
-    <div class="hud hud-bl">
-        <div class="reactbar" id="reactBar">
-            @foreach($reactions as $key)<button type="button" data-react="{{ $key }}" aria-label="React"><x-icon :name="$key" /></button>@endforeach
+    <div class="side side-r">
+        <div class="hud hud-tr">
+            <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound"><x-icon name="speaker" /></button>
+            <button class="icon-btn" id="menuBtn" type="button" aria-label="Menu"><x-icon name="menu" /></button>
         </div>
-        <button class="icon-btn" id="reactToggle" type="button" aria-label="Reactions"><x-icon name="jester" /></button>
-    </div>
-    @endif
 
-    <div class="hud hud-br">
-        <div class="turn-banner wait" id="turnBanner">…</div>
-        <button class="die-badge" id="dieBtn" type="button" disabled aria-label="Roll the dice">
-            <span class="die-label">Roll</span>
-            <div class="die-scene">
-                <div class="die-cube" id="dieCube">
-                    <div class="die-face f1"><i class="pip" style="grid-area:2/2"></i></div>
-                    <div class="die-face f2"><i class="pip" style="grid-area:1/1"></i><i class="pip" style="grid-area:3/3"></i></div>
-                    <div class="die-face f3"><i class="pip" style="grid-area:1/1"></i><i class="pip" style="grid-area:2/2"></i><i class="pip" style="grid-area:3/3"></i></div>
-                    <div class="die-face f4"><i class="pip" style="grid-area:1/1"></i><i class="pip" style="grid-area:1/3"></i><i class="pip" style="grid-area:3/1"></i><i class="pip" style="grid-area:3/3"></i></div>
-                    <div class="die-face f5"><i class="pip" style="grid-area:1/1"></i><i class="pip" style="grid-area:1/3"></i><i class="pip" style="grid-area:2/2"></i><i class="pip" style="grid-area:3/1"></i><i class="pip" style="grid-area:3/3"></i></div>
-                    <div class="die-face f6"><i class="pip" style="grid-area:1/1"></i><i class="pip" style="grid-area:1/3"></i><i class="pip" style="grid-area:2/1"></i><i class="pip" style="grid-area:2/3"></i><i class="pip" style="grid-area:3/1"></i><i class="pip" style="grid-area:3/3"></i></div>
-                </div>
+        <div class="feed" id="feed" aria-live="polite">
+            <div class="feed-h">Recent moves</div>
+            <div class="feed-list" id="feedList"></div>
+        </div>
+
+        @if($room->isOnline())
+        <div class="hud hud-bl">
+            <div class="reactbar" id="reactBar">
+                @foreach($reactions as $key)<button type="button" data-react="{{ $key }}" aria-label="React"><x-icon :name="$key" /></button>@endforeach
             </div>
-            <span class="die-val" id="dieVal"></span>
-        </button>
-        <div class="powers" id="powers"></div>
+            <button class="icon-btn" id="reactToggle" type="button" aria-label="Reactions"><x-icon name="jester" /></button>
+        </div>
+        @endif
+
+        <div class="hud hud-br">
+            <div class="turn-banner wait" id="turnBanner">…</div>
+            <button class="die-badge" id="dieBtn" type="button" disabled aria-label="Roll the dice">
+                <span class="die-label">Roll</span>
+                <div class="die-scene">
+                    <div class="die-cube" id="dieCube">
+                        <div class="die-face f1"><i class="pip" style="grid-area:2/2"></i></div>
+                        <div class="die-face f2"><i class="pip" style="grid-area:1/1"></i><i class="pip" style="grid-area:3/3"></i></div>
+                        <div class="die-face f3"><i class="pip" style="grid-area:1/1"></i><i class="pip" style="grid-area:2/2"></i><i class="pip" style="grid-area:3/3"></i></div>
+                        <div class="die-face f4"><i class="pip" style="grid-area:1/1"></i><i class="pip" style="grid-area:1/3"></i><i class="pip" style="grid-area:3/1"></i><i class="pip" style="grid-area:3/3"></i></div>
+                        <div class="die-face f5"><i class="pip" style="grid-area:1/1"></i><i class="pip" style="grid-area:1/3"></i><i class="pip" style="grid-area:2/2"></i><i class="pip" style="grid-area:3/1"></i><i class="pip" style="grid-area:3/3"></i></div>
+                        <div class="die-face f6"><i class="pip" style="grid-area:1/1"></i><i class="pip" style="grid-area:1/3"></i><i class="pip" style="grid-area:2/1"></i><i class="pip" style="grid-area:2/3"></i><i class="pip" style="grid-area:3/1"></i><i class="pip" style="grid-area:3/3"></i></div>
+                    </div>
+                </div>
+                <span class="die-val" id="dieVal"></span>
+            </button>
+            <div class="powers" id="powers"></div>
+        </div>
     </div>
 
     <div class="watch" id="watch"></div>

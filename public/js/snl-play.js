@@ -248,8 +248,51 @@
   }
 
   // ───────────────────────── replaying actions ─────────────────────────
+  /** One line for the "recent moves" feed (shown in the right sidebar on wide screens). */
+  function feedLine(a) {
+    const who = a.player_id !== undefined ? P(a.player_id) : null;
+    const n = (p) => `<b>${esc(p.name)}</b>`;
+    const clip = (t, k = 70) => esc(t.length > k ? t.slice(0, k - 1) + '…' : t);
+    switch (a.type) {
+      case 'start': return [`${ic('flag')} Game on!`, '#f59e0b'];
+      case 'roll': return [`${ic('dice')} ${n(who)} rolled a <b>${a.roll}</b>`, who.color];
+      case 'reroll': return [`${ic('reroll')} ${n(who)} rerolled → <b>${a.new_roll}</b>`, '#6366f1'];
+      case 'move': return a.via === 'snake_head'
+        ? [`${ic('snake')} ${n(who)} slid down to ${a.to}`, '#dc2626'] : [`${ic('ladder')} ${n(who)} climbed to ${a.to}`, '#16a34a'];
+      case 'card': return [`${ic(a.icon || 'cards')} ${a.kind === 'everyone' ? 'Everybody' : n(P(a.source_id))}: ${clip(a.text)}`, kindColor(a.kind)];
+      case 'shield': return [`${ic('shield')} ${n(who)} blocked it`, '#38bdf8'];
+      case 'duel': return [`${ic('duel')} ${n(P(a.a_id))} vs ${n(P(a.b_id))}: <b>${esc(P(a.loser_id).name)}</b> lost`, '#ef4444'];
+      case 'swap': return [`${ic('swap')} ${n(P(a.a_id))} swapped with ${n(P(a.b_id))}`, '#8b5cf6'];
+      case 'power': return [`${ic('power')} ${n(who)} found a power-up`, '#eab308'];
+      case 'rule': return [`${ic('rule')} New rule: ${clip(a.text, 60)}`, kindColor('rule')];
+      case 'factcheck': return [`${ic(a.correct ? 'check' : 'cross')} ${n(who)} ${a.correct ? 'got it right' : 'got it wrong'} — it's <b>${a.answer ? 'TRUE' : 'FALSE'}</b>`, a.correct ? '#34d399' : '#f87171'];
+      case 'bluff_said': return [`${ic('jester')} ${n(who)} made a claim`, '#14b8a6'];
+      case 'bluff_pass': return [`${ic('check')} Nobody doubted ${n(who)}`, '#34d399'];
+      case 'bluff_called': return [`${ic('search')} ${n(P(a.caller_id))} called bluff on ${n(who)}`, '#f87171'];
+      case 'bluff_result': return a.result === 'void' ? null : [`${ic(a.result === 'proved' ? 'check' : 'search')} ${a.result === 'proved' ? 'Proven' : 'Bluff caught'}!`, a.result === 'proved' ? '#34d399' : '#f87171'];
+      case 'spot_result': return [`${ic('mic')} ${n(who)} ${a.nailed ? 'nailed it' : 'ran out of time'}`, a.nailed ? '#34d399' : '#f87171'];
+      case 'win': return [`${ic('trophy')} ${n(who)} reached the finish!`, '#fbbf24'];
+      case 'left': return [`${ic('exit')} ${n(who)} left`, '#6b7280'];
+      case 'skip': return [`${ic('clock')} ${n(who)} ran out of time`, '#6b7280'];
+      default: return null; // reactions etc. don't belong in the log
+    }
+  }
+  function feedAdd(a) {
+    const list = $('feedList');
+    if (!list) return;
+    const l = feedLine(a);
+    if (!l) return;
+    const el = document.createElement('div');
+    el.className = 'fi';
+    el.style.setProperty('--c', l[1]);
+    el.innerHTML = l[0];
+    list.appendChild(el);
+    while (list.children.length > 8) list.firstChild.remove();
+  }
+
   async function play(a) {
     const who = a.player_id !== undefined ? P(a.player_id) : null;
+    feedAdd(a);
     switch (a.type) {
       case 'start': toast(`${ic('flag')} Game on!`, 2200, '#f59e0b'); snd('notify'); await sleep(450); break;
 
@@ -560,7 +603,7 @@
       const pct = won ? 100 : Math.round((p.position / r.tile_count) * 100);
       return `<div class="pl ${cur ? 'cur' : ''} ${out ? 'out' : ''}" style="--c:${p.color}">
         <div class="ring" style="--p:${pct}"><div class="av">${won ? ic('crown') : avatar(p)}</div></div>
-        <div class="info"><span class="nm">${esc(p.name)}${p.id === C.meId ? ' (you)' : ''}</span><i class="bar"><b style="width:${pct}%"></b></i></div>
+        <div class="info"><span class="nm">${esc(p.name)}${p.id === C.meId ? ' (you)' : ''}</span><span class="pos">${won ? 'Finished' : 'Square ' + p.position + ' of ' + r.tile_count}</span><i class="bar"><b style="width:${pct}%"></b></i></div>
         <span class="pw">${pw}</span></div>`;
     }).join('');
   }
