@@ -365,9 +365,9 @@
       case 'random_pick': await randomPickOverlay(a); break;
 
       case 'neutral':
-        snd('toggle');
-        toast(`${ic('hourglass')} <b>${esc(who.name)}</b> · ${esc(a.text)}`, 2200, '#6b7280');
-        await sleep(700);
+        snd('arrive');
+        flavorSplash(who, a.text);
+        await sleep(4000);
         break;
 
       case 'bluff_said':
@@ -594,6 +594,16 @@
   })();
 
   // ───────────────────────── drawing the table ─────────────────────────
+  /** A free square's flavour line — the same banner as "your turn", just with a line of text that lingers and animates in. */
+  function flavorSplash(p, text, icon = 'hourglass') {
+    const el = document.createElement('div');
+    el.className = 'splash flavor';
+    el.style.setProperty('--c', p.color);
+    el.innerHTML = `<b><span class="spl-av">${avatar(p)}</span><span class="spl-tx"><small>${ic(icon)} ${esc(p.name)} · free square</small><span class="fl-t">${words(text)}</span></span></b>`;
+    ST.appendChild(el);
+    setTimeout(() => el.remove(), 4500);
+  }
+
   function splash(p, mine) {
     const el = document.createElement('div');
     el.className = 'splash';

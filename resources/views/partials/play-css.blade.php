@@ -170,6 +170,17 @@
     .splash b { display: inline-flex; align-items: center; gap: .7em; padding: .4em 1.6em .4em .5em; font-size: clamp(1rem, 5.2cqh, 1.6rem); font-weight: 900; color: #fff; background: linear-gradient(90deg, transparent, rgba(8,7,16,.92) 14%, rgba(8,7,16,.92) 86%, transparent); border-top: 2px solid var(--c); border-bottom: 2px solid var(--c); text-shadow: 0 2px 8px rgba(0,0,0,.6); }
     .splash .spl-av { width: 2.3em; height: 2.3em; flex-shrink: 0; border-radius: 50%; border: 3px solid var(--c); overflow: hidden; display: flex; align-items: center; justify-content: center; background: #14121f; font-size: 1em; box-shadow: 0 0 22px color-mix(in srgb, var(--c) 70%, transparent); animation: splAvIn 1.1s cubic-bezier(.34,1.56,.64,1) .15s both, avBob 1.5s ease-in-out 1.3s infinite; }
     .splash .spl-av .avimg { width: 100%; height: 100%; }
+    /* flavour banner: same spot and shape as the turn banner, but stays longer and reveals word by word */
+    .splash.flavor { animation-duration: 4.4s; top: 34%; }
+    .splash.flavor b { position: relative; overflow: hidden; padding-right: 2.2em; max-width: 92cqw; text-align: left; font-size: clamp(.9rem, 4.6cqh, 1.45rem); }
+    .splash.flavor b::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.22) 50%, transparent 60%); background-size: 260% 100%; animation: bannerSheen 2.4s .5s ease-in-out infinite; pointer-events: none; }
+    @keyframes bannerSheen { from { background-position: 140% 0; } to { background-position: -60% 0; } }
+    .splash.flavor .spl-tx { display: flex; flex-direction: column; gap: .1em; align-items: flex-start; }
+    .splash.flavor .spl-tx small { font-size: .5em; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: var(--c); display: inline-flex; align-items: center; gap: .4em; }
+    .splash.flavor .spl-tx small .ic { animation: flavorSpin 2.4s linear infinite; }
+    @keyframes flavorSpin { 0% { transform: rotate(0); } 40% { transform: rotate(180deg); } 100% { transform: rotate(180deg); } }
+    .splash.flavor .fl-t { line-height: 1.2; }
+    .splash.flavor .fl-t .w { display: inline-block; opacity: 0; animation: wordIn .6s calc(.7s + var(--i) * .1s) cubic-bezier(.34,1.56,.64,1) both; }
     .splash .spl-tx { animation: splTxIn .9s cubic-bezier(.22,1,.36,1) .35s both; }
     @keyframes splashIn { 0% { opacity: 0; transform: translateX(-16%) scale(.97); } 12% { opacity: 1; transform: none; } 88% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateX(16%); } }
     @keyframes splAvIn { 0% { transform: scale(0) rotate(-200deg); } 100% { transform: scale(1) rotate(0); } }
