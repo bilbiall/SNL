@@ -16,7 +16,7 @@
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   // ArcadeSound is a top-level `const` in arcade-sounds.js (not a window property).
-  const snd = (n) => { try { if (typeof ArcadeSound !== 'undefined') ArcadeSound.play(n); } catch (_) {} };
+  const snd = (n) => { try { SNLAudio.play(n); } catch (_) {} };
 
   // ───────────────────────── icons ─────────────────────────
   const ICONS = new Set(C.iconKeys);
@@ -341,7 +341,7 @@
 
       case 'swap': {
         toast(`${ic('swap')} <b>${esc(P(a.a_id).name)}</b> swapped places with <b>${esc(P(a.b_id).name)}</b>`, 2600, '#8b5cf6');
-        snd('mystery');
+        snd('whoosh');
         await Promise.all([glide(a.a_id, a.a_pos), glide(a.b_id, a.b_pos)]);
         await sleep(250);
         break;
@@ -352,7 +352,7 @@
         if (a.power) {
           const cfg = C.powersCfg[a.power];
           toast(`${ic('power')} <b>${name}</b> grabbed a ${ic(cfg.icon)} <b>${cfg.label}</b>${a.spin ? ' (spin)' : ''}`, 2400, '#eab308');
-          snd('boostArm');
+          snd('badge');
         } else {
           toast(`${ic('power')} ${name} found a power-up — but is already full!`, 2400, '#eab308');
         }
@@ -365,13 +365,14 @@
       case 'random_pick': await randomPickOverlay(a); break;
 
       case 'neutral':
+        snd('toggle');
         toast(`${ic('hourglass')} <b>${esc(who.name)}</b> · ${esc(a.text)}`, 2200, '#6b7280');
         await sleep(700);
         break;
 
       case 'bluff_said':
         toast(`${ic('jester')} <b>${esc(who.name)}</b> has made a claim — believe it?`, 2600, '#14b8a6');
-        snd('decisionPing');
+        snd('drum');
         await sleep(500);
         break;
 
@@ -390,15 +391,15 @@
       case 'bluff_result': await bluffResultOverlay(a); break;
 
       case 'spot_result':
-        if (a.nailed) { toast(`${ic('mic')} <b>${esc(who.name)}</b> nailed it!`, 2400, '#34d399'); snd('ladder'); }
-        else { toast(`${ic('hourglass')} Time's up for <b>${esc(who.name)}</b>`, 2400, '#f87171'); snd('snake'); }
+        if (a.nailed) { toast(`${ic('mic')} <b>${esc(who.name)}</b> nailed it!`, 2400, '#34d399'); snd('quest'); }
+        else { toast(`${ic('hourglass')} Time's up for <b>${esc(who.name)}</b>`, 2400, '#f87171'); snd('buzz'); }
         await sleep(700);
         break;
 
       case 'rule': await ruleOverlay(a); break;
 
       case 'win': {
-        snd('win');
+        snd('win'); setTimeout(() => snd('quest'), 900);
         confetti();
         toast(`${ic('trophy')} <b>${esc(who.name)}</b> reached the finish!`, 3200, '#fbbf24');
         await sleep(1400);
@@ -442,12 +443,13 @@
 
   function holdCard(id, { color = '#f59e0b', head, icon, who = '', text, sub = '', seconds = 7, intensity = 0 }) {
     return new Promise((resolve) => {
+      snd('open'); try { SNLAudio.duck(true); } catch (_) {}
       const auto = !C.isParty;
       show(id, cardShell({ color, head, icon, who, text, sub, intensity,
         buttons: '<button class="obtn" data-ok>Got it</button>',
         extra: auto ? `<div class="autobar" style="width:100%;animation-duration:${seconds}s"></div>` : '' }));
       let timer = null;
-      const done = () => { clearTimeout(timer); hide(id); resolve(); };
+      const done = () => { clearTimeout(timer); hide(id); snd('close'); try { SNLAudio.duck(false); } catch (_) {} resolve(); };
       $(id).querySelector('[data-ok]').onclick = done;
       if (auto) timer = setTimeout(done, seconds * 1000);
     });
@@ -469,7 +471,7 @@
       case 'blank': head = 'Mystery spin'; break;
       default: head = 'Card';
     }
-    snd(a.kind === 'fact' ? 'notify' : (a.kind === 'self' || a.kind === 'duel' || a.kind === 'pick') ? 'decisionPing' : 'mystery');
+    snd(a.kind === 'heart' ? 'heart' : a.kind === 'everyone' ? (C.mode.label === 'Drinks' ? 'cheers' : 'sparkle') : a.kind === 'fact' ? 'notify' : (a.kind === 'self' || a.kind === 'pick') ? (C.mode.label === 'Drinks' ? 'clink' : 'decisionPing') : 'mystery');
     return holdCard('ovCard', { color: a.kind === 'blank' || a.spin ? kindColor('spin') : kindColor(a.kind), head, icon: a.icon || 'cards', who, text: a.text, intensity: a.intensity || 0 });
   }
 
@@ -484,10 +486,11 @@
     const steps = chips.length * 3 + target;
     for (let i = 0; i <= steps; i++) {
       chips.forEach((c, k) => c.classList.toggle('hot', k === i % chips.length));
+      snd('tick');
       await sleep(70 + Math.pow(i / steps, 3) * 380);
     }
     chips[target].classList.add('won');
-    snd('decisionPing');
+    snd('sparkle');
     await sleep(900);
     hide('ovCard');
   }
@@ -502,7 +505,7 @@
 
   /** True-or-false reveal: right or wrong, the real answer, and why. */
   function factResultOverlay(a) {
-    snd(a.correct ? 'ladder' : 'snake');
+    snd(a.correct ? 'quest' : 'buzz');
     return holdCard('ovCard', {
       color: a.correct ? '#34d399' : '#f87171',
       head: a.correct ? 'Correct!' : 'Wrong!',
@@ -522,7 +525,7 @@
       return sleep(400);
     }
     const proved = a.result === 'proved';
-    snd(proved ? 'ladder' : 'snake');
+    snd(proved ? 'quest' : 'buzz');
     return holdCard('ovCard', {
       color: proved ? '#34d399' : '#f87171',
       head: proved ? 'Proven!' : 'Busted!',
@@ -535,7 +538,7 @@
 
   async function duelOverlay(a) {
     const A = P(a.a_id), B = P(a.b_id), loser = P(a.loser_id);
-    snd('roll');
+    snd('roll'); setTimeout(() => snd('clash'), 600);
     show('ovCard', cardShell({ color: kindColor('duel'), head: 'Duel!', icon: 'duel',
       who: `${chip(A)}<b style="align-self:center;font-size:1.3rem;">${a.a_roll}</b><span style="align-self:center;font-size:.7rem;">vs</span><b style="align-self:center;font-size:1.3rem;">${a.b_roll}</b>${chip(B)}`,
       text: `${loser.name} loses!` }));
@@ -595,6 +598,7 @@
     const el = document.createElement('div');
     el.className = 'splash';
     el.style.setProperty('--c', p.color);
+    if (!mine) snd('arrive');
     el.innerHTML = `<b><span class="spl-av">${avatar(p)}</span><span class="spl-tx">${mine ? 'Your turn!' : esc(p.name) + "'s turn"}</span></b>`;
     ST.appendChild(el);
     setTimeout(() => el.remove(), 3300);
@@ -623,9 +627,11 @@
   function renderHudTl() {
     const r = S.room;
     const lv = C.levels[r.intensity] || { label: '', icon: 'fire' };
-    let h = `<span class="chip">${ic(C.mode.icon)} ${esc(C.mode.label)} · ${ic(lv.icon)} ${esc(lv.label)}</span>`;
+    let nav = `<span class="chip">${ic(C.mode.icon)} ${esc(C.mode.label)} · ${ic(lv.icon)} ${esc(lv.label)}</span>`;
+    if (r.join_code) nav += `<button class="chip" type="button" id="codeChip" style="cursor:pointer;">${ic('share')} ${esc(r.join_code)}</button>`;
+    $('navMid').innerHTML = nav;
+    let h = '';
     if (r.status === 'active') h += `<span class="chip">${ic('dice')} Round ${r.round}</span>`;
-    if (r.join_code) h += `<button class="chip" type="button" id="codeChip" style="cursor:pointer;">${ic('share')} ${esc(r.join_code)}</button>`;
     if (r.active_rule && r.status === 'active') h += `<button class="chip rule" type="button" id="ruleChip">${ic('rule')} ${esc(r.active_rule)}</button>`;
     $('hudTl').innerHTML = h;
     const cc = $('codeChip'); if (cc) cc.onclick = shareInvite;
@@ -998,7 +1004,7 @@
     if (DIE.disabled || rolling || busy) return;
     rolling = true;
     DIE.disabled = true;
-    try { ArcadeSound.unlock(); } catch (_) {}
+    try { ArcadeSound.unlock(); SNLAudio.unlock(); } catch (_) {}
     spinDie();
     const res = await post(C.urls.roll);
     if (!res) { rolling = false; CUBE.classList.remove('spinning'); render(); }
@@ -1008,12 +1014,19 @@
 
   const soundOn = (() => { try { return localStorage.getItem('snl_sound') !== '0'; } catch (_) { return true; } })();
   function setSound(on) {
-    try { ArcadeSound.toggle(on); } catch (_) {}
+    try { SNLAudio.setSfx(on); } catch (_) {}
     $('soundBtn').innerHTML = ic(on ? 'speaker' : 'mute');
     try { localStorage.setItem('snl_sound', on ? '1' : '0'); } catch (_) {}
   }
   setSound(soundOn);
-  $('soundBtn').onclick = () => setSound(!ArcadeSound.on);
+  $('soundBtn').onclick = () => setSound(!SNLAudio.sfx);
+  const musicBtn = $('musicBtn');
+  if (musicBtn) {
+    const musicOn = (() => { try { return localStorage.getItem('snl_music') !== '0'; } catch (_) { return true; } })();
+    const setMusic = (on) => { SNLAudio.setMusic(on); musicBtn.classList.toggle('off', !on); musicBtn.innerHTML = ic('music'); try { localStorage.setItem('snl_music', on ? '1' : '0'); } catch (_) {} };
+    setMusic(musicOn);
+    musicBtn.onclick = () => setMusic(!SNLAudio.music);
+  }
 
   const rt = $('reactToggle');
   if (rt) {

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset="1" stop-color="#ec4899"/></linearGradient>
+  <linearGradient id="sn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#059669"/></linearGradient>
+  <linearGradient id="dr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fde68a" stop-opacity=".85"/></linearGradient>
+</defs>
+<rect x="4" y="4" width="120" height="120" rx="30" fill="#14102a"/>
+<rect x="4" y="4" width="120" height="120" rx="30" fill="none" stroke="url(#bg)" stroke-width="5"/>
+<!-- cocktail glass -->
+<path d="M30 30 H98 L68 66 V92 H84 V100 H44 V92 H60 V66 Z" fill="url(#dr)" stroke="#1b1830" stroke-width="3.5" stroke-linejoin="round"/>
+<path d="M38 36 H90 L78 50 H50 Z" fill="#ec4899" opacity=".9"/>
+<circle cx="86" cy="26" r="6" fill="#34d399" stroke="#1b1830" stroke-width="2.5"/><path d="M80 14 L92 24" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
+<!-- snake winding up the stem -->
+<path d="M44 98 C60 98 76 92 64 84 C52 76 76 74 64 66 C58 62 66 56 74 50" fill="none" stroke="#1b1830" stroke-width="11" stroke-linecap="round"/>
+<path d="M44 98 C60 98 76 92 64 84 C52 76 76 74 64 66 C58 62 66 56 74 50" fill="none" stroke="url(#sn)" stroke-width="7" stroke-linecap="round"/>
+<circle cx="78" cy="47" r="7.5" fill="url(#sn)" stroke="#1b1830" stroke-width="2.8"/>
+<circle cx="80" cy="45" r="1.8" fill="#1b1830"/><circle cx="76" cy="45" r="1.8" fill="#1b1830"/>
+<path d="M84 49 l9 3 M84 49 l8 -2" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+</svg>

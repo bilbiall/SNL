@@ -14,16 +14,16 @@ const BG = { pink: 'ff71ce', cyan: '01cdfe', mint: '05ffa1', purple: 'b967ff', y
 
 // Skin shades, light → deep. `mouth` is darkened on deeper skin so smiles stay readable.
 const SKINS = [
-  { id: 1, label: 'Porcelain', hex: 'ffdbac', mouth: 'd98a7b' },
-  { id: 2, label: 'Sand',      hex: 'e0b687', mouth: 'c98276' },
-  { id: 3, label: 'Honey',     hex: 'cb9e6e', mouth: 'b2705f' },
-  { id: 4, label: 'Caramel',   hex: 'a26d3d', mouth: '8f4f43' },
-  { id: 5, label: 'Chestnut',  hex: '7b4a28', mouth: '7a3b36' },
-  { id: 6, label: 'Espresso',  hex: '523020', mouth: '6e3030' },
-  { id: 7, label: 'Ebony',     hex: '33201a', mouth: '6e3030' },
+  { id: 1, label: 'Porcelain', hex: 'ffdbac', mouth: 'c0605a' },
+  { id: 2, label: 'Sand',      hex: 'e0b687', mouth: 'b2564e' },
+  { id: 3, label: 'Honey',     hex: 'cb9e6e', mouth: 'a04a42' },
+  { id: 4, label: 'Caramel',   hex: 'a26d3d', mouth: '8a3a36' },
+  { id: 5, label: 'Chestnut',  hex: '7b4a28', mouth: 'd8706a' },
+  { id: 6, label: 'Espresso',  hex: '523020', mouth: 'e58a86' },
+  { id: 7, label: 'Ebony',     hex: '33201a', mouth: 'ee948f' },
 ];
 
-const common = { accessoriesProbability: 0, glassesProbability: 0, hatProbability: 0, beardProbability: 0, eyes: ['variant05'], eyesColor: ['4b4b4b'] };
+const common = { accessoriesProbability: 0, glassesProbability: 0, hatProbability: 0, beardProbability: 0, eyes: ['variant05'], eyesColor: ['14121f'] };
 
 // 8 women + 8 men, each a distinct 90s look.
 const LOOKS = [

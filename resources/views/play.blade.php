@@ -30,17 +30,22 @@
 
     {{-- HUD. On phones the two .side wrappers vanish (display:contents) and each piece floats in a corner of the stage.
          On a wide screen they become two matching sidebars: info + players on the left, controls + moves on the right. --}}
+    <header class="topnav" id="topnav">
+        <a class="brand" href="{{ route('home') }}" aria-label="Snakes &amp; Liquor home"><img src="{{ asset('img/logo.svg') }}" alt=""><span><b>Snakes</b> &amp; <b>Liquor</b></span></a>
+        <div class="nav-mid" id="navMid"></div>
+        <div class="nav-btns">
+            @if($music)<button class="icon-btn" id="musicBtn" type="button" aria-label="Music"><x-icon name="music" /></button>@endif
+            <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound"><x-icon name="speaker" /></button>
+            <button class="icon-btn" id="menuBtn" type="button" aria-label="Menu"><x-icon name="menu" /></button>
+        </div>
+    </header>
+
     <div class="side side-l">
         <div class="hud hud-tl" id="hudTl"></div>
         <div class="hud hud-left" id="players"></div>
     </div>
 
     <div class="side side-r">
-        <div class="hud hud-tr">
-            <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound"><x-icon name="speaker" /></button>
-            <button class="icon-btn" id="menuBtn" type="button" aria-label="Menu"><x-icon name="menu" /></button>
-        </div>
-
         <div class="feed" id="feed" aria-live="polite">
             <div class="feed-h">Recent moves</div>
             <div class="feed-list" id="feedList"></div>
@@ -88,8 +93,11 @@
 </div>
 
 <script src="{{ asset('js/arcade-sounds.js') }}"></script>
+<script>window.SNL = { audioBase: @json(asset('audio')), music: @json($music) };</script>
+<script src="{{ asset('js/snl-audio.js') }}"></script>
 <script>
 window.SNL = {
+    audioBase: @json(asset('audio')), music: @json($music),
     token: @json($room->token),
     csrf: document.querySelector('meta[name=csrf-token]').content,
     urls: {

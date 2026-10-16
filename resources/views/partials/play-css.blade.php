@@ -6,7 +6,7 @@
     /* ── The stage: always laid out as a LANDSCAPE screen. On a portrait phone the whole thing is rotated 90°
        (so every overlay, the die and the board stay upright relative to each other). Container units (cqw/cqh)
        let children size themselves off the stage, rotated or not. ── */
-    .stage { position: fixed; inset: 0; overflow: hidden; container-type: size; background: #0b0a16; }
+    .stage { position: fixed; inset: 0; overflow: hidden; container-type: size; background: #0b0a16; --nav: clamp(30px, 8.6cqh, 52px); }
     @media (max-width: 1023px) and (orientation: portrait) {
         .stage {
             inset: auto; top: 0; left: 0; width: 100vh; height: 100vw; width: 100dvh; height: 100dvw;
@@ -21,8 +21,8 @@
 
     /* The board is exactly the art's size, so tile positions (% of the board) land on the right squares. */
     .board-wrap {
-        position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2;
-        width: min(100cqw, calc(100cqh * var(--bw) / var(--bh))); aspect-ratio: var(--bw) / var(--bh);
+        position: absolute; left: 50%; top: calc(50% + var(--nav) / 2); transform: translate(-50%, -50%); z-index: 2;
+        width: min(100cqw, calc((100cqh - var(--nav)) * var(--bw) / var(--bh))); aspect-ratio: var(--bw) / var(--bh);
         border-radius: .9rem; overflow: hidden; box-shadow: 0 0 0 2px rgba(255,255,255,.12), 0 0 60px rgba(245,158,11,.22), 0 30px 70px rgba(0,0,0,.6);
     }
     .board-wrap > img { width: 100%; height: 100%; display: block; object-fit: fill; pointer-events: none; -webkit-user-drag: none; }
@@ -66,11 +66,24 @@
     @keyframes rollPop { 0% { opacity: 0; transform: translate(-50%,-20%) scale(.3); } 25% { opacity: 1; transform: translate(-50%,-90%) scale(1.25); } 100% { opacity: 0; transform: translate(-50%,-220%) scale(1); } }
 
     /* ── HUD ── */
+    /* ── Top nav: logo, room info, sound / music / menu ── */
+    .topnav { position: absolute; top: 0; left: 0; right: 0; height: var(--nav); z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: 0 clamp(8px, 1.6cqw, 18px);
+        background: linear-gradient(180deg, rgba(10,8,22,.92), rgba(10,8,22,.62)); border-bottom: 1px solid rgba(255,255,255,.1); backdrop-filter: blur(10px); box-shadow: 0 6px 24px rgba(0,0,0,.35); }
+    .topnav::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: linear-gradient(90deg, transparent, #f59e0b, #ec4899, #8b5cf6, transparent); opacity: .8; }
+    .brand { display: inline-flex; align-items: center; gap: .5rem; text-decoration: none; color: #fff; min-width: 0; }
+    .brand img { height: calc(var(--nav) - 10px); width: auto; flex-shrink: 0; filter: drop-shadow(0 2px 6px rgba(236,72,153,.5)); }
+    .brand span { font-weight: 800; font-size: clamp(.78rem, 3.4cqh, 1.05rem); letter-spacing: .02em; white-space: nowrap; }
+    .brand b { font-weight: 900; background: linear-gradient(90deg, #fbbf24, #f472b6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .nav-mid { display: flex; align-items: center; gap: .4rem; min-width: 0; overflow: hidden; }
+    .nav-btns { display: inline-flex; gap: clamp(4px, 1cqw, 9px); align-items: center; flex-shrink: 0; }
+    .topnav .icon-btn { width: calc(var(--nav) - 12px); height: calc(var(--nav) - 12px); font-size: clamp(.95rem, 4cqh, 1.3rem); }
+    .icon-btn.off { opacity: .45; }
+    @media (max-width: 640px) { .brand span { display: none; } }
     .hud { position: absolute; z-index: 30; pointer-events: none; }
     .hud > * { pointer-events: auto; }
-    .hud-tl { top: 6px; left: 6px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; max-width: min(34cqw, 230px); }
+    .hud-tl { top: calc(var(--nav) + 6px); left: 6px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; max-width: min(34cqw, 230px); }
     .hud-tr { top: 6px; right: 6px; display: flex; gap: 5px; }
-    .hud-left { left: 6px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: clamp(3px, 1.3cqh, 7px); max-height: 66cqh; }
+    .hud-left { left: 6px; top: calc(50% + var(--nav) / 2); transform: translateY(-50%); display: flex; flex-direction: column; gap: clamp(3px, 1.3cqh, 7px); max-height: 66cqh; }
     .hud-br { right: 8px; bottom: 8px; display: flex; flex-direction: column; align-items: center; gap: 5px; width: clamp(92px, 26cqh, 150px); }
     .hud-bl { left: 6px; bottom: 6px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
     .chip {
@@ -297,7 +310,7 @@
     .obtn.ok { background: linear-gradient(135deg, #10b981, #059669); }
     .obtn.no { background: linear-gradient(135deg, #ef4444, #dc2626); }
     .watch {
-        --k: #06b6d4; position: absolute; top: 6px; left: 50%; transform: translateX(-50%) translateY(-8px); z-index: 36; display: none; align-items: center; gap: .6rem;
+        --k: #06b6d4; position: absolute; top: calc(var(--nav) + 6px); left: 50%; transform: translateX(-50%) translateY(-8px); z-index: 36; display: none; align-items: center; gap: .6rem;
         width: min(52cqw, 360px); padding: .45rem .7rem .45rem .5rem; border-radius: .9rem; text-align: left; pointer-events: none;
         background: linear-gradient(135deg, color-mix(in srgb, var(--k) 22%, #14121f), rgba(8,7,16,.92)); border: 1.5px solid var(--k);
         box-shadow: 0 8px 24px rgba(0,0,0,.5), 0 0 22px color-mix(in srgb, var(--k) 35%, transparent);
@@ -325,11 +338,11 @@
     .feed-h, .feed-list { display: none; }
 
     @container (min-width: 1000px) and (min-height: 600px) {
-        .board-wrap { --sw: clamp(200px, 15.5cqw, 290px); width: min(calc(100cqw - 2 * var(--sw) - 40px), calc(100cqh * var(--bw) / var(--bh))); }
+        .board-wrap { --sw: clamp(200px, 15.5cqw, 290px); width: min(calc(100cqw - 2 * var(--sw) - 40px), calc((100cqh - var(--nav) - 16px) * var(--bw) / var(--bh))); }
 
         .side {
             --sw: clamp(200px, 15.5cqw, 290px);
-            display: flex; flex-direction: column; gap: 12px; position: absolute; top: 14px; bottom: 14px; width: var(--sw); z-index: 30; pointer-events: none;
+            display: flex; flex-direction: column; gap: 12px; position: absolute; top: calc(var(--nav) + 10px); bottom: 14px; width: var(--sw); z-index: 30; pointer-events: none;
         }
         .side-l { left: 14px; }
         .side-r { right: 14px; }
