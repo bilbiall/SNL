@@ -265,6 +265,7 @@
       case 'swap': return [`${ic('swap')} ${n(P(a.a_id))} swapped with ${n(P(a.b_id))}`, '#8b5cf6'];
       case 'power': return [`${ic('power')} ${n(who)} found a power-up`, '#eab308'];
       case 'rule': return [`${ic('rule')} New rule: ${clip(a.text, 60)}`, kindColor('rule')];
+      case 'neutral': return [`${ic('hourglass')} ${n(who)}: ${clip(a.text, 50)}`, '#6b7280'];
       case 'factcheck': return [`${ic(a.correct ? 'check' : 'cross')} ${n(who)} ${a.correct ? 'got it right' : 'got it wrong'} — it's <b>${a.answer ? 'TRUE' : 'FALSE'}</b>`, a.correct ? '#34d399' : '#f87171'];
       case 'bluff_said': return [`${ic('jester')} ${n(who)} made a claim`, '#14b8a6'];
       case 'bluff_pass': return [`${ic('check')} Nobody doubted ${n(who)}`, '#34d399'];
@@ -361,6 +362,11 @@
 
       case 'factcheck': await factResultOverlay(a); break;
 
+      case 'neutral':
+        toast(`${ic('hourglass')} <b>${esc(who.name)}</b> · ${esc(a.text)}`, 2200, '#6b7280');
+        await sleep(700);
+        break;
+
       case 'bluff_said':
         toast(`${ic('jester')} <b>${esc(who.name)}</b> has made a claim — believe it?`, 2600, '#14b8a6');
         snd('decisionPing');
@@ -408,21 +414,32 @@
 
   /** A standard playing-card pop-up tinted by what kind of card it is. Every device shows it;
    *  party mode waits for a tap, online auto-closes after a few seconds. */
-  function holdCard(id, { color = '#f59e0b', head, icon, who = '', text, sub = '', seconds = 7 }) {
+  /** The one card shell every pop-up uses: foil border, corner indices, watermark icon, intensity pips, footer. */
+  function cardShell({ color, head, icon, who = '', text = '', sub = '', extra = '', buttons = '', intensity = 0, mid = '' }) {
+    const pips = intensity ? `<div class="pc-pips" title="Intensity">${[1, 2, 3].map((i) => `<i class="${i <= intensity ? 'on' : ''}"></i>`).join('')}</div>` : '';
+    return `<div class="pcard" style="--k:${color}">
+      <span class="pc-corner tl">${ic(icon)}</span><span class="pc-corner br">${ic(icon)}</span>
+      <div class="pc-mark">${ic(icon)}</div>
+      <div class="pc-head">${head}</div>${SPARKS}
+      <div class="pc-body">
+        <div class="pc-icon">${ic(icon)}</div>
+        <div class="pc-mid">
+          ${who ? `<div class="tgt-row">${who}</div>` : ''}
+          ${mid || `<div class="pc-text">${esc(text)}</div>`}
+          ${sub ? `<div class="ov-sub">${sub}</div>` : ''}
+          ${extra}
+        </div>
+        <div class="ov-btns">${buttons}</div>
+        <div class="pc-foot">${pips}<span>Snakes &amp; Liquor</span></div>
+      </div></div>`;
+  }
+
+  function holdCard(id, { color = '#f59e0b', head, icon, who = '', text, sub = '', seconds = 7, intensity = 0 }) {
     return new Promise((resolve) => {
       const auto = !C.isParty;
-      show(id, `<div class="pcard" style="--k:${color}">
-        <div class="pc-head">${head}</div>${SPARKS}
-        <div class="pc-body">
-          <div class="pc-icon">${ic(icon)}</div>
-          <div class="pc-mid">
-            ${who ? `<div class="tgt-row">${who}</div>` : ''}
-            <div class="pc-text">${esc(text)}</div>
-            ${sub ? `<div class="ov-sub">${sub}</div>` : ''}
-          </div>
-          <div class="ov-btns"><button class="obtn" data-ok>Got it</button></div>
-          ${auto ? `<div class="autobar" style="width:100%;animation-duration:${seconds}s"></div>` : ''}
-        </div></div>`);
+      show(id, cardShell({ color, head, icon, who, text, sub, intensity,
+        buttons: '<button class="obtn" data-ok>Got it</button>',
+        extra: auto ? `<div class="autobar" style="width:100%;animation-duration:${seconds}s"></div>` : '' }));
       let timer = null;
       const done = () => { clearTimeout(timer); hide(id); resolve(); };
       $(id).querySelector('[data-ok]').onclick = done;
@@ -446,13 +463,13 @@
       default: head = 'Card';
     }
     snd(a.kind === 'fact' ? 'notify' : (a.kind === 'self' || a.kind === 'duel' || a.kind === 'pick') ? 'decisionPing' : 'mystery');
-    return holdCard('ovCard', { color: a.kind === 'blank' || a.spin ? kindColor('spin') : kindColor(a.kind), head, icon: a.icon || 'cards', who, text: a.text });
+    return holdCard('ovCard', { color: a.kind === 'blank' || a.spin ? kindColor('spin') : kindColor(a.kind), head, icon: a.icon || 'cards', who, text: a.text, intensity: a.intensity || 0 });
   }
 
   function ruleOverlay(a) {
     snd('mystery');
     return holdCard('ovCard', {
-      color: kindColor('rule'), head: `${a.spin ? 'Mystery spin · ' : ''}New table rule`, icon: a.icon || 'rule',
+      color: kindColor('rule'), head: `${a.spin ? 'Mystery spin · ' : ''}New table rule`, icon: a.icon || 'rule', intensity: a.intensity || 0,
       text: a.text, sub: 'Applies to everyone until the next rule square.', seconds: 8,
     });
   }
@@ -493,13 +510,9 @@
   async function duelOverlay(a) {
     const A = P(a.a_id), B = P(a.b_id), loser = P(a.loser_id);
     snd('roll');
-    show('ovCard', `<div class="pcard" style="--k:${kindColor('duel')}">
-      <div class="pc-head">Duel!</div>${SPARKS}
-      <div class="pc-body"><div class="pc-icon">${ic('duel')}</div>
-        <div class="pc-mid">
-          <div class="tgt-row">${chip(A)}<b style="align-self:center;font-size:1.3rem;">${a.a_roll}</b><span style="align-self:center;font-size:.7rem;">vs</span><b style="align-self:center;font-size:1.3rem;">${a.b_roll}</b>${chip(B)}</div>
-          <div class="pc-text">${esc(loser.name)} loses!</div>
-        </div></div></div>`);
+    show('ovCard', cardShell({ color: kindColor('duel'), head: 'Duel!', icon: 'duel',
+      who: `${chip(A)}<b style="align-self:center;font-size:1.3rem;">${a.a_roll}</b><span style="align-self:center;font-size:.7rem;">vs</span><b style="align-self:center;font-size:1.3rem;">${a.b_roll}</b>${chip(B)}`,
+      text: `${loser.name} loses!` }));
     await sleep(2600);
     hide('ovCard');
   }
@@ -661,18 +674,7 @@
   // ── prompts that wait on a player ──
   /** A card-shaped prompt with answer buttons — the same standard card as every pop-up. */
   function promptCard({ color, head, icon, who = '', text, sub = '', buttons = '', extra = '' }) {
-    return `<div class="pcard" style="--k:${color}">
-      <div class="pc-head">${head}</div>${SPARKS}
-      <div class="pc-body">
-        <div class="pc-icon">${ic(icon)}</div>
-        <div class="pc-mid">
-          ${who ? `<div class="tgt-row">${who}</div>` : ''}
-          <div class="pc-text">${esc(text)}</div>
-          ${sub ? `<div class="ov-sub">${sub}</div>` : ''}
-          ${extra}
-        </div>
-        <div class="ov-btns">${buttons}</div>
-      </div></div>`;
+    return cardShell({ color, head, icon, who, text, sub, extra, buttons });
   }
 
   /** A slim, non-blocking card for everyone who isn't the one being asked (online): what's being decided, and by whom. */

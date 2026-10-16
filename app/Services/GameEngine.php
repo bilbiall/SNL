@@ -49,10 +49,12 @@ class GameEngine
         'drinks' => [
             'self' => 'Take a sip.', 'pick' => 'Pick someone to take a sip.', 'everyone' => 'Everybody take a sip.',
             'duel' => 'The loser takes a sip.', 'fact' => 'Share a fun fact with the table.', 'rule' => 'No pointing for the rest of the game.',
+            'swap' => 'Swap places with a player of your choice!', 'neutral' => 'Free square — you are safe. Sip of water?',
         ],
         'family' => [
             'self' => 'Do your best victory dance!', 'pick' => 'Pick someone to do ten star jumps.', 'everyone' => 'Everybody cheer as loud as you can!',
             'duel' => 'The loser does a silly walk.', 'fact' => 'Share a fun fact with the table.', 'rule' => 'Everyone must speak in a whisper until the next rule.',
+            'swap' => 'Swap places with a player of your choice!', 'neutral' => 'Free square — you are safe. Take a breath!',
         ],
     ];
 
@@ -363,9 +365,7 @@ class GameEngine
             case 'pick':
             case 'duel':
             case 'swap':
-                $card = $kind === 'swap'
-                    ? ['kind' => 'swap', 'icon' => 'swap', 'text' => $tile?->label ?: 'Swap places with a player of your choice!', 'spin' => $spin]
-                    : $this->publicCard($this->cardFor($kind, $tile, $spin));
+                $card = $this->publicCard($this->cardFor($kind, $tile, $spin));
                 $eligible = $this->activePlayers()->where('id', '!=', $actor->id)->pluck('id')->values()->all();
                 if (!$eligible) {
                     break;
@@ -411,7 +411,7 @@ class GameEngine
             case 'rule':
                 $card = $this->cardFor('rule', $tile, $spin);
                 $this->room->active_rule = mb_substr($card['text'], 0, 220);
-                $this->room->log(['type' => 'rule', 'player_id' => $actor->id, 'text' => $card['text'], 'icon' => $card['icon'], 'spin' => $spin]);
+                $this->room->log(['type' => 'rule', 'player_id' => $actor->id, 'text' => $card['text'], 'icon' => $card['icon'], 'spin' => $spin, 'intensity' => $card['intensity'] ?? $this->room->intensity]);
                 break;
 
             case 'power':
@@ -423,6 +423,11 @@ class GameEngine
                 break;
 
             default: // blank / start
+                if (!$spin && $kind === 'blank' && $tile) {
+                    // A free square: no action, but a little flavour so it feels deliberate (a breather, a hydration nudge…).
+                    $card = $this->cardFor('neutral', $tile, false);
+                    $this->room->log(['type' => 'neutral', 'player_id' => $actor->id, 'text' => $card['text'], 'icon' => 'hourglass', 'tile' => $number]);
+                }
                 if ($spin) {
                     $this->room->log(['type' => 'card', 'kind' => 'blank', 'text' => 'The wheel stops on… nothing! Lucky you.', 'icon' => 'mystery', 'spin' => true,
                         'source_id' => $actor->id, 'target_ids' => [], 'tile' => $number]);
@@ -480,13 +485,14 @@ class GameEngine
             'kind' => $kind, 'text' => $this->fill($text), 'icon' => $icon, 'spin' => $spin,
             // Only meaningful for True-or-False / Bluff / Spotlight cards — never sent to clients as-is (see publicCard()).
             'answer' => $drawn?->answer, 'explain' => $drawn?->explain, 'penalty' => (int) ($drawn?->penalty ?: 1), 'timer' => $drawn?->timer,
+            'intensity' => $drawn?->intensity ?? $this->room->intensity,
         ];
     }
 
     /** What clients may see of a card: never the answer or the explanation. */
     private function publicCard(array $card): array
     {
-        return ['kind' => $card['kind'], 'text' => $card['text'], 'icon' => $card['icon'], 'spin' => $card['spin'] ?? false];
+        return ['kind' => $card['kind'], 'text' => $card['text'], 'icon' => $card['icon'], 'spin' => $card['spin'] ?? false, 'intensity' => $card['intensity'] ?? $this->room->intensity];
     }
 
     /**
@@ -554,7 +560,7 @@ class GameEngine
             $source->bump('picks');
         }
         $this->room->log([
-            'type' => 'card', 'kind' => $card['kind'], 'text' => $card['text'], 'icon' => $card['icon'], 'spin' => $card['spin'] ?? false,
+            'type' => 'card', 'kind' => $card['kind'], 'text' => $card['text'], 'icon' => $card['icon'], 'spin' => $card['spin'] ?? false, 'intensity' => $card['intensity'] ?? $this->room->intensity,
             'source_id' => $source->id, 'target_ids' => array_map(fn ($t) => $t->id, $targets), 'tile' => $tile,
         ]);
     }

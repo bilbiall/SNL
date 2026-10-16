@@ -233,6 +233,24 @@
     .pcard .ov-sub { margin: .25rem 0 0; font-size: clamp(.54rem, 2cqh, .68rem); }
     .pcard .ov-btns { margin: 0; }
     .pcard .obtn { padding: clamp(.3rem, 1.4cqh, .45rem) clamp(.8rem, 3cqh, 1.1rem); font-size: clamp(.64rem, 2.5cqh, .8rem); }
+    /* designed-card extras: foil border, corner indices, watermark, pips, footer, shine sweep */
+    .pcard { animation: cardDeal .7s cubic-bezier(.2,.9,.3,1.1) both; transform-style: preserve-3d; }
+    @keyframes cardDeal { 0% { opacity: 0; transform: perspective(900px) translateY(40%) rotateX(35deg) rotateY(-120deg) scale(.6); } 60% { opacity: 1; transform: perspective(900px) rotateY(8deg) scale(1.04); } 100% { opacity: 1; transform: none; } }
+    .pcard::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 3;
+        background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.22) 50%, transparent 62%); background-size: 250% 100%; background-position: 130% 0; animation: foilSweep 1.1s .55s ease-out 1 both, foilIdle 5s 2s linear infinite; }
+    @keyframes foilSweep { to { background-position: -60% 0; } }
+    @keyframes foilIdle { 0%, 70% { background-position: 130% 0; } 100% { background-position: -60% 0; } }
+    .pcard { border: 0; padding: 0; background: linear-gradient(165deg, #221e38, #12101e 62%) padding-box, conic-gradient(from 210deg, var(--k), #fff8 18%, var(--k) 36%, color-mix(in srgb, var(--k) 40%, #000) 60%, var(--k) 80%, #fff6 92%, var(--k)) border-box; border: 3px solid transparent; }
+    .pcard .pc-mark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: min(46cqw, 130px); color: var(--k); opacity: .08; pointer-events: none; transform: rotate(-12deg); }
+    .pcard .pc-corner { position: absolute; z-index: 2; font-size: clamp(.7rem, 3.2cqh, 1rem); color: #fff; opacity: .9; line-height: 1; }
+    .pcard .pc-corner.tl { top: .42rem; left: .45rem; }
+    .pcard .pc-corner.br { bottom: .42rem; right: .45rem; transform: rotate(180deg); }
+    .pcard .pc-head { text-align: center; padding-inline: 1.5rem; }
+    .pcard .pc-foot { display: flex; align-items: center; justify-content: center; gap: .5rem; width: 100%; font-size: clamp(.4rem, 1.5cqh, .52rem); font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.35); }
+    .pcard .pc-pips { display: inline-flex; gap: 3px; }
+    .pcard .pc-pips i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.18); }
+    .pcard .pc-pips i.on { background: var(--k); box-shadow: 0 0 6px var(--k); }
+    .board-dim { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,.10) 40%, rgba(0,0,0,.30) 100%), rgba(4,6,18,.14); }
     .pcard .spark { position: absolute; color: var(--k); font-size: clamp(.7rem, 3cqh, 1rem); opacity: .9; animation: twinkle 1.6s ease-in-out infinite; pointer-events: none; }
     @keyframes twinkle { 0%,100% { transform: scale(.6) rotate(0); opacity: .3; } 50% { transform: scale(1.15) rotate(25deg); opacity: 1; } }
 

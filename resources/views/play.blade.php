@@ -24,6 +24,7 @@
     {{-- The board. Tokens are added here by snl-play.js and positioned as % of this box. --}}
     <div class="board-wrap" id="boardWrap">
         <img src="{{ $board->imageUrl() }}" alt="{{ $board->name }} board" draggable="false">
+        <div class="board-dim"></div>
         <div id="glow" class="tile-glow"></div>
     </div>
 

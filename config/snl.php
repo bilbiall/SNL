@@ -45,7 +45,7 @@ return [
         'pick'          => ['label' => 'Pick a friend',  'icon' => 'pick',      'card' => 'pick',     'color' => '#ec4899', 'help' => 'The roller chooses who does what the card says.'],
         'everyone'      => ['label' => 'Everyone',       'icon' => 'everyone',  'card' => 'everyone', 'color' => '#10b981', 'help' => 'Every player does what the card says.'],
         'duel'          => ['label' => 'Duel',           'icon' => 'duel',      'card' => 'duel',     'color' => '#ef4444', 'help' => 'The roller picks an opponent; both roll, the lower roll loses.'],
-        'swap'          => ['label' => 'Swap places',    'icon' => 'swap',      'card' => null,       'color' => '#8b5cf6', 'help' => 'The roller picks a player and they trade board positions.'],
+        'swap'          => ['label' => 'Swap places',    'icon' => 'swap',      'card' => 'swap',       'color' => '#8b5cf6', 'help' => 'The roller picks a player and they trade board positions.'],
         'fact'          => ['label' => 'True or false',  'icon' => 'fact',      'card' => 'fact',     'color' => '#06b6d4', 'help' => 'The game states a fact — the roller says true or false. Wrong answer = a penalty.'],
         'bluff'         => ['label' => 'Fact or bluff',  'icon' => 'jester',    'card' => 'bluff',    'color' => '#14b8a6', 'help' => 'The roller states a fact (true or made up). Anyone can call bluff — then it must be proven, or someone drinks.'],
         'spotlight'     => ['label' => 'Spotlight',      'icon' => 'mic',       'card' => 'spotlight','color' => '#fb923c', 'help' => 'A creative prompt on the clock — a movie for the moment, a song, a hot take. Fail it and take a penalty.'],
@@ -75,6 +75,8 @@ return [
         'bluff'     => 'Fact or bluff (prompt)',
         'spotlight' => 'Spotlight (creative prompt)',
         'rule'      => 'New rule',
+        'swap'      => 'Swap places (flavour line)',
+        'neutral'   => 'Free square (flavour line — no action)',
     ],
 
     /*
