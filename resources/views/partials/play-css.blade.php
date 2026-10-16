@@ -152,11 +152,26 @@
     @keyframes toastIn { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: none; } }
     @keyframes toastOut { to { opacity: 0; transform: translateY(-6px); } }
 
-    /* Turn splash */
-    .splash { position: absolute; left: 0; right: 0; top: 38%; z-index: 48; text-align: center; pointer-events: none; animation: splashIn 1.25s cubic-bezier(.2,.9,.3,1) forwards; }
-    .splash b { display: inline-flex; align-items: center; gap: .5em; padding: .35em 1.2em; font-size: clamp(.95rem, 5.4cqh, 1.7rem); font-weight: 900; color: #fff; background: linear-gradient(90deg, transparent, rgba(8,7,16,.9) 16%, rgba(8,7,16,.9) 84%, transparent); border-top: 2px solid var(--c); border-bottom: 2px solid var(--c); text-shadow: 0 2px 8px rgba(0,0,0,.6); }
-    .splash .ic { color: var(--c); font-size: 1.2em; }
-    @keyframes splashIn { 0% { opacity: 0; transform: translateX(-30%) scale(.9); } 22% { opacity: 1; transform: none; } 78% { opacity: 1; } 100% { opacity: 0; transform: translateX(30%); } }
+    /* Turn splash — slow and readable: the avatar pops in, then bobs while the banner holds */
+    .splash { position: absolute; left: 0; right: 0; top: 36%; z-index: 48; text-align: center; pointer-events: none; animation: splashIn 3.2s cubic-bezier(.22,1,.36,1) forwards; }
+    .splash b { display: inline-flex; align-items: center; gap: .7em; padding: .4em 1.6em .4em .5em; font-size: clamp(1rem, 5.2cqh, 1.6rem); font-weight: 900; color: #fff; background: linear-gradient(90deg, transparent, rgba(8,7,16,.92) 14%, rgba(8,7,16,.92) 86%, transparent); border-top: 2px solid var(--c); border-bottom: 2px solid var(--c); text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+    .splash .spl-av { width: 2.3em; height: 2.3em; flex-shrink: 0; border-radius: 50%; border: 3px solid var(--c); overflow: hidden; display: flex; align-items: center; justify-content: center; background: #14121f; font-size: 1em; box-shadow: 0 0 22px color-mix(in srgb, var(--c) 70%, transparent); animation: splAvIn 1.1s cubic-bezier(.34,1.56,.64,1) .15s both, avBob 1.5s ease-in-out 1.3s infinite; }
+    .splash .spl-av .avimg { width: 100%; height: 100%; }
+    .splash .spl-tx { animation: splTxIn .9s cubic-bezier(.22,1,.36,1) .35s both; }
+    @keyframes splashIn { 0% { opacity: 0; transform: translateX(-16%) scale(.97); } 12% { opacity: 1; transform: none; } 88% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateX(16%); } }
+    @keyframes splAvIn { 0% { transform: scale(0) rotate(-200deg); } 100% { transform: scale(1) rotate(0); } }
+    @keyframes splTxIn { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+    @keyframes avBob { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-5px) rotate(3deg); } }
+
+    /* Whoever is playing keeps a little life: ringed avatar breathes, the token bobs on the board */
+    .pl.cur .ring { animation: ringPulse 1.6s ease-in-out infinite; }
+    .pl.cur .ring .av { animation: avBob 1.6s ease-in-out infinite; }
+    @keyframes ringPulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 60%, transparent); } 50% { box-shadow: 0 0 0 7px transparent; } }
+    .token.active { animation: tokIdle 1.2s ease-in-out infinite; }
+    @keyframes tokIdle {
+        0%, 100% { transform: translate(calc(-50% + var(--ox, 0px)), calc(-50% + var(--oy, 0px))) scale(1); }
+        50% { transform: translate(calc(-50% + var(--ox, 0px)), calc(-50% + var(--oy, 0px) - 7px)) scale(1.08); }
+    }
 
     /* ── Dialogs: standard, compact sizes ── */
     .ov { position: absolute; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; padding: 8px; box-sizing: border-box; background: rgba(5,4,12,.72); backdrop-filter: blur(3px); }
@@ -229,4 +244,27 @@
     .reactbar.show { display: flex; }
     .reactbar button { font-size: clamp(.95rem, 4cqh, 1.25rem); border: 1px solid rgba(255,255,255,.15); background: rgba(8,7,16,.8); border-radius: .6rem; padding: .22rem .38rem; cursor: pointer; color: #fff; display: inline-flex; }
     .reactbar button:active { transform: scale(.88); }
+
+    /* ── Answer buttons, the "watching" card and the Spotlight clock ── */
+    .obtn.ok { background: linear-gradient(135deg, #10b981, #059669); }
+    .obtn.no { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .watch {
+        --k: #06b6d4; position: absolute; top: 6px; left: 50%; transform: translateX(-50%) translateY(-8px); z-index: 36; display: none; align-items: center; gap: .6rem;
+        width: min(52cqw, 360px); padding: .45rem .7rem .45rem .5rem; border-radius: .9rem; text-align: left; pointer-events: none;
+        background: linear-gradient(135deg, color-mix(in srgb, var(--k) 22%, #14121f), rgba(8,7,16,.92)); border: 1.5px solid var(--k);
+        box-shadow: 0 8px 24px rgba(0,0,0,.5), 0 0 22px color-mix(in srgb, var(--k) 35%, transparent);
+    }
+    .watch.show { display: flex; animation: watchIn .3s ease both; }
+    @keyframes watchIn { to { transform: translateX(-50%) translateY(0); } }
+    .watch .w-ic { width: clamp(26px, 8cqh, 38px); height: clamp(26px, 8cqh, 38px); border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: clamp(.95rem, 4cqh, 1.35rem); color: var(--k); border: 2px solid var(--k); background: rgba(255,255,255,.05); }
+    .watch .w-tx { min-width: 0; font-size: clamp(.58rem, 2.3cqh, .76rem); line-height: 1.3; }
+    .watch .w-tx b { display: block; font-size: .88em; letter-spacing: .08em; text-transform: uppercase; color: var(--k); }
+    .watch .w-tx div { font-weight: 800; }
+    .watch .w-tx span { color: #9ca3af; font-weight: 600; }
+    .spot-clock { margin: .25rem 0; }
+    .spot-clock b { display: inline-flex; align-items: center; justify-content: center; min-width: 2.4em; padding: .1em .5em; font-size: clamp(1.3rem, 8cqh, 2.4rem); font-weight: 900; font-variant-numeric: tabular-nums; border-radius: .6em; background: rgba(251,146,60,.18); border: 2px solid #fb923c; color: #fdba74; }
+    .spot-clock.low b { background: rgba(239,68,68,.22); border-color: #ef4444; color: #fca5a5; animation: clockPulse .6s ease-in-out infinite; }
+    @keyframes clockPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+    .pcard .tgt-row .tgt { cursor: pointer; }
+    .pcard .watch-secs { color: #9ca3af; }
 </style>

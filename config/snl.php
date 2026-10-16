@@ -26,14 +26,14 @@ return [
                      'blurb' => 'Shots, sips and forfeits. 18+ only — please drink responsibly.'],
         'family' => ['label' => 'Family', 'icon' => 'balloons', 'adult' => false, 'enabled' => true,
                      'blurb' => 'Zero alcohol. Silly actions, facts and challenges everyone can play.'],
-        'spicy'  => ['label' => 'Spicy',  'icon' => 'fire',     'adult' => true,  'enabled' => false,
+        'lovers' => ['label' => 'Lovers', 'icon' => 'heart',    'adult' => true,  'enabled' => false,
                      'blurb' => 'For couples. Coming soon.'],
     ],
 
     'intensities' => [
         1 => ['label' => 'Chill',  'icon' => 'thumb'],
-        2 => ['label' => 'Normal', 'icon' => 'fire'],
-        3 => ['label' => 'Wild',   'icon' => 'skull'],
+        2 => ['label' => 'Normal', 'icon' => 'star'],
+        3 => ['label' => 'Spicy',  'icon' => 'fire'],
     ],
 
     /*
@@ -46,7 +46,9 @@ return [
         'everyone'      => ['label' => 'Everyone',       'icon' => 'everyone',  'card' => 'everyone', 'color' => '#10b981', 'help' => 'Every player does what the card says.'],
         'duel'          => ['label' => 'Duel',           'icon' => 'duel',      'card' => 'duel',     'color' => '#ef4444', 'help' => 'The roller picks an opponent; both roll, the lower roll loses.'],
         'swap'          => ['label' => 'Swap places',    'icon' => 'swap',      'card' => null,       'color' => '#8b5cf6', 'help' => 'The roller picks a player and they trade board positions.'],
-        'fact'          => ['label' => 'Fun fact',       'icon' => 'fact',      'card' => 'fact',     'color' => '#06b6d4', 'help' => 'A random fact is read out to the table.'],
+        'fact'          => ['label' => 'True or false',  'icon' => 'fact',      'card' => 'fact',     'color' => '#06b6d4', 'help' => 'The game states a fact — the roller says true or false. Wrong answer = a penalty.'],
+        'bluff'         => ['label' => 'Fact or bluff',  'icon' => 'jester',    'card' => 'bluff',    'color' => '#14b8a6', 'help' => 'The roller states a fact (true or made up). Anyone can call bluff — then it must be proven, or someone drinks.'],
+        'spotlight'     => ['label' => 'Spotlight',      'icon' => 'mic',       'card' => 'spotlight','color' => '#fb923c', 'help' => 'A creative prompt on the clock — a movie for the moment, a song, a hot take. Fail it and take a penalty.'],
         'rule'          => ['label' => 'New rule',       'icon' => 'rule',      'card' => 'rule',     'color' => '#a855f7', 'help' => 'Sets a table rule that stays until the next rule tile.'],
         'spin'          => ['label' => 'Mystery spin',   'icon' => 'mystery',   'card' => null,       'color' => '#f43f5e', 'help' => 'Spins for a random tile effect.'],
         'power'         => ['label' => 'Power-up',       'icon' => 'power',     'card' => null,       'color' => '#eab308', 'help' => 'Gives the roller a Shield or a Reroll.'],
@@ -61,7 +63,7 @@ return [
     ],
 
     // What a Mystery spin can turn into (kind => weight).
-    'spin_table' => ['self' => 3, 'pick' => 3, 'everyone' => 2, 'fact' => 2, 'power' => 2, 'blank' => 1],
+    'spin_table' => ['self' => 3, 'pick' => 3, 'everyone' => 2, 'fact' => 2, 'bluff' => 2, 'spotlight' => 3, 'power' => 2, 'blank' => 1],
 
     // Card kinds the admin can write text for.
     'card_kinds' => [
@@ -69,8 +71,10 @@ return [
         'pick'     => 'Pick a friend',
         'everyone' => 'Everyone',
         'duel'     => 'Duel (loser does it)',
-        'fact'     => 'Fun fact',
-        'rule'     => 'New rule',
+        'fact'      => 'True or false (statement + answer)',
+        'bluff'     => 'Fact or bluff (prompt)',
+        'spotlight' => 'Spotlight (creative prompt)',
+        'rule'      => 'New rule',
     ],
 
     /*
@@ -81,6 +85,23 @@ return [
                      'help' => 'Block one hit aimed at you.'],
         'reroll' => ['label' => 'Reroll', 'icon' => 'reroll', 'start' => 1, 'max' => 3,
                      'help' => 'Throw your die again after seeing the number.'],
+    ],
+
+    /*
+    | What a lost True-or-False / lost bluff / failed Spotlight costs. [mode][intensity][units] — a card's `penalty`
+    | (1 or 2) is the number of units. Chill is gentler, Spicy bites harder. Family mode swaps drinks for forfeits.
+    */
+    'penalties' => [
+        'drinks' => [
+            1 => [1 => 'Take a sip.',  2 => 'Take two sips.'],
+            2 => [1 => 'Take a shot.', 2 => 'Take two shots.'],
+            3 => [1 => 'Take a shot.', 2 => 'Take two shots — no chaser.'],
+        ],
+        'family' => [
+            1 => [1 => 'Do three star jumps.', 2 => 'Do six star jumps.'],
+            2 => [1 => 'Do five star jumps.',  2 => 'Do ten star jumps.'],
+            3 => [1 => 'Dance like nobody is watching for ten seconds.', 2 => 'Sing the chorus of any song — loudly.'],
+        ],
     ],
 
     'players' => ['min' => 2, 'max' => 12],

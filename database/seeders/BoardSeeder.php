@@ -10,7 +10,7 @@ class BoardSeeder extends Seeder
 {
     private const KINDS = [
         'b' => 'blank', 's' => 'self', 'p' => 'pick', 'e' => 'everyone', 'd' => 'duel', 'w' => 'swap', 'f' => 'fact',
-        'r' => 'rule', 'm' => 'spin', 'x' => 'power', 'L' => 'ladder_bottom', 'S' => 'snake_head',
+        'r' => 'rule', 'm' => 'spin', 'x' => 'power', 'u' => 'bluff', 'o' => 'spotlight', 'L' => 'ladder_bottom', 'S' => 'snake_head',
     ];
 
     /**

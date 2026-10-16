@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GamesetBoardController;
 use App\Http\Controllers\GamesetCardController;
+use App\Http\Controllers\GamesetWordController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\RoomController;
 use Illuminate\Support\Facades\Route;
@@ -56,4 +57,10 @@ Route::middleware(['auth', 'gameset'])->prefix('gameset')->name('gameset.')->gro
     Route::post('/cards/bulk', [GamesetCardController::class, 'bulk'])->name('cards.bulk');
     Route::put('/cards/{card}', [GamesetCardController::class, 'update'])->name('cards.update');
     Route::delete('/cards/{card}', [GamesetCardController::class, 'destroy'])->name('cards.destroy');
+
+    Route::get('/words', [GamesetWordController::class, 'index'])->name('words.index');
+    Route::post('/words', [GamesetWordController::class, 'store'])->name('words.store');
+    Route::post('/words/bulk', [GamesetWordController::class, 'bulk'])->name('words.bulk');
+    Route::put('/words/{word}', [GamesetWordController::class, 'update'])->name('words.update');
+    Route::delete('/words/{word}', [GamesetWordController::class, 'destroy'])->name('words.destroy');
 });

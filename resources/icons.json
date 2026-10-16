@@ -62,5 +62,17 @@
   "play": "play-button",
   "table": "tabletop-players",
   "join": "join",
-  "laptop": "laptop"
+  "laptop": "laptop",
+  "mic": "microphone",
+  "movie": "clapperboard",
+  "music": "musical-notes",
+  "popcorn": "popcorn",
+  "headphones": "headphones",
+  "search": "magnifying-glass",
+  "mask": "domino-mask",
+  "cape": "cape",
+  "tv": "tv",
+  "cross": "cross-mark",
+  "bolt": "lightning-arc",
+  "heroic": "ninja-heroic-stance"
 }

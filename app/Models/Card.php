@@ -7,21 +7,21 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Card extends Model
 {
-    protected $fillable = ['board_id', 'kind', 'mode', 'intensity', 'text', 'is_active'];
+    protected $fillable = ['board_id', 'kind', 'mode', 'intensity', 'text', 'answer', 'explain', 'penalty', 'timer', 'is_active'];
 
-    protected $casts = ['is_active' => 'boolean'];
+    protected $casts = ['is_active' => 'boolean', 'answer' => 'boolean'];
 
     public function board(): BelongsTo
     {
         return $this->belongsTo(Board::class);
     }
 
-    /** A random live card of this kind for the room's mode, never wilder than the
+    /** A random live card of this kind for the room's mode (or "all" modes), never wilder than the
      *  room's intensity. Falls back to ignoring intensity before giving up. */
     public static function draw(Room $room, string $kind): ?self
     {
         $base = fn () => static::where('kind', $kind)
-            ->where('mode', $room->content_mode)
+            ->whereIn('mode', ['all', $room->content_mode])
             ->where('is_active', true)
             ->where(fn ($q) => $q->whereNull('board_id')->orWhere('board_id', $room->board_id));
 

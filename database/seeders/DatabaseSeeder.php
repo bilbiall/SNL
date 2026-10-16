@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             BoardSeeder::class,
             CardSeeder::class,
+            WordListSeeder::class,
         ]);
     }
 }

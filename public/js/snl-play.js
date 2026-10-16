@@ -42,6 +42,8 @@
   const players = () => latest.players;
   const P = (id) => players().find((p) => p.id === id) || { id, name: 'Someone', color: '#64748b', avatar: 'm1-3', powers: {}, status: 'active' };
   const iAmActor = (id) => C.isParty || id === C.meId;
+  /** Can this device answer the current prompt? (Some — like "call bluff" — let several players respond.) */
+  const canAct = (p) => C.isParty || (p.actors ? p.actors.includes(C.meId) : p.actor_id === C.meId);
   const kindInfo = (k) => C.kinds[k] || { label: k, icon: 'cards', help: '' };
   const kindColor = (k) => C.kindColors[k] || '#f59e0b';
 
@@ -57,7 +59,7 @@
     setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, ms);
   }
   // Retro pixel avatars ("f3-4" = look f3, skin shade 4) are images; anything else falls back to a game icon.
-  const AV = /^[fm]d+-d+$/;
+  const AV = /^[a-z][0-9]+-[0-9]+$/;
   const avatar = (p) => AV.test(p.avatar || '') ? `<img class="avimg" src="${C.avatarBase}/${p.avatar}.svg" alt="">` : ic(p.avatar || 'cards');
   const chip = (p) => `<span class="tgt static" style="--c:${p.color}"><span class="av">${avatar(p)}</span>${esc(p.name)}</span>`;
   function show(id, html) { const el = $(id); if (html !== undefined) el.innerHTML = html; el.classList.add('show'); return el; }
@@ -152,6 +154,7 @@
     const el = tokens[id];
     if (!el) return;
     el.classList.remove('landed'); void el.offsetWidth; el.classList.add('landed');
+    setTimeout(() => el.classList.remove('landed'), 520); // so the idle bob can resume
     const { l, t } = xy(shown[id]);
     const r = document.createElement('div');
     r.className = 'ripple'; r.style.left = l + '%'; r.style.top = t + '%';
@@ -313,6 +316,34 @@
         break;
       }
 
+      case 'factcheck': await factResultOverlay(a); break;
+
+      case 'bluff_said':
+        toast(`${ic('jester')} <b>${esc(who.name)}</b> has made a claim — believe it?`, 2600, '#14b8a6');
+        snd('decisionPing');
+        await sleep(500);
+        break;
+
+      case 'bluff_pass':
+        toast(`${ic('check')} Nobody doubted <b>${esc(who.name)}</b> — safe!`, 2600, '#34d399');
+        snd('ladder');
+        await sleep(600);
+        break;
+
+      case 'bluff_called':
+        toast(`${ic('search')} <b>${esc(P(a.caller_id).name)}</b> calls BLUFF on <b>${esc(who.name)}</b>!`, 3000, '#f87171');
+        snd('mystery');
+        await sleep(1200);
+        break;
+
+      case 'bluff_result': await bluffResultOverlay(a); break;
+
+      case 'spot_result':
+        if (a.nailed) { toast(`${ic('mic')} <b>${esc(who.name)}</b> nailed it!`, 2400, '#34d399'); snd('ladder'); }
+        else { toast(`${ic('hourglass')} Time's up for <b>${esc(who.name)}</b>`, 2400, '#f87171'); snd('snake'); }
+        await sleep(700);
+        break;
+
       case 'rule': await ruleOverlay(a); break;
 
       case 'win': {
@@ -383,6 +414,39 @@
     });
   }
 
+  /** True-or-false reveal: right or wrong, the real answer, and why. */
+  function factResultOverlay(a) {
+    snd(a.correct ? 'ladder' : 'snake');
+    return holdCard('ovCard', {
+      color: a.correct ? '#34d399' : '#f87171',
+      head: a.correct ? 'Correct!' : 'Wrong!',
+      icon: a.correct ? 'check' : 'cross',
+      who: chip(P(a.player_id)),
+      text: `${a.text}`,
+      sub: `<b>${a.answer ? 'TRUE' : 'FALSE'}</b>${a.explain ? ' — ' + esc(a.explain) : ''}`,
+      seconds: 9,
+    });
+  }
+
+  /** The bluff has been judged. */
+  function bluffResultOverlay(a) {
+    const roller = P(a.player_id), caller = P(a.caller_id);
+    if (a.result === 'void') {
+      toast(`${ic('info')} No ruling — nobody drinks.`, 2600);
+      return sleep(400);
+    }
+    const proved = a.result === 'proved';
+    snd(proved ? 'ladder' : 'snake');
+    return holdCard('ovCard', {
+      color: proved ? '#34d399' : '#f87171',
+      head: proved ? 'Proven!' : 'Busted!',
+      icon: proved ? 'check' : 'search',
+      who: chip(proved ? caller : roller),
+      text: proved ? `${roller.name} backed it up — ${caller.name} pays up.` : `${roller.name} was bluffing — caught red-handed.`,
+      seconds: 7,
+    });
+  }
+
   async function duelOverlay(a) {
     const A = P(a.a_id), B = P(a.b_id), loser = P(a.loser_id);
     snd('roll');
@@ -449,9 +513,9 @@
     const el = document.createElement('div');
     el.className = 'splash';
     el.style.setProperty('--c', p.color);
-    el.innerHTML = `<b>${avatar(p)} ${mine ? 'Your turn!' : esc(p.name) + "'s turn"}</b>`;
+    el.innerHTML = `<b><span class="spl-av">${avatar(p)}</span><span class="spl-tx">${mine ? 'Your turn!' : esc(p.name) + "'s turn"}</span></b>`;
     ST.appendChild(el);
-    setTimeout(() => el.remove(), 1300);
+    setTimeout(() => el.remove(), 3300);
   }
 
   function render() {
@@ -516,8 +580,11 @@
       html = `${ic('flag')} Game over`;
     } else if (S.pending) {
       const who = P(S.pending.actor_id);
-      const verb = { pick: 'choosing', shield: 'deciding on a Shield', reroll: 'deciding on a Reroll' }[S.pending.type] || 'deciding';
-      html = iAmActor(S.pending.actor_id) && !C.isParty ? 'Your move!' : `${ic('hourglass')} <b>${esc(who.name)}</b> is ${verb}…`;
+      const verb = {
+        pick: 'choosing', shield: 'deciding on a Shield', reroll: 'deciding on a Reroll', tf: 'making the call',
+        bluff_say: 'making a claim', bluff_call: 'waiting for a challenger', bluff_verdict: 'waiting for a ruling', spot: 'in the spotlight',
+      }[S.pending.type] || 'deciding';
+      html = canAct(S.pending) && !C.isParty ? 'Your move!' : `${ic('hourglass')} <b>${esc(who.name)}</b> is ${verb}…`;
       if (!C.isParty) html += secs(pendingLeft);
     } else {
       const cur = P(r.current_player_id);
@@ -533,7 +600,7 @@
     DIE.disabled = !(r.status === 'active' && !S.pending && mine && !rolling && !busy);
     if (S.pending && S.pending.type === 'reroll') settleDie(S.pending.roll);
     const glow = $('glow');
-    if (S.pending && S.pending.type === 'reroll' && iAmActor(S.pending.actor_id)) {
+    if (S.pending && S.pending.type === 'reroll' && canAct(S.pending)) {
       const { l, t } = xy(S.pending.preview_tile);
       glow.style.left = l + '%'; glow.style.top = t + '%';
       glow.classList.add('show');
@@ -549,9 +616,66 @@
   }
 
   // ── prompts that wait on a player ──
+  /** A card-shaped prompt with answer buttons — the same standard card as every pop-up. */
+  function promptCard({ color, head, icon, who = '', text, sub = '', buttons = '', extra = '' }) {
+    return `<div class="pcard" style="--k:${color}">
+      <div class="pc-head">${head}</div>${SPARKS}
+      <div class="pc-body">
+        <div class="pc-icon">${ic(icon)}</div>
+        <div class="pc-mid">
+          ${who ? `<div class="tgt-row">${who}</div>` : ''}
+          <div class="pc-text">${esc(text)}</div>
+          ${sub ? `<div class="ov-sub">${sub}</div>` : ''}
+          ${extra}
+        </div>
+        <div class="ov-btns">${buttons}</div>
+      </div></div>`;
+  }
+
+  /** A slim, non-blocking card for everyone who isn't the one being asked (online): what's being decided, and by whom. */
+  function renderWatch(p) {
+    const w = $('watch');
+    const card = p.card;
+    const who = P(p.actor_id);
+    const heads = {
+      tf: 'True or false?', bluff_say: 'Fact or bluff', bluff_call: 'Call bluff?', bluff_verdict: 'Was it proven?', spot: 'Spotlight',
+    };
+    if (!card || !heads[p.type]) { w.classList.remove('show'); return; }
+    const status = {
+      tf: `${esc(who.name)} is making the call…`,
+      bluff_say: `${esc(who.name)} is about to make a claim…`,
+      bluff_call: p.actors && p.actors.includes(C.meId) ? 'Think they\'re bluffing?' : `Waiting for challengers…`,
+      bluff_verdict: `${esc(P(p.caller_id).name)} called bluff on ${esc(who.name)} — judges are deciding…`,
+      spot: `${esc(who.name)} is on the clock…`,
+    }[p.type];
+    w.style.setProperty('--k', kindColor(p.type === 'tf' ? 'fact' : p.type === 'spot' ? 'spotlight' : 'bluff'));
+    w.innerHTML = `<div class="w-ic">${ic(card.icon || 'cards')}</div><div class="w-tx"><b>${heads[p.type]}</b>
+      <div>${p.type === 'bluff_verdict' ? '' : esc(card.text)}</div><span>${status}</span></div>`;
+    w.classList.add('show');
+  }
+
+  // Spotlight keeps its own clock so a re-render (e.g. from a poll) never restarts it.
+  let spotKey = null, spotEnds = 0, spotTick = null;
+  function runSpotClock(key, secs) {
+    if (spotKey !== key) { spotKey = key; spotEnds = Date.now() + secs * 1000; }
+    clearInterval(spotTick);
+    const el = () => document.querySelector('[data-spot]');
+    const paint = () => {
+      const e = el(); if (!e) { clearInterval(spotTick); return; }
+      const left = Math.max(0, Math.ceil((spotEnds - Date.now()) / 1000));
+      e.textContent = left > 0 ? left : 'Time!';
+      e.parentElement.classList.toggle('low', left <= 5);
+      if (left <= 0) clearInterval(spotTick);
+    };
+    paint();
+    spotTick = setInterval(paint, 250);
+  }
+
   function renderPrompt() {
     const p = S.pending;
-    if (!p || S.room.status !== 'active' || !iAmActor(p.actor_id)) { hide('ovPrompt'); return; }
+    if (!p || S.room.status !== 'active') { hide('ovPrompt'); $('watch').classList.remove('show'); return; }
+    if (!canAct(p)) { hide('ovPrompt'); renderWatch(p); return; }
+    $('watch').classList.remove('show');
     const actor = P(p.actor_id);
     const cfg = C.powersCfg;
     const left = !C.isParty && pendingLeft !== null ? `<div class="ov-sub" data-pend>${ic('clock')} <span data-secs>${Math.max(0, pendingLeft)}</span>s</div>` : '';
@@ -600,6 +724,76 @@
         <div class="ov-text">${esc(p.card.text)}</div>
         <div class="tgt-row">${btns}</div>${left}</div>`);
       $('ovPrompt').querySelectorAll('[data-id]').forEach((b) => (b.onclick = () => answer({ choice: 'target', target_id: +b.dataset.id })));
+      return;
+    }
+
+    // ── True or false: the game states a fact, the roller calls it ──
+    if (p.type === 'tf') {
+      show('ovPrompt', promptCard({
+        color: kindColor('fact'), head: `${esc(actor.name)} · True or false?`, icon: p.card.icon || 'fact', text: p.card.text,
+        sub: 'Get it right and pass. Get it wrong and you pay.' + (!C.isParty && pendingLeft !== null ? ` (<span data-secs>${Math.max(0, pendingLeft)}</span>s)` : ''),
+        buttons: `<button class="obtn ok" data-ans="true">${ic('check')} True</button><button class="obtn no" data-ans="false">${ic('cross')} False</button>`,
+      }));
+      $('ovPrompt').querySelectorAll('[data-ans]').forEach((b) => (b.onclick = () => answer({ choice: b.dataset.ans })));
+      return;
+    }
+
+    // ── Fact or bluff, step 1: the roller says their "fact" out loud ──
+    if (p.type === 'bluff_say') {
+      show('ovPrompt', promptCard({
+        color: kindColor('bluff'), head: `${esc(actor.name)} · Fact or bluff`, icon: p.card.icon || 'jester', text: p.card.text,
+        sub: 'Say it out loud — true, or totally made up. Everyone else: watch for the tell.',
+        buttons: `<button class="obtn" data-say="1">${ic('mic')} I've said it</button>`,
+      }));
+      $('ovPrompt').querySelector('[data-say]').onclick = () => answer({ choice: 'done' });
+      return;
+    }
+
+    // ── Step 2: does anyone call bluff? ──
+    if (p.type === 'bluff_call') {
+      if (C.isParty) {
+        const btns = p.eligible.map((id) => { const t = P(id); return `<button class="tgt" data-call="${id}" style="--c:${t.color}"><span class="av">${avatar(t)}</span>${esc(t.name)}</button>`; }).join('');
+        show('ovPrompt', promptCard({
+          color: kindColor('bluff'), head: 'Anyone calling bluff?', icon: 'search', who: chip(actor), text: `Does anyone think ${actor.name} is bluffing?`,
+          sub: 'Tap who is calling it — or let it slide.', extra: `<div class="tgt-row">${btns}</div>`,
+          buttons: `<button class="obtn alt" data-none="1">Nobody — they're safe</button>`,
+        }));
+        $('ovPrompt').querySelectorAll('[data-call]').forEach((b) => (b.onclick = () => answer({ choice: 'call', target_id: +b.dataset.call })));
+        $('ovPrompt').querySelector('[data-none]').onclick = () => answer({ choice: 'none' });
+      } else {
+        show('ovPrompt', promptCard({
+          color: '#f87171', head: `${esc(actor.name)} made a claim`, icon: 'search', text: 'Think they\'re bluffing?',
+          sub: `Call it and they must prove it — if they can, <b>you</b> pay. <span class="watch-secs">(<span data-secs>${Math.max(0, pendingLeft ?? 0)}</span>s)</span>`,
+          buttons: `<button class="obtn no" data-bluff="1">${ic('search')} Call bluff!</button>`,
+        }));
+        $('ovPrompt').querySelector('[data-bluff]').onclick = () => answer({ choice: 'call' });
+      }
+      return;
+    }
+
+    // ── Step 3: was it proven? ──
+    if (p.type === 'bluff_verdict') {
+      const caller = P(p.caller_id);
+      show('ovPrompt', promptCard({
+        color: kindColor('bluff'), head: 'The verdict', icon: 'search', who: chip(caller),
+        text: `${caller.name} called bluff on ${actor.name}.`,
+        sub: C.isParty ? 'The table decides: did they prove it?' : 'You\'re a judge — did they prove it?',
+        buttons: `<button class="obtn ok" data-v="proved">${ic('check')} Proven</button><button class="obtn no" data-v="busted">${ic('cross')} Bluff caught</button>`,
+      }));
+      $('ovPrompt').querySelectorAll('[data-v]').forEach((b) => (b.onclick = () => answer({ choice: b.dataset.v })));
+      return;
+    }
+
+    // ── Spotlight: a creative prompt on the clock ──
+    if (p.type === 'spot') {
+      const secs = p.card.timer || 15;
+      show('ovPrompt', promptCard({
+        color: kindColor('spotlight'), head: `${esc(actor.name)} · Spotlight`, icon: p.card.icon || 'mic', text: p.card.text,
+        extra: `<div class="spot-clock"><b data-spot>${secs}</b></div>`,
+        buttons: `<button class="obtn ok" data-spotr="nailed">${ic('check')} Nailed it</button><button class="obtn no" data-spotr="failed">${ic('cross')} Couldn't</button>`,
+      }));
+      $('ovPrompt').querySelectorAll('[data-spotr]').forEach((b) => (b.onclick = () => answer({ choice: b.dataset.spotr })));
+      runSpotClock(`${S.room.event_seq}:${p.actor_id}:${p.card.text}`, secs);
     }
   }
 

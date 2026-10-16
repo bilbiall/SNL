@@ -1,5 +1,5 @@
-{{-- Retro avatar picker. Usage:  SNLAvatars.open(currentKey, key => …)  ·  SNLAvatars.url(key)
-     Keys look like "f3-4" (look f3, skin shade 4). The roster comes from resources/avatars.json. --}}
+{{-- Avatar picker. Usage:  SNLAvatars.open(currentKey, key => …)  ·  SNLAvatars.url(key)
+     Keys look like "f3-4" or "h7-2" (look, skin shade). Collections (Retro 90s, Heroes) come from resources/avatars.json. --}}
 <style>
     .avbtn { position: relative; flex-shrink: 0; width: 3.1rem; height: 3.1rem; padding: 0; border-radius: 50%; border: 2px solid #fff; background: #1b1830; cursor: pointer; overflow: visible; box-shadow: 0 4px 12px rgba(0,0,0,.4); transition: transform .12s; }
     .avbtn:hover { transform: scale(1.06); } .avbtn:active { transform: scale(.95); }
@@ -14,9 +14,10 @@
     .avp-prev { width: 6rem; height: 6rem; margin: 0 auto .35rem; border-radius: 1rem; border: 3px solid #fff; overflow: hidden; box-shadow: 0 8px 22px rgba(0,0,0,.5); }
     .avp-prev img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
     .avp-name { font-weight: 900; font-size: .95rem; }
-    .avp-tabs { display: inline-flex; gap: .25rem; padding: .2rem; border-radius: 999px; background: rgba(255,255,255,.07); margin: .6rem 0; }
+    .avp-tabs { display: inline-flex; gap: .25rem; padding: .2rem; border-radius: 999px; background: rgba(255,255,255,.07); margin: .5rem .15rem; }
     .avp-tabs button { border: none; background: none; color: #9ca3af; font: inherit; font-weight: 800; font-size: .74rem; padding: .3rem .8rem; border-radius: 999px; cursor: pointer; }
     .avp-tabs button.on { background: linear-gradient(135deg, #f59e0b, #ec4899); color: #fff; }
+    .avp-cols button.on { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
     .avp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .45rem; }
     .avp-look { position: relative; padding: 0; border: 2px solid transparent; border-radius: .8rem; background: none; cursor: pointer; overflow: hidden; aspect-ratio: 1; }
     .avp-look img { width: 100%; height: 100%; display: block; image-rendering: pixelated; border-radius: .6rem; }
@@ -33,6 +34,7 @@
     <div class="avp-card">
         <div class="avp-prev"><img id="avpPrev" alt=""></div>
         <div class="avp-name" id="avpName"></div>
+        <div class="avp-tabs avp-cols" id="avpCols"></div>
         <div class="avp-tabs" id="avpTabs">
             <button type="button" data-f="all" class="on">All</button>
             <button type="button" data-f="f">Women</button>
@@ -50,13 +52,24 @@ window.SNLAvatars = (function () {
     var R = @json(\App\Support\Avatars::roster()), BASE = @json(asset('avatars'));
     var el = function (id) { return document.getElementById(id); };
     var url = function (key) { return BASE + '/' + key + '.svg'; };
-    var st = { look: R.looks[0].id, skin: 3, f: 'all', cb: null };
-    function parse(key) { var m = /^([fm]\d+)-(\d+)$/.exec(key || ''); return m ? { look: m[1], skin: +m[2] } : { look: R.looks[0].id, skin: 3 }; }
+    var LOOKS = [].concat.apply([], R.collections.map(function (c) { return c.looks; }));
+    var colOf = function (look) {
+        var c = R.collections.find(function (c) { return c.looks.some(function (l) { return l.id === look; }); });
+        return (c || R.collections[0]).id;
+    };
+    var first = R.collections[0].looks[0].id;
+    var st = { look: first, col: R.collections[0].id, skin: 3, f: 'all', cb: null };
+    var KEY = new RegExp('^([a-z][0-9]+)-([0-9]+)$');
+    function parse(key) { var m = KEY.exec(key || ''); return m ? { look: m[1], skin: +m[2] } : { look: first, skin: 3 }; }
     function draw() {
-        var cur = R.looks.find(function (l) { return l.id === st.look; }) || R.looks[0];
+        var cur = LOOKS.find(function (l) { return l.id === st.look; }) || LOOKS[0];
+        var col = R.collections.find(function (c) { return c.id === st.col; }) || R.collections[0];
         el('avpPrev').src = url(st.look + '-' + st.skin);
         el('avpName').textContent = cur.label + ' · ' + R.skins.find(function (s) { return s.id === st.skin; }).label;
-        el('avpGrid').innerHTML = R.looks.filter(function (l) { return st.f === 'all' || l.gender === st.f; }).map(function (l) {
+        el('avpCols').innerHTML = R.collections.map(function (c) {
+            return '<button type="button" data-col="' + c.id + '" class="' + (c.id === st.col ? 'on' : '') + '">' + c.label + '</button>';
+        }).join('');
+        el('avpGrid').innerHTML = col.looks.filter(function (l) { return st.f === 'all' || l.gender === st.f; }).map(function (l) {
             return '<button type="button" class="avp-look ' + (l.id === st.look ? 'on' : '') + '" data-look="' + l.id + '" title="' + l.label + '"><img src="' + url(l.id + '-' + st.skin) + '" alt="' + l.label + '"><span>' + l.label + '</span></button>';
         }).join('');
         el('avpSkins').innerHTML = R.skins.map(function (s) {
@@ -64,6 +77,13 @@ window.SNLAvatars = (function () {
         }).join('');
         el('avpTabs').querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.dataset.f === st.f); });
     }
+    el('avpCols').addEventListener('click', function (e) {
+        var b = e.target.closest('[data-col]'); if (!b) return;
+        st.col = b.dataset.col;
+        var c = R.collections.find(function (x) { return x.id === st.col; });
+        if (!c.looks.some(function (l) { return l.id === st.look; })) st.look = c.looks[0].id; // keep the shade, switch to this collection's first look
+        draw();
+    });
     el('avpGrid').addEventListener('click', function (e) { var b = e.target.closest('[data-look]'); if (b) { st.look = b.dataset.look; draw(); } });
     el('avpSkins').addEventListener('click', function (e) { var b = e.target.closest('[data-skin]'); if (b) { st.skin = +b.dataset.skin; draw(); } });
     el('avpTabs').addEventListener('click', function (e) { var b = e.target.closest('[data-f]'); if (b) { st.f = b.dataset.f; draw(); } });
@@ -74,8 +94,7 @@ window.SNLAvatars = (function () {
     return {
         url: url,
         open: function (key, cb) {
-            var p = parse(key); st.look = p.look; st.skin = p.skin; st.cb = cb;
-            st.f = 'all';
+            var p = parse(key); st.look = p.look; st.col = colOf(p.look); st.skin = p.skin; st.cb = cb; st.f = 'all';
             draw(); el('avp').classList.add('show');
         },
     };

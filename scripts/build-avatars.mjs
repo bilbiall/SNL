@@ -1,10 +1,12 @@
 // Generates the retro pixel-art avatar roster as static SVGs + a manifest.
 //   npm run avatars
-// Art: DiceBear "Pixel Art" style — CC0 1.0 (public domain), https://www.dicebear.com/styles/pixel-art/
+// Retro art: DiceBear "Pixel Art" style — CC0 1.0 (public domain), https://www.dicebear.com/styles/pixel-art/
+// Hero art: original, drawn in code (scripts/lib/heroes.mjs) — no third-party characters.
 // Output: public/avatars/{look}-{skin}.svg  and  resources/avatars.json  (both committed — production needs no Node).
 import fs from 'fs';
 import { createAvatar } from '@dicebear/core';
 import { pixelArt } from '@dicebear/collection';
+import { HEROES, heroSvg } from './lib/heroes.mjs';
 
 // 90s vaporwave backdrops
 const BG = { pink: 'ff71ce', cyan: '01cdfe', mint: '05ffa1', purple: 'b967ff', yellow: 'fffb96', coral: 'ff9b85' };
@@ -55,8 +57,20 @@ for (const look of LOOKS) {
     n++;
   }
 }
+// ── Heroes: original comic-style characters drawn in code (scripts/lib/heroes.mjs) ──
+let h = 0;
+for (const hero of HEROES) {
+  for (const skin of SKINS) {
+    fs.writeFileSync(`public/avatars/${hero.id}-${skin.id}.svg`, heroSvg(hero, { hex: '#' + skin.hex }));
+    h++;
+  }
+}
+
 fs.writeFileSync('resources/avatars.json', JSON.stringify({
-  looks: LOOKS.map(({ id, gender, label }) => ({ id, gender, label })),
   skins: SKINS.map(({ id, label, hex }) => ({ id, label, hex: '#' + hex })),
+  collections: [
+    { id: 'retro', label: 'Retro 90s', looks: LOOKS.map(({ id, gender, label }) => ({ id, gender, label })) },
+    { id: 'heroes', label: 'Heroes', looks: HEROES.map(({ id, gender, label }) => ({ id, gender, label })) },
+  ],
 }, null, 2) + '\n');
-console.log(`Built ${n} avatars (${LOOKS.length} looks × ${SKINS.length} skin shades) → public/avatars/, resources/avatars.json`);
+console.log(`Built ${n} retro + ${h} hero avatars (${LOOKS.length + HEROES.length} looks × ${SKINS.length} skin shades) → public/avatars/, resources/avatars.json`);

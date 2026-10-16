@@ -25,6 +25,7 @@
         <a href="{{ route('home') }}" class="logo" style="margin-right:.6rem;font-size:1rem;color:#fff;text-decoration:none;">S<b>&amp;</b>L <span style="font-size:.7rem;color:#9ca3af;">GameSet</span></a>
         <a href="{{ route('gameset.boards.index') }}" class="gs-tab {{ request()->routeIs('gameset.boards.*') ? 'on' : '' }}">Boards</a>
         <a href="{{ route('gameset.cards.index') }}" class="gs-tab {{ request()->routeIs('gameset.cards.*') ? 'on' : '' }}">Cards</a>
+        <a href="{{ route('gameset.words.index') }}" class="gs-tab {{ request()->routeIs('gameset.words.*') ? 'on' : '' }}">Words</a>
         <span style="flex:1;"></span>
         <a href="{{ route('home') }}" class="gs-tab" target="_blank">↗ View game</a>
         <form method="POST" action="{{ route('logout') }}" style="margin:0;">@csrf<button class="gs-tab" style="background:none;border:none;cursor:pointer;font-family:inherit;">Sign out</button></form>

@@ -7,6 +7,7 @@ use App\Models\Card;
 use App\Models\Player;
 use App\Models\Room;
 use App\Models\Tile;
+use App\Models\WordList;
 use App\Support\Avatars;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -40,6 +41,9 @@ class GameEngine
 
     /** Milliseconds the most recent movement will visibly take on screen. */
     private int $delay = 0;
+
+    /** Whose turn it is right now — used to fill {you} / {other} in card text. */
+    private ?Player $turnActor = null;
 
     private const FALLBACK = [
         'drinks' => [
@@ -236,10 +240,10 @@ class GameEngine
             if (!$pending) {
                 throw new GameException('There is nothing to decide right now.');
             }
-            if ((int) $pending['actor_id'] !== $actorId) {
+            if (!in_array($actorId, $pending['actors'] ?? [(int) $pending['actor_id']], true)) {
                 throw new GameException('That prompt is for someone else.');
             }
-            $this->answerPending($pending, $choice, $targetId);
+            $this->answerPending($pending, $choice, $targetId, $actorId);
         });
     }
 
@@ -330,6 +334,7 @@ class GameEngine
     {
         $kind = $forceKind ?? ($tile?->kind ?? 'blank');
         $number = $tile?->number;
+        $this->turnActor = $actor;
 
         switch ($kind) {
             case 'snake_head':
@@ -346,12 +351,12 @@ class GameEngine
                 break;
 
             case 'self':
-                $card = $this->cardFor('self', $tile, $spin);
+                $card = $this->publicCard($this->cardFor('self', $tile, $spin));
                 $this->hit($actor, [$actor], $card, $number);
                 break;
 
             case 'everyone':
-                $card = $this->cardFor('everyone', $tile, $spin);
+                $card = $this->publicCard($this->cardFor('everyone', $tile, $spin));
                 $this->commitHit($actor, $this->activePlayers()->all(), $card, $number);
                 break;
 
@@ -360,7 +365,7 @@ class GameEngine
             case 'swap':
                 $card = $kind === 'swap'
                     ? ['kind' => 'swap', 'icon' => 'swap', 'text' => $tile?->label ?: 'Swap places with a player of your choice!', 'spin' => $spin]
-                    : $this->cardFor($kind, $tile, $spin);
+                    : $this->publicCard($this->cardFor($kind, $tile, $spin));
                 $eligible = $this->activePlayers()->where('id', '!=', $actor->id)->pluck('id')->values()->all();
                 if (!$eligible) {
                     break;
@@ -371,9 +376,36 @@ class GameEngine
                 ]);
                 break;
 
-            case 'fact':
+            case 'fact': // True or false: the game states a fact, the roller calls it
                 $card = $this->cardFor('fact', $tile, $spin);
-                $this->room->log(['type' => 'card'] + $card + ['source_id' => $actor->id, 'target_ids' => [], 'tile' => $number]);
+                if ($card['answer'] === null) { // a plain read-aloud fact (no answer on the card) still works
+                    $this->room->log(['type' => 'card'] + $this->publicCard($card) + ['source_id' => $actor->id, 'target_ids' => [], 'tile' => $number]);
+                    break;
+                }
+                $this->setPending([
+                    'type' => 'tf', 'actor_id' => $actor->id, 'card' => $this->publicCard($card),
+                    'answer' => (bool) $card['answer'], 'explain' => $card['explain'], 'penalty' => (int) $card['penalty'], 'tile' => $number,
+                ]);
+                break;
+
+            case 'bluff': // Fact or bluff: the roller says a fact (true or invented); anyone may call bluff
+                if ($this->activePlayers()->count() < 2) {
+                    break;
+                }
+                $card = $this->cardFor('bluff', $tile, $spin);
+                $this->setPending([
+                    'type' => 'bluff_say', 'actor_id' => $actor->id, 'card' => $this->publicCard($card),
+                    'penalty' => (int) $card['penalty'], 'tile' => $number,
+                ]);
+                break;
+
+            case 'spotlight': // a creative prompt against the clock
+                $card = $this->cardFor('spotlight', $tile, $spin);
+                $timer = (int) ($card['timer'] ?: 15);
+                $this->setPending([
+                    'type' => 'spot', 'actor_id' => $actor->id, 'card' => $this->publicCard($card) + ['timer' => $timer],
+                    'penalty' => (int) $card['penalty'], 'tile' => $number, 'ttl' => $timer + 14,
+                ]);
                 break;
 
             case 'rule':
@@ -436,6 +468,7 @@ class GameEngine
         $icon = $tile?->icon
             ?: (config("snl.mode_icons.{$this->room->content_mode}.$kind") ?? config("snl.tile_kinds.$kind.icon") ?? 'cards');
         $text = $tile?->label;
+        $drawn = null;
         if (!$text || $spin) {
             // A spin ignores the tile's own fixed text — it's a different effect than the tile normally shows.
             $drawn = Card::draw($this->room, $kind);
@@ -443,7 +476,59 @@ class GameEngine
                 ?? (self::FALLBACK[$this->room->content_mode][$kind] ?? self::FALLBACK['family'][$kind] ?? 'Enjoy the moment!');
         }
 
-        return ['kind' => $kind, 'text' => $text, 'icon' => $icon, 'spin' => $spin];
+        return [
+            'kind' => $kind, 'text' => $this->fill($text), 'icon' => $icon, 'spin' => $spin,
+            // Only meaningful for True-or-False / Bluff / Spotlight cards — never sent to clients as-is (see publicCard()).
+            'answer' => $drawn?->answer, 'explain' => $drawn?->explain, 'penalty' => (int) ($drawn?->penalty ?: 1), 'timer' => $drawn?->timer,
+        ];
+    }
+
+    /** What clients may see of a card: never the answer or the explanation. */
+    private function publicCard(array $card): array
+    {
+        return ['kind' => $card['kind'], 'text' => $card['text'], 'icon' => $card['icon'], 'spin' => $card['spin'] ?? false];
+    }
+
+    /**
+     * Fills a card's {placeholders} so the same card reads differently every time:
+     * {you} / {other} are players at the table; anything else is a word-list slot ({scene}, {vibe}, {topic}…).
+     */
+    private function fill(string $text): string
+    {
+        if (!str_contains($text, '{')) {
+            return $text;
+        }
+
+        return preg_replace_callback('/\{([a-z_]+)\}/', function ($m) {
+            $slot = $m[1];
+            if ($slot === 'you') {
+                return $this->turnActor?->name ?? 'you';
+            }
+            if ($slot === 'other') {
+                $others = $this->activePlayers()->where('id', '!=', $this->turnActor?->id)->values();
+
+                return $others->isEmpty() ? 'someone' : $others->random()->name;
+            }
+
+            return WordList::pick($this->room, $slot) ?? 'something';
+        }, $text);
+    }
+
+    /** What a lost True-or-False / lost bluff / failed Spotlight costs, in this room's mode and intensity. */
+    private function penaltyText(int $units): string
+    {
+        $table = config('snl.penalties.' . $this->room->content_mode) ?? config('snl.penalties.family');
+        $level = $table[$this->room->intensity] ?? $table[2];
+        $u = max(1, min(2, $units));
+
+        return $level[$u] ?? $level[1];
+    }
+
+    /** Applies a penalty to $target (as a hit, so a Shield can still block it). */
+    private function penalize(Player $source, Player $target, int $units, ?int $tile): void
+    {
+        $icon = config("snl.mode_icons.{$this->room->content_mode}.self") ?? 'self';
+        $this->hit($source, [$target], ['kind' => 'self', 'icon' => $icon, 'text' => $this->penaltyText($units), 'spin' => false], $tile);
     }
 
     /** A hit on a single player — pauses for their Shield if they hold one. */
@@ -488,7 +573,7 @@ class GameEngine
         $this->room->pending_started_at = null;
     }
 
-    private function answerPending(array $pending, string $choice, ?int $targetId): void
+    private function answerPending(array $pending, string $choice, ?int $targetId, ?int $by = null): void
     {
         $room = $this->room;
         $turnOwner = $this->players[$room->current_player_id];
@@ -538,6 +623,105 @@ class GameEngine
                 $target = $this->players[$targetId];
                 $this->clearPending();
                 $this->resolvePick($pending, $actor, $target);
+                break;
+
+            case 'tf': // True or false
+                if (!in_array($choice, ['true', 'false'], true)) {
+                    throw new GameException('Say true or false.');
+                }
+                $actor = $this->players[$pending['actor_id']];
+                $guess = $choice === 'true';
+                $correct = $guess === (bool) $pending['answer'];
+                $this->clearPending();
+                $actor->bump($correct ? 'facts_right' : 'facts_wrong');
+                $room->log([
+                    'type' => 'factcheck', 'player_id' => $actor->id, 'text' => $pending['card']['text'], 'icon' => $pending['card']['icon'],
+                    'answer' => (bool) $pending['answer'], 'guess' => $guess, 'correct' => $correct, 'explain' => $pending['explain'],
+                    'penalty' => $this->penaltyText((int) $pending['penalty']), 'spin' => $pending['card']['spin'] ?? false,
+                ]);
+                if (!$correct) {
+                    $this->penalize($actor, $actor, (int) $pending['penalty'], $pending['tile'] ?? null);
+                }
+                break;
+
+            case 'bluff_say': // the roller has said their "fact" out loud
+                if ($choice !== 'done') {
+                    throw new GameException("Tap 'Said it' once you've told the table.");
+                }
+                $roller = $this->players[$pending['actor_id']];
+                $others = $this->activePlayers()->where('id', '!=', $roller->id)->pluck('id')->values()->all();
+                $this->clearPending();
+                $roller->bump('bluffs');
+                $room->log(['type' => 'bluff_said', 'player_id' => $roller->id]);
+                $this->setPending([
+                    'type' => 'bluff_call', 'actor_id' => $roller->id,
+                    // One shared device in party mode (the table says who is calling); on their own phones, any challenger can tap.
+                    'actors' => $room->isParty() ? [$roller->id] : $others,
+                    'eligible' => $others, 'card' => $pending['card'], 'penalty' => $pending['penalty'], 'tile' => $pending['tile'] ?? null, 'ttl' => 12,
+                ]);
+                break;
+
+            case 'bluff_call':
+                $roller = $this->players[$pending['actor_id']];
+                if ($choice === 'none') { // nobody doubts them
+                    if ($room->isOnline() && $by !== null) {
+                        throw new GameException('Only a call can interrupt — the window closes on its own.');
+                    }
+                    $this->clearPending();
+                    $room->log(['type' => 'bluff_pass', 'player_id' => $roller->id]);
+                    break;
+                }
+                if ($choice !== 'call') {
+                    throw new GameException('Call bluff, or let it pass.');
+                }
+                $callerId = $room->isParty() ? (int) $targetId : (int) $by;
+                if (!in_array($callerId, $pending['eligible'], true)) {
+                    throw new GameException('Pick who is calling bluff.');
+                }
+                $caller = $this->players[$callerId];
+                $this->clearPending();
+                $caller->bump('bluffs_called');
+                $room->log(['type' => 'bluff_called', 'player_id' => $roller->id, 'caller_id' => $caller->id]);
+                // Neutral judges decide if there are any; with only two players the doubter judges.
+                $judges = $this->activePlayers()->whereNotIn('id', [$roller->id, $caller->id])->pluck('id')->values()->all();
+                $this->setPending([
+                    'type' => 'bluff_verdict', 'actor_id' => $roller->id, 'caller_id' => $caller->id,
+                    'actors' => $room->isParty() ? [$roller->id] : ($judges ?: [$caller->id]),
+                    'card' => $pending['card'], 'penalty' => $pending['penalty'], 'tile' => $pending['tile'] ?? null, 'ttl' => 40,
+                ]);
+                break;
+
+            case 'bluff_verdict':
+                if (!in_array($choice, ['proved', 'busted'], true) && !($choice === 'void' && $by === null)) {
+                    throw new GameException('Was it proven, or was the bluff caught?');
+                }
+                $roller = $this->players[$pending['actor_id']];
+                $caller = $this->players[$pending['caller_id']];
+                $this->clearPending();
+                $room->log(['type' => 'bluff_result', 'player_id' => $roller->id, 'caller_id' => $caller->id, 'result' => $choice,
+                    'penalty' => $this->penaltyText((int) $pending['penalty'])]);
+                if ($choice === 'proved') {        // the roller backed it up → the doubter pays
+                    $roller->bump('bluffs_won');
+                    $this->penalize($roller, $caller, (int) $pending['penalty'], $pending['tile'] ?? null);
+                } elseif ($choice === 'busted') {  // caught bluffing → the roller pays
+                    $caller->bump('bluffs_caught');
+                    $this->penalize($caller, $roller, (int) $pending['penalty'], $pending['tile'] ?? null);
+                }
+                break;
+
+            case 'spot': // Spotlight: did they pull it off before the clock ran out?
+                if (!in_array($choice, ['nailed', 'failed'], true)) {
+                    throw new GameException('Nailed it, or not?');
+                }
+                $actor = $this->players[$pending['actor_id']];
+                $this->clearPending();
+                $nailed = $choice === 'nailed';
+                $actor->bump($nailed ? 'spots_nailed' : 'spots_failed');
+                $room->log(['type' => 'spot_result', 'player_id' => $actor->id, 'nailed' => $nailed, 'text' => $pending['card']['text'],
+                    'penalty' => $this->penaltyText((int) $pending['penalty'])]);
+                if (!$nailed) {
+                    $this->penalize($actor, $actor, (int) $pending['penalty'], $pending['tile'] ?? null);
+                }
                 break;
 
             default:
@@ -598,11 +782,15 @@ class GameEngine
         if (!$p) {
             return;
         }
-        if ($p['type'] === 'pick') {
-            $this->answerPending($p, 'target', $p['eligible'][array_rand($p['eligible'])]);
-        } else {
-            $this->answerPending($p, 'skip', null);
-        }
+        match ($p['type']) {
+            'pick'          => $this->answerPending($p, 'target', $p['eligible'][array_rand($p['eligible'])]),
+            'tf'            => $this->answerPending($p, random_int(0, 1) ? 'true' : 'false', null), // a coin-flip keeps the game moving
+            'bluff_say'     => $this->answerPending($p, 'done', null),
+            'bluff_call'    => $this->answerPending($p, 'none', null),     // nobody called in time
+            'bluff_verdict' => $this->answerPending($p, 'void', null),     // no ruling → nobody drinks
+            'spot'          => $this->answerPending($p, 'nailed', null),   // an absent player isn't punished
+            default         => $this->answerPending($p, 'skip', null),
+        };
     }
 
     // ───────────────────────────── Turn flow ─────────────────────────────
@@ -702,7 +890,7 @@ class GameEngine
         $cfg = config('snl.timing');
 
         if ($room->pending) {
-            if ($room->pending_started_at && now()->timestamp - $room->pending_started_at->timestamp >= $cfg['pending_seconds']) {
+            if ($room->pending_started_at && now()->timestamp - $room->pending_started_at->timestamp >= ($room->pending['ttl'] ?? $cfg['pending_seconds'])) {
                 $this->autoResolvePending();
             }
 
@@ -735,7 +923,7 @@ class GameEngine
         }
         $cfg = config('snl.timing');
         if ($room->pending) {
-            return $room->pending_started_at && now()->timestamp - $room->pending_started_at->timestamp >= $cfg['pending_seconds'];
+            return $room->pending_started_at && now()->timestamp - $room->pending_started_at->timestamp >= ($room->pending['ttl'] ?? $cfg['pending_seconds']);
         }
 
         return $room->turn_started_at && !$room->turn_started_at->isFuture()
@@ -761,6 +949,9 @@ class GameEngine
                     'preview_tile' => $pending['preview_tile'], 'preview_kind' => $pending['preview_kind']],
                 'shield' => ['type' => 'shield', 'actor_id' => $pending['actor_id'], 'source_id' => $pending['source_id'], 'card' => $pending['card']],
                 'pick'   => ['type' => 'pick', 'actor_id' => $pending['actor_id'], 'sub' => $pending['sub'], 'card' => $pending['card'], 'eligible' => $pending['eligible']],
+                'tf', 'bluff_say', 'spot' => ['type' => $pending['type'], 'actor_id' => $pending['actor_id'], 'card' => $pending['card']],
+                'bluff_call' => ['type' => 'bluff_call', 'actor_id' => $pending['actor_id'], 'actors' => $pending['actors'], 'eligible' => $pending['eligible'], 'card' => $pending['card']],
+                'bluff_verdict' => ['type' => 'bluff_verdict', 'actor_id' => $pending['actor_id'], 'actors' => $pending['actors'], 'caller_id' => $pending['caller_id'], 'card' => $pending['card']],
                 default  => null,
             };
         }
@@ -772,7 +963,7 @@ class GameEngine
                 : max(0, $cfg['turn_seconds'] - (now()->timestamp - $room->turn_started_at->timestamp));
         }
         $pendingLeft = ($room->isOnline() && $pending && $room->pending_started_at)
-            ? max(0, $cfg['pending_seconds'] - (now()->timestamp - $room->pending_started_at->timestamp))
+            ? max(0, ($pending['ttl'] ?? $cfg['pending_seconds']) - (now()->timestamp - $room->pending_started_at->timestamp))
             : null;
 
         $players = $room->players->map(fn (Player $p) => [
@@ -811,6 +1002,10 @@ class GameEngine
             ['key' => 'snakes',  'icon' => 'snake', 'title' => 'Snake magnet'],
             ['key' => 'ladders', 'icon' => 'ladder', 'title' => 'Lucky climber'],
             ['key' => 'duels_won', 'icon' => 'duel', 'title' => 'Duel champion'],
+            ['key' => 'facts_right', 'icon' => 'fact', 'title' => 'Know-it-all'],
+            ['key' => 'bluffs_won', 'icon' => 'jester', 'title' => 'Best poker face'],
+            ['key' => 'bluffs_caught', 'icon' => 'search', 'title' => 'Lie detector'],
+            ['key' => 'spots_nailed', 'icon' => 'mic', 'title' => 'Crowd favourite'],
         ];
         $out = [];
         foreach ($awards as $a) {

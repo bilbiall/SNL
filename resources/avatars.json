@@ -1,86 +1,4 @@
 {
-  "looks": [
-    {
-      "id": "f1",
-      "gender": "f",
-      "label": "Scrunchie"
-    },
-    {
-      "id": "f2",
-      "gender": "f",
-      "label": "Pigtails"
-    },
-    {
-      "id": "f3",
-      "gender": "f",
-      "label": "Space Buns"
-    },
-    {
-      "id": "f4",
-      "gender": "f",
-      "label": "Braids"
-    },
-    {
-      "id": "f5",
-      "gender": "f",
-      "label": "Curly Puffs"
-    },
-    {
-      "id": "f6",
-      "gender": "f",
-      "label": "Auburn Bob"
-    },
-    {
-      "id": "f7",
-      "gender": "f",
-      "label": "Blonde Shades"
-    },
-    {
-      "id": "f8",
-      "gender": "f",
-      "label": "Cap & Swoop"
-    },
-    {
-      "id": "m1",
-      "gender": "m",
-      "label": "Flat Top"
-    },
-    {
-      "id": "m2",
-      "gender": "m",
-      "label": "Curly Top"
-    },
-    {
-      "id": "m3",
-      "gender": "m",
-      "label": "Frosted Tips"
-    },
-    {
-      "id": "m4",
-      "gender": "m",
-      "label": "Mohawk"
-    },
-    {
-      "id": "m5",
-      "gender": "m",
-      "label": "Backwards Cap"
-    },
-    {
-      "id": "m6",
-      "gender": "m",
-      "label": "Cool Shades"
-    },
-    {
-      "id": "m7",
-      "gender": "m",
-      "label": "Goatee"
-    },
-    {
-      "id": "m8",
-      "gender": "m",
-      "label": "Beanie"
-    }
-  ],
   "skins": [
     {
       "id": 1,
@@ -116,6 +34,160 @@
       "id": 7,
       "label": "Ebony",
       "hex": "#33201a"
+    }
+  ],
+  "collections": [
+    {
+      "id": "retro",
+      "label": "Retro 90s",
+      "looks": [
+        {
+          "id": "f1",
+          "gender": "f",
+          "label": "Scrunchie"
+        },
+        {
+          "id": "f2",
+          "gender": "f",
+          "label": "Pigtails"
+        },
+        {
+          "id": "f3",
+          "gender": "f",
+          "label": "Space Buns"
+        },
+        {
+          "id": "f4",
+          "gender": "f",
+          "label": "Braids"
+        },
+        {
+          "id": "f5",
+          "gender": "f",
+          "label": "Curly Puffs"
+        },
+        {
+          "id": "f6",
+          "gender": "f",
+          "label": "Auburn Bob"
+        },
+        {
+          "id": "f7",
+          "gender": "f",
+          "label": "Blonde Shades"
+        },
+        {
+          "id": "f8",
+          "gender": "f",
+          "label": "Cap & Swoop"
+        },
+        {
+          "id": "m1",
+          "gender": "m",
+          "label": "Flat Top"
+        },
+        {
+          "id": "m2",
+          "gender": "m",
+          "label": "Curly Top"
+        },
+        {
+          "id": "m3",
+          "gender": "m",
+          "label": "Frosted Tips"
+        },
+        {
+          "id": "m4",
+          "gender": "m",
+          "label": "Mohawk"
+        },
+        {
+          "id": "m5",
+          "gender": "m",
+          "label": "Backwards Cap"
+        },
+        {
+          "id": "m6",
+          "gender": "m",
+          "label": "Cool Shades"
+        },
+        {
+          "id": "m7",
+          "gender": "m",
+          "label": "Goatee"
+        },
+        {
+          "id": "m8",
+          "gender": "m",
+          "label": "Beanie"
+        }
+      ]
+    },
+    {
+      "id": "heroes",
+      "label": "Heroes",
+      "looks": [
+        {
+          "id": "h1",
+          "gender": "m",
+          "label": "Night Vigil"
+        },
+        {
+          "id": "h2",
+          "gender": "m",
+          "label": "Crimson Speedster"
+        },
+        {
+          "id": "h3",
+          "gender": "f",
+          "label": "Star Guardian"
+        },
+        {
+          "id": "h4",
+          "gender": "m",
+          "label": "Armored Genius"
+        },
+        {
+          "id": "h5",
+          "gender": "m",
+          "label": "Sky Courier"
+        },
+        {
+          "id": "h6",
+          "gender": "f",
+          "label": "Hooded Archer"
+        },
+        {
+          "id": "h7",
+          "gender": "f",
+          "label": "Warrior Princess"
+        },
+        {
+          "id": "h8",
+          "gender": "f",
+          "label": "Storm Weaver"
+        },
+        {
+          "id": "h9",
+          "gender": "f",
+          "label": "Cat Burglar"
+        },
+        {
+          "id": "h10",
+          "gender": "f",
+          "label": "Flame Heroine"
+        },
+        {
+          "id": "h11",
+          "gender": "m",
+          "label": "Mystic Sorcerer"
+        },
+        {
+          "id": "h12",
+          "gender": "m",
+          "label": "Moon Warden"
+        }
+      ]
     }
   ]
 }

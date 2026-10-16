@@ -64,6 +64,7 @@
         <div class="powers" id="powers"></div>
     </div>
 
+    <div class="watch" id="watch"></div>
     <div class="toasts" id="toasts"></div>
 
     {{-- Overlays: each is filled by JS --}}
