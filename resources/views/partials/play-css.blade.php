@@ -37,7 +37,7 @@
         box-shadow: 0 5px 10px rgba(0,0,0,.6), 0 0 0 2px var(--c, #f59e0b); z-index: 20; transition: left .22s linear, top .22s linear;
     }
     .token .ic { filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
-    .avimg { width: 100%; height: 100%; display: block; border-radius: 50%; object-fit: cover; image-rendering: pixelated; }
+    .avimg { width: 100%; height: 100%; display: block; border-radius: 50%; object-fit: cover; }
     .token .avimg { position: absolute; inset: 0; }
     .splash .avimg { width: 1.5em; height: 1.5em; flex-shrink: 0; }
     .token.glide { transition: left 1s cubic-bezier(.34,1.2,.64,1), top 1s cubic-bezier(.34,1.2,.64,1); }
@@ -234,7 +234,8 @@
     .pcard .ov-btns { margin: 0; }
     .pcard .obtn { padding: clamp(.3rem, 1.4cqh, .45rem) clamp(.8rem, 3cqh, 1.1rem); font-size: clamp(.64rem, 2.5cqh, .8rem); }
     /* designed-card extras: foil border, corner indices, watermark, pips, footer, shine sweep */
-    .pcard { animation: cardDeal .7s cubic-bezier(.2,.9,.3,1.1) both; transform-style: preserve-3d; }
+    .pcard { animation: cardDeal .7s cubic-bezier(.2,.9,.3,1.1) both, cardFloat 4.2s 1.2s ease-in-out infinite; transform-style: preserve-3d; }
+    @keyframes cardFloat { 0%, 100% { transform: translateY(0) rotate(-.6deg); } 50% { transform: translateY(-5px) rotate(.6deg); } }
     @keyframes cardDeal { 0% { opacity: 0; transform: perspective(900px) translateY(40%) rotateX(35deg) rotateY(-120deg) scale(.6); } 60% { opacity: 1; transform: perspective(900px) rotateY(8deg) scale(1.04); } 100% { opacity: 1; transform: none; } }
     .pcard::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 3;
         background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.22) 50%, transparent 62%); background-size: 250% 100%; background-position: 130% 0; animation: foilSweep 1.1s .55s ease-out 1 both, foilIdle 5s 2s linear infinite; }
@@ -250,6 +251,31 @@
     .pcard .pc-pips { display: inline-flex; gap: 3px; }
     .pcard .pc-pips i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.18); }
     .pcard .pc-pips i.on { background: var(--k); box-shadow: 0 0 6px var(--k); }
+    /* motion layer: spinning rays, rising embers, word-by-word text, popping avatar chips, ringing icon */
+    .pcard .pc-rays { position: absolute; left: 50%; top: 34%; width: 190%; aspect-ratio: 1; margin: -95% 0 0 -95%; pointer-events: none; opacity: .2; background: repeating-conic-gradient(from 0deg, var(--k) 0 7deg, transparent 7deg 22deg); -webkit-mask-image: radial-gradient(circle, #000 0, transparent 52%); mask-image: radial-gradient(circle, #000 0, transparent 52%); animation: raySpin 22s linear infinite; }
+    @keyframes raySpin { to { transform: rotate(360deg); } }
+    .pcard .ember { position: absolute; bottom: -6px; width: 5px; height: 5px; border-radius: 50%; background: var(--k); box-shadow: 0 0 8px var(--k); opacity: 0; pointer-events: none; animation: emberRise calc(2.6s / var(--s)) var(--d) ease-out infinite; }
+    @keyframes emberRise { 0% { opacity: 0; transform: translateY(0) scale(.5); } 15% { opacity: .9; } 100% { opacity: 0; transform: translateY(-120cqh) translateX(14px) scale(1.2); } }
+    .pcard .pc-head { animation: headDrop .6s .15s cubic-bezier(.22,1,.36,1) both; background-size: 220% 100%; }
+    @keyframes headDrop { from { opacity: 0; transform: translateY(-100%); } to { opacity: 1; transform: none; } }
+    .pcard .pc-icon { animation: iconPop .9s .25s cubic-bezier(.34,1.56,.64,1) both, iconPulse 1.8s 1.2s ease-in-out infinite; }
+    @keyframes iconPop { 0% { transform: scale(0) rotate(-220deg); } 100% { transform: scale(1) rotate(0); } }
+    .pcard .pc-icon::before, .pcard .pc-icon::after { content: ''; position: absolute; inset: -3px; border-radius: 50%; border: 2px solid var(--k); opacity: 0; animation: ringOut 2.2s 1s ease-out infinite; }
+    .pcard .pc-icon::after { animation-delay: 1.8s; }
+    .pcard .pc-icon { position: relative; }
+    @keyframes ringOut { 0% { transform: scale(1); opacity: .7; } 100% { transform: scale(1.9); opacity: 0; } }
+    .pcard .pc-text .w { display: inline-block; opacity: 0; animation: wordIn .55s calc(.55s + var(--i) * .07s) cubic-bezier(.34,1.56,.64,1) both; }
+    @keyframes wordIn { from { opacity: 0; transform: translateY(.7em) scale(.6) rotate(-4deg); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+    .pcard .tgt-row .tgt { animation: chipPop .7s .35s cubic-bezier(.34,1.56,.64,1) both; }
+    .pcard .tgt-row .tgt:nth-child(2) { animation-delay: .5s; } .pcard .tgt-row .tgt:nth-child(3) { animation-delay: .65s; }
+    @keyframes chipPop { from { opacity: 0; transform: translateY(14px) scale(.4); } to { opacity: 1; transform: none; } }
+    .pcard .tgt-row .tgt .av { animation: avBob 1.6s 1.2s ease-in-out infinite; }
+    .pcard .pc-pips i { animation: pipPop .4s calc(.9s + var(--p, 0) * .12s) cubic-bezier(.34,1.56,.64,1) both; }
+    .pcard .pc-pips i:nth-child(2) { --p: 1; } .pcard .pc-pips i:nth-child(3) { --p: 2; }
+    @keyframes pipPop { from { transform: scale(0); } to { transform: scale(1); } }
+    .pcard .ov-btns { animation: chipPop .5s 1.1s ease-out both; }
+    .pcard .ov-sub { animation: chipPop .6s 1s ease-out both; }
+    @media (prefers-reduced-motion: reduce) { .pcard, .pcard * { animation-duration: .01s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; } }
     .board-dim { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,.10) 40%, rgba(0,0,0,.30) 100%), rgba(4,6,18,.14); }
     .pcard .spark { position: absolute; color: var(--k); font-size: clamp(.7rem, 3cqh, 1rem); opacity: .9; animation: twinkle 1.6s ease-in-out infinite; pointer-events: none; }
     @keyframes twinkle { 0%,100% { transform: scale(.6) rotate(0); opacity: .3; } 50% { transform: scale(1.15) rotate(25deg); opacity: 1; } }

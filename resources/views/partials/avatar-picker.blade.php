@@ -3,7 +3,7 @@
 <style>
     .avbtn { position: relative; flex-shrink: 0; width: 3.1rem; height: 3.1rem; padding: 0; border-radius: 50%; border: 2px solid #fff; background: #1b1830; cursor: pointer; overflow: visible; box-shadow: 0 4px 12px rgba(0,0,0,.4); transition: transform .12s; }
     .avbtn:hover { transform: scale(1.06); } .avbtn:active { transform: scale(.95); }
-    .avbtn img { width: 100%; height: 100%; border-radius: 50%; display: block; image-rendering: pixelated; object-fit: cover; }
+    .avbtn img { width: 100%; height: 100%; border-radius: 50%; display: block; object-fit: cover; }
     .avbtn::after { content: 'Edit'; position: absolute; left: 50%; bottom: -.55rem; transform: translateX(-50%); padding: 0 .4rem; border-radius: 999px; background: #f59e0b; color: #1b1830; font-size: .55rem; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
     .avbtn.lg { width: 4.4rem; height: 4.4rem; }
 
@@ -12,15 +12,17 @@
     .avp-card { width: min(94vw, 400px); max-height: 92vh; overflow-y: auto; border-radius: 1.2rem; padding: 1rem; background: linear-gradient(165deg, #211d36, #14121f 60%); border: 1px solid rgba(255,255,255,.18); box-shadow: 0 24px 60px rgba(0,0,0,.65); text-align: center; animation: avpIn .25s cubic-bezier(.34,1.4,.64,1) both; }
     @keyframes avpIn { from { opacity: 0; transform: scale(.92) translateY(10px); } to { opacity: 1; transform: none; } }
     .avp-prev { width: 6rem; height: 6rem; margin: 0 auto .35rem; border-radius: 1rem; border: 3px solid #fff; overflow: hidden; box-shadow: 0 8px 22px rgba(0,0,0,.5); }
-    .avp-prev img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+    .avp-prev img { width: 100%; height: 100%; display: block; }
     .avp-name { font-weight: 900; font-size: .95rem; }
     .avp-tabs { display: inline-flex; gap: .25rem; padding: .2rem; border-radius: 999px; background: rgba(255,255,255,.07); margin: .5rem .15rem; }
     .avp-tabs button { border: none; background: none; color: #9ca3af; font: inherit; font-weight: 800; font-size: .74rem; padding: .3rem .8rem; border-radius: 999px; cursor: pointer; }
     .avp-tabs button.on { background: linear-gradient(135deg, #f59e0b, #ec4899); color: #fff; }
+    .avp-cols { flex-wrap: wrap; justify-content: center; border-radius: 1rem; }
+    .avp-cols button { padding: .3rem .65rem; }
     .avp-cols button.on { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
     .avp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .45rem; }
     .avp-look { position: relative; padding: 0; border: 2px solid transparent; border-radius: .8rem; background: none; cursor: pointer; overflow: hidden; aspect-ratio: 1; }
-    .avp-look img { width: 100%; height: 100%; display: block; image-rendering: pixelated; border-radius: .6rem; }
+    .avp-look img { width: 100%; height: 100%; display: block; border-radius: .6rem; }
     .avp-look:hover { transform: translateY(-2px); }
     .avp-look.on { border-color: #fff; box-shadow: 0 0 0 3px rgba(245,158,11,.8), 0 0 18px rgba(245,158,11,.5); }
     .avp-look span { position: absolute; left: 0; right: 0; bottom: 0; padding: .1rem 0; font-size: .52rem; font-weight: 800; background: rgba(8,7,16,.75); color: #e5e7eb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

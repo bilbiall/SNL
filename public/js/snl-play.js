@@ -414,18 +414,22 @@
 
   /** A standard playing-card pop-up tinted by what kind of card it is. Every device shows it;
    *  party mode waits for a tap, online auto-closes after a few seconds. */
+  /** Splits text into words that pop in one after another. */
+  const words = (t) => String(t).split(' ').map((w, i) => `<span class="w" style="--i:${i}">${esc(w)}</span>`).join(' ');
+  const EMBERS = Array.from({ length: 9 }, (_, i) => `<i class="ember" style="left:${8 + i * 10.5}%;--d:${(i * 0.37) % 2.4}s;--s:${0.5 + (i % 3) * 0.25}"></i>`).join('');
+
   /** The one card shell every pop-up uses: foil border, corner indices, watermark icon, intensity pips, footer. */
   function cardShell({ color, head, icon, who = '', text = '', sub = '', extra = '', buttons = '', intensity = 0, mid = '' }) {
     const pips = intensity ? `<div class="pc-pips" title="Intensity">${[1, 2, 3].map((i) => `<i class="${i <= intensity ? 'on' : ''}"></i>`).join('')}</div>` : '';
     return `<div class="pcard" style="--k:${color}">
       <span class="pc-corner tl">${ic(icon)}</span><span class="pc-corner br">${ic(icon)}</span>
-      <div class="pc-mark">${ic(icon)}</div>
+      <div class="pc-mark">${ic(icon)}</div><div class="pc-rays"></div>${EMBERS}
       <div class="pc-head">${head}</div>${SPARKS}
       <div class="pc-body">
         <div class="pc-icon">${ic(icon)}</div>
         <div class="pc-mid">
           ${who ? `<div class="tgt-row">${who}</div>` : ''}
-          ${mid || `<div class="pc-text">${esc(text)}</div>`}
+          ${mid || `<div class="pc-text">${words(text)}</div>`}
           ${sub ? `<div class="ov-sub">${sub}</div>` : ''}
           ${extra}
         </div>

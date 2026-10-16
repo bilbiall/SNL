@@ -5,8 +5,9 @@
 // Output: public/avatars/{look}-{skin}.svg  and  resources/avatars.json  (both committed — production needs no Node).
 import fs from 'fs';
 import { createAvatar } from '@dicebear/core';
-import { pixelArt } from '@dicebear/collection';
+import { pixelArt, lorelei } from '@dicebear/collection';
 import { HEROES, heroSvg } from './lib/heroes.mjs';
+import { GENZ, genzSvg } from './lib/genz.mjs';
 
 // 90s vaporwave backdrops
 const BG = { pink: 'ff71ce', cyan: '01cdfe', mint: '05ffa1', purple: 'b967ff', yellow: 'fffb96', coral: 'ff9b85' };
@@ -66,11 +67,38 @@ for (const hero of HEROES) {
   }
 }
 
+// ── Gen Z: original streetwear characters drawn in code (scripts/lib/genz.mjs) ──
+let z = 0;
+for (const g of GENZ) {
+  for (const skin of SKINS) { fs.writeFileSync(`public/avatars/${g.id}-${skin.id}.svg`, genzSvg(g, { hex: '#' + skin.hex })); z++; }
+}
+
+// ── Illustrated: DiceBear "Lorelei" — CC0 1.0, https://www.dicebear.com/styles/lorelei/ ──
+const ILLUS_HAIR = ['ff5ca8', '2b1b14', '7c3aed', '16a34a', '2563eb', 'f59e0b', '0ea5e9', 'ef4444', '8b5a2b', '111827', 'f472b6', '14b8a6'];
+const ILLUS_BG = ['ffd5dc', 'c0aede', 'b6e3f4', 'ffdfbf', 'd1f4d1', 'fde68a'];
+const ILLUS = [
+  { id: 'i1',  gender: 'f', label: 'Sunny',    seed: 'Sunny'   }, { id: 'i2',  gender: 'f', label: 'Pixie',    seed: 'Pixie'   },
+  { id: 'i3',  gender: 'f', label: 'Nova',     seed: 'Nova'    }, { id: 'i4',  gender: 'f', label: 'Clover',   seed: 'Clover'  },
+  { id: 'i5',  gender: 'f', label: 'Indigo',   seed: 'Indigo'  }, { id: 'i6',  gender: 'f', label: 'Mango',    seed: 'Mango'   },
+  { id: 'i7',  gender: 'm', label: 'Jett',     seed: 'Jett'    }, { id: 'i8',  gender: 'm', label: 'Ziggy',    seed: 'Ziggy'   },
+  { id: 'i9',  gender: 'm', label: 'Dash',     seed: 'Dash'    }, { id: 'i10', gender: 'm', label: 'Onyx',     seed: 'Onyx'    },
+  { id: 'i11', gender: 'm', label: 'Rio',      seed: 'Rio'     }, { id: 'i12', gender: 'm', label: 'Kai',      seed: 'Kai'     },
+];
+let il = 0;
+ILLUS.forEach((look, k) => {
+  for (const skin of SKINS) {
+    const svg = createAvatar(lorelei, { seed: look.seed, hairColor: [ILLUS_HAIR[k]], mouth: ['happy01','happy02','happy03','happy04','happy05','happy06','happy07','happy08','happy09','happy10'], skinColor: [skin.hex], backgroundColor: [ILLUS_BG[k % ILLUS_BG.length]], size: 128 }).toString();
+    fs.writeFileSync(`public/avatars/${look.id}-${skin.id}.svg`, svg); il++;
+  }
+});
+
 fs.writeFileSync('resources/avatars.json', JSON.stringify({
   skins: SKINS.map(({ id, label, hex }) => ({ id, label, hex: '#' + hex })),
   collections: [
     { id: 'retro', label: 'Retro 90s', looks: LOOKS.map(({ id, gender, label }) => ({ id, gender, label })) },
     { id: 'heroes', label: 'Heroes', looks: HEROES.map(({ id, gender, label }) => ({ id, gender, label })) },
+    { id: 'genz', label: 'Gen Z', looks: GENZ.map(({ id, gender, label }) => ({ id, gender, label })) },
+    { id: 'illus', label: 'Illustrated', looks: ILLUS.map(({ id, gender, label }) => ({ id, gender, label })) },
   ],
 }, null, 2) + '\n');
-console.log(`Built ${n} retro + ${h} hero avatars (${LOOKS.length + HEROES.length} looks × ${SKINS.length} skin shades) → public/avatars/, resources/avatars.json`);
+console.log(`Built ${n} retro + ${h} hero + ${z} gen-z + ${il} illustrated avatars (${LOOKS.length + HEROES.length + GENZ.length + ILLUS.length} looks × ${SKINS.length} skin shades) → public/avatars/, resources/avatars.json`);

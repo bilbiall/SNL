@@ -188,6 +188,138 @@
           "label": "Moon Warden"
         }
       ]
+    },
+    {
+      "id": "genz",
+      "label": "Gen Z",
+      "looks": [
+        {
+          "id": "g1",
+          "gender": "f",
+          "label": "Main Character"
+        },
+        {
+          "id": "g2",
+          "gender": "m",
+          "label": "Streetwear"
+        },
+        {
+          "id": "g3",
+          "gender": "f",
+          "label": "Soft Girl"
+        },
+        {
+          "id": "g4",
+          "gender": "m",
+          "label": "Gamer"
+        },
+        {
+          "id": "g5",
+          "gender": "f",
+          "label": "Hijabi Chic"
+        },
+        {
+          "id": "g6",
+          "gender": "m",
+          "label": "Bucket Hat"
+        },
+        {
+          "id": "g7",
+          "gender": "f",
+          "label": "Locs & Vibes"
+        },
+        {
+          "id": "g8",
+          "gender": "m",
+          "label": "Skater"
+        },
+        {
+          "id": "g9",
+          "gender": "f",
+          "label": "Afro Puff"
+        },
+        {
+          "id": "g10",
+          "gender": "m",
+          "label": "Dyed Mohawk"
+        },
+        {
+          "id": "g11",
+          "gender": "f",
+          "label": "Cap & Braids"
+        },
+        {
+          "id": "g12",
+          "gender": "f",
+          "label": "Y2K Bob"
+        }
+      ]
+    },
+    {
+      "id": "illus",
+      "label": "Illustrated",
+      "looks": [
+        {
+          "id": "i1",
+          "gender": "f",
+          "label": "Sunny"
+        },
+        {
+          "id": "i2",
+          "gender": "f",
+          "label": "Pixie"
+        },
+        {
+          "id": "i3",
+          "gender": "f",
+          "label": "Nova"
+        },
+        {
+          "id": "i4",
+          "gender": "f",
+          "label": "Clover"
+        },
+        {
+          "id": "i5",
+          "gender": "f",
+          "label": "Indigo"
+        },
+        {
+          "id": "i6",
+          "gender": "f",
+          "label": "Mango"
+        },
+        {
+          "id": "i7",
+          "gender": "m",
+          "label": "Jett"
+        },
+        {
+          "id": "i8",
+          "gender": "m",
+          "label": "Ziggy"
+        },
+        {
+          "id": "i9",
+          "gender": "m",
+          "label": "Dash"
+        },
+        {
+          "id": "i10",
+          "gender": "m",
+          "label": "Onyx"
+        },
+        {
+          "id": "i11",
+          "gender": "m",
+          "label": "Rio"
+        },
+        {
+          "id": "i12",
+          "gender": "m",
+          "label": "Kai"
+        }
+      ]
     }
   ]
 }
