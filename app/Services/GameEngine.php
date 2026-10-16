@@ -41,6 +41,7 @@ class GameEngine
 
     /** Milliseconds the most recent movement will visibly take on screen. */
     private int $delay = 0;
+    private ?Player $fillTarget = null;
 
     /** Whose turn it is right now — used to fill {you} / {other} in card text. */
     private ?Player $turnActor = null;
@@ -213,7 +214,7 @@ class GameEngine
             [$landing, $kind] = $this->previewLanding($actor->position, $value);
 
             // Only offer a Reroll when the landing would hurt — keeps the flow quick.
-            if ($actor->power('reroll') > 0 && in_array($kind, ['self', 'duel', 'snake_head'], true)) {
+            if (config('snl.powers.reroll') && $actor->power('reroll') > 0 && in_array($kind, ['self', 'duel', 'snake_head'], true)) {
                 $this->setPending([
                     'type' => 'reroll', 'actor_id' => $actorId, 'roll' => $value, 'from' => $actor->position,
                     'preview_tile' => $landing, 'preview_kind' => $kind,
@@ -365,6 +366,9 @@ class GameEngine
             case 'pick':
             case 'duel':
             case 'swap':
+                if ($kind === 'pick' && $this->tryRandomPick($actor, $tile, $number, $spin)) {
+                    break;
+                }
                 $card = $this->publicCard($this->cardFor($kind, $tile, $spin));
                 $eligible = $this->activePlayers()->where('id', '!=', $actor->id)->pluck('id')->values()->all();
                 if (!$eligible) {
@@ -436,6 +440,29 @@ class GameEngine
         }
     }
 
+    /** Sometimes the wheel - not the roller - picks the victim. Uses cards written with {target}; otherwise falls back to a normal pick. */
+    private function tryRandomPick(Player $actor, ?Tile $tile, int $number, bool $spin): bool
+    {
+        $eligible = $this->activePlayers()->where('id', '!=', $actor->id)->pluck('id')->values()->all();
+        if (!$eligible || random_int(1, 100) > (int) config('snl.random_pick_chance', 0)) {
+            return false;
+        }
+        $drawn = Card::draw($this->room, 'pick', true);
+        if (!$drawn) {
+            return false;
+        }
+        $target = $this->players[$eligible[array_rand($eligible)]];
+        $this->fillTarget = $target;
+        $card = $this->publicCard($this->cardFor('pick', $tile, $spin, $drawn));
+        $card['random'] = true;
+        $this->fillTarget = null;
+        $this->room->log(['type' => 'random_pick', 'player_id' => $actor->id, 'candidates' => $eligible, 'target_id' => $target->id, 'tile' => $number]);
+        $this->delay += 3200;
+        $this->hit($actor, [$target], $card, $number);
+
+        return true;
+    }
+
     private function spinKind(): string
     {
         $table = config('snl.spin_table');
@@ -468,13 +495,13 @@ class GameEngine
     // ───────────────────────────── Cards & hits ─────────────────────────────
 
     /** @return array{kind: string, text: string, icon: string, spin: bool} */
-    private function cardFor(string $kind, ?Tile $tile, bool $spin): array
+    private function cardFor(string $kind, ?Tile $tile, bool $spin, ?Card $preDrawn = null): array
     {
         $icon = $tile?->icon
             ?: (config("snl.mode_icons.{$this->room->content_mode}.$kind") ?? config("snl.tile_kinds.$kind.icon") ?? 'cards');
-        $text = $tile?->label;
-        $drawn = null;
-        if (!$text || $spin) {
+        $text = $preDrawn ? $preDrawn->text : $tile?->label;
+        $drawn = $preDrawn;
+        if (!$preDrawn && (!$text || $spin)) {
             // A spin ignores the tile's own fixed text — it's a different effect than the tile normally shows.
             $drawn = Card::draw($this->room, $kind);
             $text = $drawn?->text
@@ -507,6 +534,9 @@ class GameEngine
 
         return preg_replace_callback('/\{([a-z_]+)\}/', function ($m) {
             $slot = $m[1];
+            if ($slot === 'target') {
+                return $this->fillTarget?->name ?? 'someone';
+            }
             if ($slot === 'you') {
                 return $this->turnActor?->name ?? 'you';
             }
@@ -560,7 +590,7 @@ class GameEngine
             $source->bump('picks');
         }
         $this->room->log([
-            'type' => 'card', 'kind' => $card['kind'], 'text' => $card['text'], 'icon' => $card['icon'], 'spin' => $card['spin'] ?? false, 'intensity' => $card['intensity'] ?? $this->room->intensity,
+            'type' => 'card', 'kind' => $card['kind'], 'text' => $card['text'], 'icon' => $card['icon'], 'spin' => $card['spin'] ?? false, 'intensity' => $card['intensity'] ?? $this->room->intensity, 'random' => $card['random'] ?? false,
             'source_id' => $source->id, 'target_ids' => array_map(fn ($t) => $t->id, $targets), 'tile' => $tile,
         ]);
     }

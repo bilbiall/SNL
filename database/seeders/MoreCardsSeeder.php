@@ -27,6 +27,18 @@ class MoreCardsSeeder extends Seeder
             }
         }
 
+        // Retired wording (the old "chaser" cards were confusing) — remove the originals so only the clearer ones are drawn.
+        Card::whereIn('kind', ['pick', 'duel'])->where('text', 'like', '%chaser%')->delete();
+
+        foreach ($d['random_pick'] ?? [] as $mode => $tiers) {
+            foreach ($tiers as $intensity => $lines) {
+                foreach ($lines as $text) {
+                    Card::firstOrCreate(['kind' => 'pick', 'mode' => $mode, 'text' => $text],
+                        ['board_id' => null, 'intensity' => $intensity, 'is_active' => true]);
+                }
+            }
+        }
+
         foreach ($d['facts'] as [$i, $text, $answer, $explain, $penalty]) {
             Card::firstOrCreate(['kind' => 'fact', 'mode' => 'all', 'text' => $text],
                 ['board_id' => null, 'intensity' => $i, 'answer' => $answer, 'explain' => $explain, 'penalty' => $penalty, 'is_active' => true]);

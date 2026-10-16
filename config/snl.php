@@ -63,6 +63,9 @@ return [
     ],
 
     // What a Mystery spin can turn into (kind => weight).
+    // Chance (%) that a Pick-a-friend square lets the wheel choose the victim instead of the roller (needs cards containing {target}).
+    'random_pick_chance' => 35,
+
     'spin_table' => ['self' => 3, 'pick' => 3, 'everyone' => 2, 'fact' => 2, 'bluff' => 2, 'spotlight' => 3, 'power' => 2, 'blank' => 1],
 
     // Card kinds the admin can write text for.
@@ -85,8 +88,8 @@ return [
     'powers' => [
         'shield' => ['label' => 'Shield', 'icon' => 'shield', 'start' => 1, 'max' => 3,
                      'help' => 'Block one hit aimed at you.'],
-        'reroll' => ['label' => 'Reroll', 'icon' => 'reroll', 'start' => 1, 'max' => 3,
-                     'help' => 'Throw your die again after seeing the number.'],
+        // Reroll is switched off for now (the engine and its popups ignore it). Put this line back to bring it back:
+        // 'reroll' => ['label' => 'Reroll', 'icon' => 'reroll', 'start' => 1, 'max' => 3, 'help' => 'Throw your die again after seeing the number.'],
     ],
 
     /*

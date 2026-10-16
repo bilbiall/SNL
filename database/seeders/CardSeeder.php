@@ -159,7 +159,7 @@ class CardSeeder extends Seeder
             [1, 'drinks', 'Choose a friend: they sip, and tell us their favourite song right now.'],
             [2, 'drinks', 'Choose a friend to take a shot.'],
             [2, 'drinks', 'Pick who is most likely to ghost someone. They take a shot.'],
-            [2, 'drinks', 'Pick someone to take a shot — you choose their chaser.'],
+            [2, 'drinks', 'Pick someone to take a shot — then you choose a toast for them to say.'],
             [3, 'drinks', 'Pick the player with the worst taste in music. They take a shot and defend it.'],
             [3, 'drinks', 'Pick someone: they take a shot and tell a secret.'],
             [1, 'family', 'Pick a friend to give you a compliment.'],

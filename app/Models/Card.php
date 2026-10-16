@@ -18,11 +18,13 @@ class Card extends Model
 
     /** A random live card of this kind for the room's mode (or "all" modes), never wilder than the
      *  room's intensity. Falls back to ignoring intensity before giving up. */
-    public static function draw(Room $room, string $kind): ?self
+    public static function draw(Room $room, string $kind, ?bool $random = null): ?self
     {
         $base = fn () => static::where('kind', $kind)
             ->whereIn('mode', ['all', $room->content_mode])
             ->where('is_active', true)
+            // Pick-a-friend cards written with {target} are the wheel's deck; the rest are the roller's choice.
+            ->when($kind === 'pick', fn ($q) => $q->where('text', $random ? 'like' : 'not like', '%{target}%'))
             ->where(fn ($q) => $q->whereNull('board_id')->orWhere('board_id', $room->board_id));
 
         return $base()->where('intensity', '<=', $room->intensity)->inRandomOrder()->first()

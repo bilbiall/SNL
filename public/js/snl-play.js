@@ -362,6 +362,8 @@
 
       case 'factcheck': await factResultOverlay(a); break;
 
+      case 'random_pick': await randomPickOverlay(a); break;
+
       case 'neutral':
         toast(`${ic('hourglass')} <b>${esc(who.name)}</b> · ${esc(a.text)}`, 2200, '#6b7280');
         await sleep(700);
@@ -459,7 +461,7 @@
     let who = '';
     switch (a.kind) {
       case 'self': head = `${spin}${esc(src.name)}`; who = chip(src); break;
-      case 'pick': head = `${spin}${esc(src.name)} picked`; who = targets.map(chip).join(''); break;
+      case 'pick': head = a.random ? `${spin}The wheel picked` : `${spin}${esc(src.name)} picked`; who = targets.map(chip).join(''); break;
       case 'everyone': head = `${spin}Everybody!`; break;
       case 'duel': head = `${esc(targets[0]?.name || 'Someone')} lost the duel`; who = targets.map(chip).join(''); break;
       case 'fact': head = `${spin}Fun fact`; break;
@@ -468,6 +470,25 @@
     }
     snd(a.kind === 'fact' ? 'notify' : (a.kind === 'self' || a.kind === 'duel' || a.kind === 'pick') ? 'decisionPing' : 'mystery');
     return holdCard('ovCard', { color: a.kind === 'blank' || a.spin ? kindColor('spin') : kindColor(a.kind), head, icon: a.icon || 'cards', who, text: a.text, intensity: a.intensity || 0 });
+  }
+
+  /** The wheel spins over everyone's avatar and slows to a stop on the victim. */
+  async function randomPickOverlay(a) {
+    const ids = a.candidates || [];
+    const mid = `<div class="rw">${ids.map((id) => chip(P(id)).replace('tgt static', 'tgt static rwc').replace('<span class="tgt', `<span data-id="${id}" class="tgt`)).join('')}</div>`;
+    show('ovCard', cardShell({ color: kindColor('pick'), head: 'The wheel decides…', icon: 'dice', mid }));
+    snd('roll');
+    const chips = [...$('ovCard').querySelectorAll('.rw .tgt')];
+    const target = Math.max(0, chips.findIndex((c) => +c.dataset.id === a.target_id));
+    const steps = chips.length * 3 + target;
+    for (let i = 0; i <= steps; i++) {
+      chips.forEach((c, k) => c.classList.toggle('hot', k === i % chips.length));
+      await sleep(70 + Math.pow(i / steps, 3) * 380);
+    }
+    chips[target].classList.add('won');
+    snd('decisionPing');
+    await sleep(900);
+    hide('ovCard');
   }
 
   function ruleOverlay(a) {

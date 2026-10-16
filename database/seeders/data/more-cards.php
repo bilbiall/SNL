@@ -196,7 +196,7 @@ return [
         'duel' => [
             'drinks' => [
                 1 => ['The loser takes a sip and compliments the winner.', 'The loser sips and sings a line of any song.'],
-                2 => ['The loser takes a shot and picks the next song.', 'The loser takes a shot and does a victory dance for the winner.', 'The loser takes a shot — the winner picks the chaser.'],
+                2 => ['The loser takes a shot and picks the next song.', 'The loser takes a shot and does a victory dance for the winner.', 'The loser takes a shot — the winner chooses a toast for them to say first.'],
                 3 => ['The loser takes a shot and confesses an embarrassing moment.', 'The loser takes a shot — the winner asks one question, answered honestly or another shot.'],
             ],
             'family' => [
@@ -275,6 +275,20 @@ return [
             'family' => [
                 1 => ['Take a deep breath… and a big smile.', 'Wiggle your fingers and shake it out!'],
             ],
+        ],
+    ],
+
+    // ───────── The wheel picks (kind = pick, written with {target}) ─────────
+    'random_pick' => [
+        'drinks' => [
+            1 => ['The wheel picked {target}! Take a sip and give the table a compliment.', '{target} was chosen — take a sip and show your best dance move.', '{target}, the wheel says sip! Then name your go-to karaoke song.'],
+            2 => ['The wheel picked {target}! Take a shot and tell your worst date story.', '{target} was chosen — take a shot, then pick the next song.', 'Fate chose {target}: take a shot and confess a guilty pleasure.', '{target} takes a shot — the wheel has spoken!'],
+            3 => ['The wheel is merciless: {target} takes a shot and answers one honest question.', '{target} was chosen — take a shot and reveal your most-used emoji.', 'Fate chose {target}: take a shot and read your last text out loud (or take another).'],
+        ],
+        'family' => [
+            1 => ['The wheel picked {target}! Tell everyone your favourite joke.', '{target} was chosen — do your best victory dance.', 'The wheel chose {target}: name three animals in five seconds.'],
+            2 => ['The wheel picked {target}! Do an impression of your favourite cartoon character.', '{target} was chosen — sing the first line of any song.', 'Fate chose {target}: tell a funny story from school or work.'],
+            3 => ['The wheel is wild: {target}, do ten seconds of your best robot dance.', '{target} was chosen — talk in a silly voice until your next turn.', 'Fate chose {target}: act out an animal and let the table guess!'],
         ],
     ],
 

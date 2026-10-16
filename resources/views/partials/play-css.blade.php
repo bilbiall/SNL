@@ -174,7 +174,7 @@
     }
 
     /* ── Dialogs: standard, compact sizes ── */
-    .ov { position: absolute; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; padding: 8px; box-sizing: border-box; background: rgba(5,4,12,.72); backdrop-filter: blur(3px); }
+    .ov { position: absolute; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; padding: 8px; box-sizing: border-box; background: rgba(5,4,12,.30); backdrop-filter: blur(1.5px); }
     .ov.show { display: flex; animation: ovIn .2s ease both; }
     #ovCard { z-index: 62; } #ovWin { z-index: 64; } #ovConfirm { z-index: 66; }
     @keyframes ovIn { from { opacity: 0; } to { opacity: 1; } }
@@ -241,7 +241,7 @@
         background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.22) 50%, transparent 62%); background-size: 250% 100%; background-position: 130% 0; animation: foilSweep 1.1s .55s ease-out 1 both, foilIdle 5s 2s linear infinite; }
     @keyframes foilSweep { to { background-position: -60% 0; } }
     @keyframes foilIdle { 0%, 70% { background-position: 130% 0; } 100% { background-position: -60% 0; } }
-    .pcard { border: 0; padding: 0; background: linear-gradient(165deg, #221e38, #12101e 62%) padding-box, conic-gradient(from 210deg, var(--k), #fff8 18%, var(--k) 36%, color-mix(in srgb, var(--k) 40%, #000) 60%, var(--k) 80%, #fff6 92%, var(--k)) border-box; border: 3px solid transparent; }
+    .pcard { background: linear-gradient(165deg, rgba(38,32,64,.66), rgba(16,14,28,.56) 62%); border: 2.5px solid color-mix(in srgb, var(--k) 80%, #fff); -webkit-backdrop-filter: blur(7px) saturate(1.2); backdrop-filter: blur(7px) saturate(1.2); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 0 30px color-mix(in srgb, var(--k) 38%, transparent), 0 16px 40px rgba(0,0,0,.45); }
     .pcard .pc-mark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: min(46cqw, 130px); color: var(--k); opacity: .08; pointer-events: none; transform: rotate(-12deg); }
     .pcard .pc-corner { position: absolute; z-index: 2; font-size: clamp(.7rem, 3.2cqh, 1rem); color: #fff; opacity: .9; line-height: 1; }
     .pcard .pc-corner.tl { top: .42rem; left: .45rem; }
@@ -276,6 +276,10 @@
     .pcard .ov-btns { animation: chipPop .5s 1.1s ease-out both; }
     .pcard .ov-sub { animation: chipPop .6s 1s ease-out both; }
     @media (prefers-reduced-motion: reduce) { .pcard, .pcard * { animation-duration: .01s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; } }
+    .rw { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center; }
+    .rw .tgt { opacity: .45; transform: scale(.92); transition: all .12s; }
+    .rw .tgt.hot { opacity: 1; transform: scale(1.12); border-color: var(--c); box-shadow: 0 0 16px var(--c); }
+    .rw .tgt.won { animation: none; transform: scale(1.22); }
     .board-dim { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,.10) 40%, rgba(0,0,0,.30) 100%), rgba(4,6,18,.14); }
     .pcard .spark { position: absolute; color: var(--k); font-size: clamp(.7rem, 3cqh, 1rem); opacity: .9; animation: twinkle 1.6s ease-in-out infinite; pointer-events: none; }
     @keyframes twinkle { 0%,100% { transform: scale(.6) rotate(0); opacity: .3; } 50% { transform: scale(1.15) rotate(25deg); opacity: 1; } }
