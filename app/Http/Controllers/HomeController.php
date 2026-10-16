@@ -10,7 +10,12 @@ class HomeController extends Controller
 {
     public function index()
     {
-        return view('home', ['boards' => Board::playable()]);
+        // One look per avatar on the roster (random skin shade) for the bouncing token on the landing page.
+        $looks = Avatars::looks();
+        shuffle($looks);
+        $pool = array_map(fn ($l) => $l['id'] . '-' . random_int(1, 7), array_slice($looks, 0, 24));
+
+        return view('home', ['boards' => Board::playable(), 'pool' => $pool]);
     }
 
     /** Game setup. ?type=party (one device) or ?type=online (room code). */

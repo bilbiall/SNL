@@ -18,6 +18,15 @@
             : 'You get a 5-letter code to share. Friends join on their own phones with just a name.' }}
     </p>
 
+    @if($type === 'online')
+        <form action="{{ route('join') }}" method="GET" class="snl-card flex items-center gap-2 mb-5" style="padding:.7rem .9rem;">
+            <x-icon name="join" />
+            <span class="text-sm" style="flex:1;font-weight:700;">Got a code from a friend?</span>
+            <input name="code" class="snl-input" placeholder="CODE" maxlength="8" autocomplete="off" aria-label="Room code" style="width:7.5rem;text-align:center;text-transform:uppercase;letter-spacing:.2em;font-weight:900;">
+            <button class="btn btn-ghost btn-sm">Join</button>
+        </form>
+    @endif
+
     @if($errors->any())
         <div class="snl-alert err">@foreach($errors->all() as $e)<div>{{ $e }}</div>@endforeach</div>
     @endif

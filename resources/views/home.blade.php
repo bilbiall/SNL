@@ -75,6 +75,10 @@
     @keyframes breathe { 0%,100% { box-shadow: 0 12px 34px rgba(236,72,153,.45); } 50% { box-shadow: 0 12px 50px rgba(236,72,153,.8); } }
     .code { display: flex; gap: .5rem; margin-top: 1.5rem; animation: fadeUp .8s ease 1.7s both; }
     .code input { width: 10.5rem; text-align: center; text-transform: uppercase; letter-spacing: .25em; font-weight: 900; background: rgba(7,6,15,.6); backdrop-filter: blur(6px); }
+    .twinkles { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+    .tw { position: absolute; width: var(--s); height: var(--s); fill: #fff; opacity: 0; filter: drop-shadow(0 0 5px rgba(253,224,71,.9)); animation: twinkle 4.2s ease-in-out var(--d) infinite; }
+    .tw:nth-child(3n) { fill: #fde68a; } .tw:nth-child(4n) { fill: #f9a8d4; filter: drop-shadow(0 0 5px rgba(244,114,182,.9)); }
+    @keyframes twinkle { 0%, 100% { opacity: 0; transform: scale(.4) rotate(0); } 45% { opacity: .95; transform: scale(1) rotate(45deg); } 60% { opacity: .5; transform: scale(.8) rotate(60deg); } }
     .lp-foot { position: absolute; bottom: 1rem; left: 0; right: 0; font-size: .74rem; color: #94a3b8; animation: fadeUp .8s ease 2s both; }
     .lp-foot a { color: #94a3b8; }
 
@@ -89,6 +93,20 @@
     <div class="sweep" aria-hidden="true"></div>
     <div class="wash" aria-hidden="true"></div>
     <div class="pieces" id="lpPieces" aria-hidden="true"></div>
+    <div class="twinkles" aria-hidden="true">
+        <svg class="tw" viewBox="0 0 24 24" style="left:8%;top:14%;--s:12px;--d:0s" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z"/></svg>
+        <svg class="tw" viewBox="0 0 24 24" style="left:22%;top:7%;--s:9px;--d:1.3s" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z"/></svg>
+        <svg class="tw" viewBox="0 0 24 24" style="left:38%;top:20%;--s:8px;--d:2.1s" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z"/></svg>
+        <svg class="tw" viewBox="0 0 24 24" style="left:63%;top:9%;--s:10px;--d:0.7s" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z"/></svg>
+        <svg class="tw" viewBox="0 0 24 24" style="left:80%;top:16%;--s:13px;--d:1.9s" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z"/></svg>
+        <svg class="tw" viewBox="0 0 24 24" style="left:92%;top:28%;--s:8px;--d:2.8s" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z"/></svg>
+        <svg class="tw" viewBox="0 0 24 24" style="left:5%;top:52%;--s:9px;--d:1.1s" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z"/></svg>
+        <svg class="tw" viewBox="0 0 24 24" style="left:95%;top:60%;--s:11px;--d:0.4s" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z"/></svg>
+        <svg class="tw" viewBox="0 0 24 24" style="left:14%;top:82%;--s:10px;--d:2.4s" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z"/></svg>
+        <svg class="tw" viewBox="0 0 24 24" style="left:86%;top:86%;--s:9px;--d:1.6s" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z"/></svg>
+        <svg class="tw" viewBox="0 0 24 24" style="left:50%;top:5%;--s:7px;--d:3.1s" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z"/></svg>
+        <svg class="tw" viewBox="0 0 24 24" style="left:30%;top:92%;--s:8px;--d:0.9s" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z"/></svg>
+    </div>
 
     <h1 class="title" aria-label="Snakes and Liquor">
         <span class="w">@foreach(str_split('SNAKES') as $i => $ch)<span style="--i:{{ $i }}">{{ $ch }}</span>@endforeach</span>
@@ -99,9 +117,9 @@
 
     <div class="mini" aria-hidden="true">
         <div class="track">
-            @php $tiles = [['#94a3b8','start'],['#f59e0b','self'],['#ec4899','pick'],['#10b981','everyone'],['#ef4444','duel'],['#22d3ee','fact'],['#a78bfa','swap'],['#facc15','power'],['#fb7185','trophy']]; @endphp
+            @php $tiles = [['#94a3b8','start'],['#f59e0b','self'],['#ec4899','pick'],['#fb7185','heart'],['#22d3ee','fact'],['#a78bfa','swap'],['#ef4444','duel'],['#facc15','power'],['#34d399','trophy']]; @endphp
             @foreach($tiles as $i => [$c, $icon])<div class="tile" style="--c:{{ $c }};--i:{{ $i }}"><x-icon :name="$icon" /></div>@endforeach
-            <div class="tok"><div style="overflow:hidden;"><img src="{{ asset('avatars/f3-3.svg') }}" alt="" style="width:100%;height:100%;display:block;image-rendering:pixelated;"></div></div>
+            <div class="tok"><div style="overflow:hidden;"><img id="tokAv" src="{{ asset('avatars/' . $pool[0] . '.svg') }}" alt="" style="width:100%;height:100%;display:block;"></div></div>
         </div>
         <div class="die">
             @foreach([[5],[1,9],[1,5,9],[1,3,7,9],[1,3,5,7,9],[1,3,4,6,7,9]] as $n => $pips)
@@ -115,13 +133,30 @@
         <a href="{{ route('setup', ['type' => 'online']) }}" class="go b"><x-icon name="globe" /> Play online</a>
     </div>
 
-    <form action="{{ route('join') }}" method="GET" class="code">
-        <input name="code" class="snl-input" placeholder="CODE" maxlength="8" autocomplete="off" aria-label="Room code">
-        <button class="btn btn-ghost">Join</button>
-    </form>
-
     <div class="lp-foot">18+ for Drinks mode · Drink responsibly · Icons <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a> · <a href="{{ route('login') }}">Admin</a></div>
 </div>
+
+<script>
+// The bouncing token puts on a different avatar every time it lands on a square.
+(function () {
+    var tok = document.querySelector('.tok'), img = document.getElementById('tokAv');
+    if (!tok || !img || !tok.getAnimations || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var base = '{{ asset('avatars') }}', pool = @json($pool), i = 0, last = -1;
+    pool.forEach(function (k) { var p = new Image(); p.src = base + '/' + k + '.svg'; });
+    (function loop() {
+        var an = tok.getAnimations()[0];
+        if (an && an.currentTime != null) {
+            var phase = Math.floor((an.currentTime % 10000) / 1000);
+            if (phase !== last) {
+                last = phase;
+                i = (i + 1) % pool.length; img.src = base + '/' + pool[i] + '.svg';
+                img.animate([{ transform: 'scale(1.3) rotate(-8deg)', filter: 'brightness(1.6)' }, { transform: 'none', filter: 'none' }], { duration: 320, easing: 'cubic-bezier(.34,1.56,.64,1)' });
+            }
+        }
+        requestAnimationFrame(loop);
+    })();
+})();
+</script>
 
 <script>
 // Game pieces pop in around the edges, then drift; they lean gently away from the pointer.
