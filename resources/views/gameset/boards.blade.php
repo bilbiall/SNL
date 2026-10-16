@@ -73,6 +73,19 @@
     <button type="submit" form="board-calibrator" id="saveLayoutBtn" class="gs-btn go">💾 Save board layout</button>
 </div>
 
+{{-- Quick layout: click the first and last square of each row and the rest are spaced evenly. --}}
+<div class="gs-box" style="background:rgba(236,72,153,.05);border:1px solid rgba(236,72,153,.2);padding:.9rem 1.1rem;margin-bottom:1rem;">
+    <div class="flex flex-wrap items-center gap-2">
+        <b style="color:#f9a8d4;font-size:.85rem;">⚡ Quick layout</b>
+        <span style="font-size:.72rem;color:rgba(255,255,255,.5);">Squares in each row, bottom row first (comma-separated):</span>
+        <input id="qlCounts" class="gs-in" style="max-width:340px;" autocomplete="off">
+        <button type="button" id="qlStart" class="gs-btn go">Start</button>
+        <button type="button" id="qlCancel" class="gs-btn soft" style="display:none;">Cancel</button>
+    </div>
+    <p id="qlStatus" style="font-size:.8rem;margin:.55rem 0 0;color:#fbcfe8;font-weight:700;"></p>
+    <p style="font-size:.7rem;color:rgba(255,255,255,.4);margin:.3rem 0 0;">Count the squares in every row of your art first — the counts must add up to {{ $board->tile_count }}. Then click the <b>centre of the first square</b> and the <b>centre of the last square</b> of each row, in numbering order (a snaking board flips direction every row — just follow the numbers shown). The squares in between are spaced evenly. Works on whichever layout tab is open; then nudge anything that's off by dragging, and press Save.</p>
+</div>
+
 <div class="flex gap-1" style="margin-bottom:-1px;">
     <div class="layout-tab active" data-tab="desktop" onclick="switchLayoutTab('desktop')">🖥️ Desktop layout</div>
     <div class="layout-tab" data-tab="mobile" onclick="switchLayoutTab('mobile')">📱 Mobile landscape layout</div>
@@ -202,10 +215,83 @@
         });
     }
     const clamp = v => Math.max(0, Math.min(100, v));
-    wire('boardCalibrator', '.cal-tile', (b, x, y) => { const r = b.getBoundingClientRect(); return { left: clamp((x - r.left) / r.width * 100), top: clamp((y - r.top) / r.height * 100) }; });
+    const convDesktop = (b, x, y) => { const r = b.getBoundingClientRect(); return { left: clamp((x - r.left) / r.width * 100), top: clamp((y - r.top) / r.height * 100) }; };
     // The mobile pane is rotated 90° clockwise, so a pointer's screen position maps to the board's % space
     // rotated too: local "left%" runs down the screen's Y axis, local "top%" runs backwards along X.
-    wire('boardCalibratorMobile', '.cal-tile-mobile', (b, x, y) => { const r = b.getBoundingClientRect(); return { left: clamp((y - r.top) / r.height * 100), top: clamp(100 - (x - r.left) / r.width * 100) }; });
+    const convMobile = (b, x, y) => { const r = b.getBoundingClientRect(); return { left: clamp((y - r.top) / r.height * 100), top: clamp(100 - (x - r.left) / r.width * 100) }; };
+    wire('boardCalibrator', '.cal-tile', convDesktop);
+    wire('boardCalibratorMobile', '.cal-tile-mobile', convMobile);
+
+    // ── Quick layout: click each row's first and last square; the squares between are spaced evenly. ──
+    const PANES = {
+        desktop: { id: 'boardCalibrator', sel: '.cal-tile', conv: convDesktop },
+        mobile:  { id: 'boardCalibratorMobile', sel: '.cal-tile-mobile', conv: convMobile },
+    };
+    function spaceRow(a, b, count) {
+        return Array.from({ length: count }, (_, k) => count === 1 ? { left: a.left, top: a.top } : {
+            left: a.left + (b.left - a.left) * k / (count - 1),
+            top:  a.top  + (b.top  - a.top)  * k / (count - 1),
+        });
+    }
+    (function quickLayout() {
+        const total = {{ $board->tile_count }};
+        const input = document.getElementById('qlCounts'), status = document.getElementById('qlStatus');
+        const startBtn = document.getElementById('qlStart'), cancelBtn = document.getElementById('qlCancel');
+        const sum = a => a.reduce((s, n) => s + n, 0);
+        let counts = [], clicks = [], row = 0, active = null;
+
+        // A sensible default: the same grid shape new boards start with.
+        (function () {
+            const cols = Math.max(4, Math.ceil(Math.sqrt(total * 1.5)));
+            const out = []; let left = total;
+            while (left > 0) { out.push(Math.min(cols, left)); left -= cols; }
+            input.value = out.join(',');
+        })();
+
+        function stop(msg) {
+            active = null;
+            document.querySelectorAll('.cal-board').forEach(b => { b.classList.remove('picking'); b.style.cursor = ''; });
+            startBtn.disabled = false; cancelBtn.style.display = 'none';
+            status.textContent = msg || '';
+        }
+        function ask() {
+            const first = sum(counts.slice(0, row)) + 1, last = first + counts[row] - 1;
+            const firstClick = clicks.length % 2 === 0;
+            status.innerHTML = `Row ${row + 1} of ${counts.length} — click the <b>centre of square ${firstClick ? first : last}</b> (${firstClick ? 'first' : 'last'} square of this row).`;
+        }
+        startBtn.onclick = () => {
+            counts = input.value.split(/[\s,]+/).map(Number).filter(n => n > 0);
+            if (!counts.length || sum(counts) !== total) { status.textContent = `Those add up to ${sum(counts)}, but this board has ${total} squares.`; return; }
+            active = PANES[document.getElementById('layoutField').value];
+            clicks = []; row = 0;
+            const board = document.getElementById(active.id);
+            board.classList.add('picking'); board.style.cursor = 'crosshair';
+            startBtn.disabled = true; cancelBtn.style.display = '';
+            ask();
+        };
+        cancelBtn.onclick = () => stop('Cancelled — nothing was moved after the last finished row.');
+
+        Object.values(PANES).forEach(p => {
+            const board = document.getElementById(p.id);
+            board.classList.add('cal-board');
+            // Capture phase: while picking, a click is a measurement, never the start of a drag.
+            board.addEventListener('pointerdown', e => {
+                if (active !== p) return;
+                e.preventDefault(); e.stopPropagation();
+                clicks.push(p.conv(board, e.clientX, e.clientY));
+                if (clicks.length % 2 === 1) { ask(); return; }
+                const first = sum(counts.slice(0, row)) + 1;
+                const pts = spaceRow(clicks[clicks.length - 2], clicks[clicks.length - 1], counts[row]);
+                pts.forEach((pt, k) => {
+                    const tile = board.querySelector(`${p.sel}[data-number="${first + k}"]`);
+                    if (tile) { tile.style.left = pt.left.toFixed(2) + '%'; tile.style.top = pt.top.toFixed(2) + '%'; }
+                });
+                row++;
+                if (row >= counts.length) stop('✅ All rows placed — nudge any square that is off by dragging it, then press Save.');
+                else { clicks = []; ask(); }
+            }, true);
+        });
+    })();
 
     function switchLayoutTab(name) {
         document.querySelectorAll('.layout-tab[data-tab]').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
