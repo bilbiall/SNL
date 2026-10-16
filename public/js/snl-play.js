@@ -465,6 +465,7 @@
       case 'everyone': head = `${spin}Everybody!`; break;
       case 'duel': head = `${esc(targets[0]?.name || 'Someone')} lost the duel`; who = targets.map(chip).join(''); break;
       case 'fact': head = `${spin}Fun fact`; break;
+      case 'heart': head = `${spin}Love ladder · ${esc(src.name)}`; who = chip(src); break;
       case 'blank': head = 'Mystery spin'; break;
       default: head = 'Card';
     }

@@ -50,12 +50,12 @@ class GameEngine
         'drinks' => [
             'self' => 'Take a sip.', 'pick' => 'Pick someone to take a sip.', 'everyone' => 'Everybody take a sip.',
             'duel' => 'The loser takes a sip.', 'fact' => 'Share a fun fact with the table.', 'rule' => 'No pointing for the rest of the game.',
-            'swap' => 'Swap places with a player of your choice!', 'neutral' => 'Free square — you are safe. Sip of water?',
+            'swap' => 'Swap places with a player of your choice!', 'neutral' => 'Free square — you are safe. Sip of water?', 'heart' => 'Give {other} a genuine compliment.',
         ],
         'family' => [
             'self' => 'Do your best victory dance!', 'pick' => 'Pick someone to do ten star jumps.', 'everyone' => 'Everybody cheer as loud as you can!',
             'duel' => 'The loser does a silly walk.', 'fact' => 'Share a fun fact with the table.', 'rule' => 'Everyone must speak in a whisper until the next rule.',
-            'swap' => 'Swap places with a player of your choice!', 'neutral' => 'Free square — you are safe. Take a breath!',
+            'swap' => 'Swap places with a player of your choice!', 'neutral' => 'Free square — you are safe. Take a breath!', 'heart' => 'Give {other} a genuine compliment.',
         ],
     ];
 
@@ -356,6 +356,11 @@ class GameEngine
             case 'self':
                 $card = $this->publicCard($this->cardFor('self', $tile, $spin));
                 $this->hit($actor, [$actor], $card, $number);
+                break;
+
+            case 'heart': // love ladder — a kind moment, never a penalty
+                $card = $this->publicCard($this->cardFor('heart', $tile, $spin));
+                $this->commitHit($actor, [$actor], $card, $number);
                 break;
 
             case 'everyone':

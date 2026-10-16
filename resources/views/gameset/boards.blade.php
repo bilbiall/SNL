@@ -8,6 +8,10 @@
     .tile-row:hover { background: rgba(255,255,255,.02); }
     .tile-num { font-weight: 900; font-size: .8rem; color: #a5b4fc; text-align: center; }
     .row-group { background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.07); border-radius: 1rem; overflow: hidden; margin-bottom: 1rem; }
+    .pager { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: space-between; align-items: center; }
+    .pager-pages, .pager-tools { display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; }
+    .pg { border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); color: #cbd5e1; font: inherit; font-size: .72rem; font-weight: 800; padding: .32rem .7rem; border-radius: .6rem; cursor: pointer; }
+    .pg.on { background: linear-gradient(135deg, #f59e0b, #ec4899); color: #fff; border-color: transparent; }
     .row-group-h { padding: .55rem .9rem; font-size: .75rem; font-weight: 900; color: #fbbf24; background: rgba(245,158,11,.06); border-bottom: 1px solid rgba(245,158,11,.15); }
     @media (max-width: 900px) { .tile-row { grid-template-columns: repeat(2, 1fr); } .tile-head { display: none; } }
 
@@ -173,14 +177,27 @@
         <b>Icon</b> is shown on the card pop-up.
     </p>
 
+    <div class="pager" id="tilePager">
+        <div class="pager-pages" id="pagerPages">
+            @foreach($groups as $i => $g)<button type="button" class="pg" data-page="{{ $i }}">{{ $loop->first ? 1 : $i * 10 + 1 }}–{{ min(($i + 1) * 10, $board->tile_count) }}</button>@endforeach
+            <button type="button" class="pg" data-page="all">All</button>
+        </div>
+        <div class="pager-tools">
+            <select id="pagerKind" class="gs-in" style="width:auto;"><option value="">Every type</option>@foreach($kinds as $key => $k)<option value="{{ $key }}">{{ $k['label'] }}</option>@endforeach</select>
+            <input id="pagerJump" type="number" min="1" max="{{ $board->tile_count }}" class="gs-in" style="width:5.5rem;" placeholder="Go to #">
+            <button type="button" class="pg" id="pagerPrev">‹ Prev</button><button type="button" class="pg" id="pagerNext">Next ›</button>
+        </div>
+    </div>
+    <div id="pagerNote" style="font-size:.7rem;color:rgba(255,255,255,.4);margin:.2rem 0 .7rem;"></div>
+
     @foreach($groups as $g)
-    <div class="row-group">
+    <div class="row-group" data-group="{{ $loop->index }}">
         <div class="row-group-h">{{ $g['label'] }}</div>
         <div class="tile-row tile-head" style="background:rgba(255,255,255,.03);">
             <span class="gs-h">#</span><span class="gs-h">Type</span><span class="gs-h">Target</span><span class="gs-h">Icon</span><span class="gs-h">Fixed text (optional)</span>
         </div>
         @foreach($g['tiles'] as $t)
-        <div class="tile-row">
+        <div class="tile-row" data-n="{{ $t->number }}" data-kind="{{ $t->kind }}">
             <input type="hidden" name="tiles[{{ $t->number }}][number]" value="{{ $t->number }}">
             <span class="tile-num">{{ $t->number }}</span>
             <select name="tiles[{{ $t->number }}][kind]" class="gs-in">
@@ -190,13 +207,43 @@
             </select>
             <input type="number" name="tiles[{{ $t->number }}][target_number]" value="{{ $t->target_number }}" min="1" max="{{ $board->tile_count }}" class="gs-in" placeholder="→">
             <input name="tiles[{{ $t->number }}][icon]" value="{{ $t->icon }}" class="gs-in" maxlength="24" list="iconKeys" placeholder="icon" title="A game-icon name such as flag, trophy or duel — leave blank to use the square type's own icon">
-            <input name="tiles[{{ $t->number }}][label]" value="{{ $t->label }}" class="gs-in" maxlength="120" placeholder="Random from deck">
+            <input name="tiles[{{ $t->number }}][label]" value="{{ $t->label }}" class="gs-in" maxlength="120" placeholder="{{ ($kinds[$t->kind]['card'] ?? null) ? 'Random from the ' . ($kinds[$t->kind]['label']) . ' deck (' . ($deckCounts[$kinds[$t->kind]['card']] ?? 0) . ' cards)' : 'No card on this square type' }}">
         </div>
         @endforeach
     </div>
     @endforeach
     <button class="gs-btn go">Save all squares</button>
 </form>
+<script>
+(function () {
+    var groups = [].slice.call(document.querySelectorAll('.row-group[data-group]'));
+    var kindSel = document.getElementById('pagerKind'), jump = document.getElementById('pagerJump'), note = document.getElementById('pagerNote');
+    var buttons = [].slice.call(document.querySelectorAll('#pagerPages .pg'));
+    var page = 0; try { page = sessionStorage.getItem('snlTilePage') || 0; } catch (e) {}
+    if (page !== 'all') page = Math.min(+page || 0, groups.length - 1);
+    function render() {
+        var kind = kindSel.value, shown = 0;
+        groups.forEach(function (g, i) {
+            var inPage = page === 'all' || +page === i, any = false;
+            g.querySelectorAll('.tile-row[data-n]').forEach(function (r) {
+                var ok = inPage && (!kind || r.dataset.kind === kind);
+                r.style.display = ok ? '' : 'none'; if (ok) { any = true; shown++; }
+            });
+            var head = g.querySelector('.tile-head'); if (head) head.style.display = any ? '' : 'none';
+            g.style.display = any ? '' : 'none';
+        });
+        buttons.forEach(function (b) { b.classList.toggle('on', b.dataset.page === String(page)); });
+        note.textContent = shown + ' square' + (shown === 1 ? '' : 's') + ' shown' + (kind ? ' (filtered by type)' : '') + ' — every square is still saved when you press Save.';
+        try { sessionStorage.setItem('snlTilePage', page); } catch (e) {}
+    }
+    buttons.forEach(function (b) { b.addEventListener('click', function () { page = b.dataset.page === 'all' ? 'all' : +b.dataset.page; render(); }); });
+    document.getElementById('pagerPrev').addEventListener('click', function () { page = page === 'all' ? 0 : Math.max(0, page - 1); render(); });
+    document.getElementById('pagerNext').addEventListener('click', function () { page = page === 'all' ? 0 : Math.min(groups.length - 1, page + 1); render(); });
+    kindSel.addEventListener('change', function () { if (kindSel.value && page !== 'all') page = 'all'; render(); });
+    jump.addEventListener('change', function () { var n = +jump.value; if (n > 0) { page = Math.floor((n - 1) / 10); render(); var row = document.querySelector('.tile-row[data-n="' + n + '"]'); if (row) { row.scrollIntoView({ block: 'center' }); row.style.outline = '2px solid #f59e0b'; setTimeout(function () { row.style.outline = ''; }, 1600); } } });
+    render();
+})();
+</script>
 
 <datalist id="iconKeys">@foreach(\App\Support\Icons::keys() as $iconKey)<option value="{{ $iconKey }}">@endforeach</datalist>
 

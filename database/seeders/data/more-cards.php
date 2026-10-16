@@ -249,6 +249,36 @@ return [
             ],
         ],
 
+        // ───────── Love ladder — a kind moment, no penalty ─────────
+        'heart' => [
+            'all' => [
+                1 => [
+                    'Pay {other} a genuine compliment.', 'Tell {other} one thing you admire about them.', 'Give {other} a high five and say why they are great.',
+                    'Share the nicest thing a friend ever did for you.', 'Name one thing you love about this group.', 'Give {other} a shout-out for something they did this week.',
+                    'Say one thing you are grateful for today.', 'Tell {other} what you are most excited to do with them next.',
+                ],
+                2 => [
+                    'Tell {other} the first impression you had of them.', 'Compliment {other}\'s style — be specific.', 'Name a song that reminds you of {other} and why.',
+                    'Share a memory with {other} that still makes you smile.', 'Nominate {other} for an award and give the speech.', 'Say who you would call first with good news — and why.',
+                    'Tell {other} the nicest thing you have never told them.', 'Describe {other} in three kind words.',
+                ],
+                3 => [
+                    'Rate {other}\'s flirting game out of ten — honestly.', 'Give {other} your best pickup line.', 'Describe your perfect date in ten seconds — {other} gives it a score.',
+                    'Tell {other} the boldest compliment you can think of.', 'Write {other} a two-line love poem. Out loud. Now.', 'Say what you would do on a surprise first date with {other}.',
+                ],
+            ],
+            'drinks' => [
+                1 => ['Clink glasses with {other} and take a sip together.', 'Raise your glass and give {other} a toast.'],
+                2 => ['Give {other} a heartfelt toast — then you both sip.', 'Clink with {other} and share your favourite memory together.'],
+                3 => ['Make a toast to {other} in the most dramatic way possible — then sip.', 'Toast {other} with a pickup line — if it flops, take another sip.'],
+            ],
+            'family' => [
+                1 => ['Give {other} a big (air) hug and say why you are glad they are here.', 'Make {other} a tiny paper-crown out of words — three compliments.'],
+                2 => ['Give {other} a thank-you speech, ten seconds.', 'Give {other} a funny nickname that is also a compliment.'],
+                3 => ['Sing {other} a two-line compliment song.', 'Make {other} laugh in ten seconds — your best try.'],
+            ],
+        ],
+
         // ───────── Swap places — flavour for the roller's choice ─────────
         'swap' => [
             'all' => [

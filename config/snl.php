@@ -49,6 +49,7 @@ return [
         'fact'          => ['label' => 'True or false',  'icon' => 'fact',      'card' => 'fact',     'color' => '#06b6d4', 'help' => 'The game states a fact — the roller says true or false. Wrong answer = a penalty.'],
         'bluff'         => ['label' => 'Fact or bluff',  'icon' => 'jester',    'card' => 'bluff',    'color' => '#14b8a6', 'help' => 'The roller states a fact (true or made up). Anyone can call bluff — then it must be proven, or someone drinks.'],
         'spotlight'     => ['label' => 'Spotlight',      'icon' => 'mic',       'card' => 'spotlight','color' => '#fb923c', 'help' => 'A creative prompt on the clock — a movie for the moment, a song, a hot take. Fail it and take a penalty.'],
+        'heart'         => ['label' => 'Love ladder',    'icon' => 'heart',     'card' => 'heart',    'color' => '#fb7185', 'help' => 'A sweet moment: pay a compliment, share a memory, toast someone. No penalty — just good vibes.'],
         'rule'          => ['label' => 'New rule',       'icon' => 'rule',      'card' => 'rule',     'color' => '#a855f7', 'help' => 'Sets a table rule that stays until the next rule tile.'],
         'spin'          => ['label' => 'Mystery spin',   'icon' => 'mystery',   'card' => null,       'color' => '#f43f5e', 'help' => 'Spins for a random tile effect.'],
         'power'         => ['label' => 'Power-up',       'icon' => 'power',     'card' => null,       'color' => '#eab308', 'help' => 'Gives the roller a Shield or a Reroll.'],
@@ -66,7 +67,7 @@ return [
     // Chance (%) that a Pick-a-friend square lets the wheel choose the victim instead of the roller (needs cards containing {target}).
     'random_pick_chance' => 35,
 
-    'spin_table' => ['self' => 3, 'pick' => 3, 'everyone' => 2, 'fact' => 2, 'bluff' => 2, 'spotlight' => 3, 'power' => 2, 'blank' => 1],
+    'spin_table' => ['self' => 3, 'pick' => 3, 'everyone' => 2, 'fact' => 2, 'bluff' => 2, 'spotlight' => 3, 'heart' => 1, 'power' => 2, 'blank' => 1],
 
     // Card kinds the admin can write text for.
     'card_kinds' => [
@@ -78,6 +79,7 @@ return [
         'bluff'     => 'Fact or bluff (prompt)',
         'spotlight' => 'Spotlight (creative prompt)',
         'rule'      => 'New rule',
+        'heart'     => 'Love ladder (compliments & sweet moments)',
         'swap'      => 'Swap places (flavour line)',
         'neutral'   => 'Free square (flavour line — no action)',
     ],

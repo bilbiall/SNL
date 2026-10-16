@@ -7,7 +7,7 @@
 |       all in image pixels. Squares between are spaced evenly (same idea as GameSet's Quick layout).
 | kinds: one code per square, 1…80:
 |   b free · s you-do-it · p pick-a-friend · e everyone · d duel · w swap · f true-or-false · r rule
-|   m mystery spin · x power-up · u fact-or-bluff · o spotlight · L ladder bottom · S snake head
+|   m mystery spin · x power-up · u fact-or-bluff · o spotlight · h love ladder · L ladder bottom · S snake head
 | ladders / snakes: from => to (read off the artwork).
 */
 return [
@@ -24,7 +24,9 @@ return [
         [14,  170, 1200, 192],
         [13, 1160,  215,  65],
     ],
-    'kinds' => 'bsbeeLbbmLbb' . 'xsrodbfwwssLbe' . 'ubeSpmopsxLbd' . 'fwbbSfLpubexbe' . 'opdfrbodbxwbSb' . 'xxpSeeumbpoSb',
+    // Matched to the icons printed on the art: ☝ you · 👉 / person→person pick · hands-up & party-popper everyone · 💡 true/false (+ spotlight)
+    // ⟳ swap · scroll rule · swords duel · ? wheel spin · ⚡ power-up · ladder+hearts love ladder · group = bluff. Plain tiles are free squares.
+    'kinds' => 'bsbebLbbmLbb' . 'xbrbdbfwwbbLbb' . 'obeSbmbpbbLbb' . 'fbbbSbLpfbbhbb' . 'spubrbbdbhwbSb' . 'hxpSeeombpbSb',
     'ladders' => [6 => 35, 10 => 39, 24 => 52, 37 => 65, 46 => 76],
     'snakes'  => [79 => 49, 71 => 62, 66 => 41, 44 => 35, 30 => 22],
 ];

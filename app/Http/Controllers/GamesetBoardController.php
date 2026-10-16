@@ -42,6 +42,7 @@ class GamesetBoardController extends Controller
             'tiles'     => $tiles,
             'groups'    => $groups,
             'kinds'     => config('snl.tile_kinds'),
+            'deckCounts' => \App\Models\Card::where('is_active', true)->selectRaw('kind, count(*) as n')->groupBy('kind')->pluck('n', 'kind'),
             'roomCount' => $board ? $board->rooms()->count() : 0,
         ]);
     }
