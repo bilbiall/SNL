@@ -5,10 +5,10 @@
 @section('body')
 <div class="snl-narrow">
     <header class="flex items-center justify-between py-3 mb-2">
-        <a href="{{ route('home') }}" class="logo text-lg">🐍 Snakes <b>&amp;</b> Liquor 🥃</a>
+        <a href="{{ route('home') }}" class="logo text-lg"><x-icon name="snake" /> Snakes <b>&amp;</b> Liquor <x-icon name="cheers" /></a>
     </header>
 
-    <h1 class="snl-h text-2xl mb-1">🌍 Join a room</h1>
+    <h1 class="snl-h text-2xl mb-1"><x-icon name="globe" /> Join a room</h1>
     <p class="snl-muted text-sm mb-5">Ask the host for the 5-letter code, then pop your name in.</p>
 
     @if($errors->any())

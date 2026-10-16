@@ -4,7 +4,7 @@
 
 @section('body')
 <div class="snl-narrow" style="padding-top:4rem;">
-    <a href="{{ route('home') }}" class="logo text-lg block mb-6">🐍 Snakes <b>&amp;</b> Liquor 🥃</a>
+    <a href="{{ route('home') }}" class="logo text-lg block mb-6"><x-icon name="snake" /> Snakes <b>&amp;</b> Liquor <x-icon name="cheers" /></a>
     <h1 class="snl-h text-2xl mb-1">GameSet</h1>
     <p class="snl-muted text-sm mb-5">Admin sign-in — boards, squares and cards.</p>
 

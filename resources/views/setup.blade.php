@@ -5,13 +5,13 @@
 @section('body')
 <div class="snl-narrow">
     <header class="flex items-center justify-between py-3 mb-2">
-        <a href="{{ route('home') }}" class="logo text-lg">🐍 Snakes <b>&amp;</b> Liquor 🥃</a>
+        <a href="{{ route('home') }}" class="logo text-lg"><x-icon name="snake" /> Snakes <b>&amp;</b> Liquor <x-icon name="cheers" /></a>
         <a href="{{ route('setup', ['type' => $type === 'party' ? 'online' : 'party']) }}" class="btn btn-ghost btn-sm">
-            {{ $type === 'party' ? '🌍 Online instead' : '📱 Party mode instead' }}
+            <x-icon :name="$type === 'party' ? 'globe' : 'phone'" /> {{ $type === 'party' ? 'Online instead' : 'Party mode instead' }}
         </a>
     </header>
 
-    <h1 class="snl-h text-2xl mb-1">{{ $type === 'party' ? '📱 New party game' : '🌍 New online room' }}</h1>
+    <h1 class="snl-h text-2xl mb-1"><x-icon :name="$type === 'party' ? 'phone' : 'globe'" /> {{ $type === 'party' ? 'New party game' : 'New online room' }}</h1>
     <p class="snl-muted text-sm mb-5">
         {{ $type === 'party'
             ? 'One device on the table — add everyone who is playing and pass it around.'
@@ -34,7 +34,7 @@
                 <label class="pill-opt">
                     <input type="radio" name="content_mode" value="{{ $key }}" data-adult="{{ $m['adult'] ? 1 : 0 }}"
                            {{ old('content_mode', 'drinks') === $key ? 'checked' : '' }} {{ $m['enabled'] ? '' : 'disabled' }}>
-                    <span><b style="font-size:1.5rem;">{{ $m['emoji'] }}</b>{{ $m['label'] }}
+                    <span><x-icon :name="$m['icon']" style="font-size:1.7rem;" />{{ $m['label'] }}
                         <small>{{ $m['enabled'] ? ($m['adult'] ? '18+ only' : 'Everyone') : 'Coming soon' }}</small></span>
                 </label>
                 @endforeach
@@ -54,7 +54,7 @@
                 @foreach($levels as $n => $lv)
                 <label class="pill-opt">
                     <input type="radio" name="intensity" value="{{ $n }}" {{ (int) old('intensity', 2) === $n ? 'checked' : '' }}>
-                    <span><b style="font-size:1.4rem;">{{ $lv['emoji'] }}</b>{{ $lv['label'] }}</span>
+                    <span><x-icon :name="$lv['icon']" style="font-size:1.6rem;" />{{ $lv['label'] }}</span>
                 </label>
                 @endforeach
             </div>
@@ -109,7 +109,7 @@
         </div>
 
         <button class="btn btn-primary btn-block" style="font-size:1.05rem;padding:1rem;">
-            {{ $type === 'party' ? '🎲 Start the game' : '🌍 Create room' }}
+            <x-icon :name="$type === 'party' ? 'dice' : 'globe'" /> {{ $type === 'party' ? 'Start the game' : 'Create room' }}
         </button>
     </form>
 
@@ -133,6 +133,8 @@
     @if($type === 'party')
     const colors = @json($colors);
     const avatars = @json($avatars);
+    const iconUrl = @json(asset('icons.svg'));
+    const ico = (k) => '<svg class="ic" aria-hidden="true"><use href="' + iconUrl + '#i-' + k + '"/></svg>';
     const limits = @json($limits);
     const rows = document.getElementById('playerRows');
     const oldNames = @json(array_values(old('names', [])));
@@ -152,7 +154,7 @@
             row.className = 'flex items-center gap-2';
             row.innerHTML = `
                 <button type="button" class="dot" data-i="${i}" title="Change colour"
-                    style="width:2.3rem;height:2.3rem;border-radius:50%;border:2px solid #fff;background:${color};flex-shrink:0;font-size:1.1rem;cursor:pointer;">${avatars[i % avatars.length]}</button>
+                    style="width:2.3rem;height:2.3rem;border-radius:50%;border:2px solid #fff;background:${color};flex-shrink:0;font-size:1.15rem;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;padding:0;">${ico(avatars[i % avatars.length])}</button>
                 <input type="hidden" name="colors[]" value="${color}">
                 <input class="snl-input" name="names[]" maxlength="24" placeholder="Player ${i + 1}" value="${(names[i] || '').replace(/"/g, '&quot;')}" autocomplete="off" required>`;
             rows.appendChild(row);

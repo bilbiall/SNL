@@ -55,3 +55,8 @@ Positions are stored as a percentage of the image, so any artwork works.
 ## Responsible play
 
 Drinks mode is for adults. Every screen reminds players that any drink can be swapped for water and that they should never drive after drinking.
+
+## Credits & licences
+
+* **Icons** — [game-icons.net](https://game-icons.net) by Lorc, Delapouite and contributors, licensed [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). Compiled into `public/icons.svg` from `resources/icons.json` (`npm run icons`); to add or swap an icon, edit that map and rebuild. Please keep this credit.
+* **Landing-page photos** (`public/img/landing/`) — free-to-use stock from [Pexels](https://www.pexels.com) under the [Pexels licence](https://www.pexels.com/license/) (no attribution required): the red neon "Cocktails" sign (photo 3566120) and dice and chips on a felt table (photo 4677404).

@@ -44,7 +44,7 @@
     @foreach($boards as $b)
         <a href="{{ route('gameset.boards.index', ['board' => $b->id]) }}" class="layout-tab"
            style="border-bottom:1px solid rgba(255,255,255,.08);border-radius:.7rem;text-decoration:none;{{ $board && $b->id === $board->id ? 'background:rgba(245,158,11,.12);color:#fbbf24;border-color:rgba(245,158,11,.4);' : '' }}">
-            🗺️ {{ $b->name }} <span style="opacity:.55;font-weight:700;">· {{ $b->tile_count }}</span>@unless($b->is_active) <span style="color:#f87171;">· hidden</span>@endunless
+            {{ $b->name }} <span style="opacity:.55;font-weight:700;">· {{ $b->tile_count }}</span>@unless($b->is_active) <span style="color:#f87171;">· hidden</span>@endunless
         </a>
     @endforeach
     <button type="button" onclick="document.getElementById('newBoardPanel').classList.toggle('hidden')" class="gs-btn ok">➕ New board</button>
@@ -69,14 +69,14 @@
 
 {{-- Board layout calibration --}}
 <div class="flex items-center justify-between mb-2">
-    <h2 style="font-weight:900;color:#fbbf24;font-size:.9rem;margin:0;">🎯 Board layout — drag each square onto its real spot</h2>
-    <button type="submit" form="board-calibrator" id="saveLayoutBtn" class="gs-btn go">💾 Save board layout</button>
+    <h2 style="font-weight:900;color:#fbbf24;font-size:.9rem;margin:0;">Board layout — drag each square onto its real spot</h2>
+    <button type="submit" form="board-calibrator" id="saveLayoutBtn" class="gs-btn go">Save board layout</button>
 </div>
 
 {{-- Quick layout: click the first and last square of each row and the rest are spaced evenly. --}}
 <div class="gs-box" style="background:rgba(236,72,153,.05);border:1px solid rgba(236,72,153,.2);padding:.9rem 1.1rem;margin-bottom:1rem;">
     <div class="flex flex-wrap items-center gap-2">
-        <b style="color:#f9a8d4;font-size:.85rem;">⚡ Quick layout</b>
+        <b style="color:#f9a8d4;font-size:.85rem;">Quick layout</b>
         <span style="font-size:.72rem;color:rgba(255,255,255,.5);">Squares in each row, bottom row first (comma-separated):</span>
         <input id="qlCounts" class="gs-in" style="max-width:340px;" autocomplete="off">
         <button type="button" id="qlStart" class="gs-btn go">Start</button>
@@ -87,8 +87,8 @@
 </div>
 
 <div class="flex gap-1" style="margin-bottom:-1px;">
-    <div class="layout-tab active" data-tab="desktop" onclick="switchLayoutTab('desktop')">🖥️ Desktop layout</div>
-    <div class="layout-tab" data-tab="mobile" onclick="switchLayoutTab('mobile')">📱 Mobile landscape layout</div>
+    <div class="layout-tab active" data-tab="desktop" onclick="switchLayoutTab('desktop')">Desktop layout</div>
+    <div class="layout-tab" data-tab="mobile" onclick="switchLayoutTab('mobile')">Mobile landscape layout</div>
 </div>
 
 <form id="board-calibrator" method="POST" action="{{ route('gameset.boards.positions', $board) }}">
@@ -103,7 +103,7 @@
                      style="left:{{ $t->pos_left ?? 50 }}%; top:{{ $t->pos_top ?? 50 }}%;">{{ $t->number }}</div>
             @endforeach
         </div>
-        <p style="font-size:.72rem;color:rgba(255,255,255,.4);">🖱️ Drag any numbered square onto the board square it belongs to, then press <b>Save board layout</b>. This places the tokens on desktop and landscape phones.</p>
+        <p style="font-size:.72rem;color:rgba(255,255,255,.4);">Drag any numbered square onto the board square it belongs to, then press <b>Save board layout</b>. This places the tokens on desktop and landscape phones.</p>
     </div>
 
     <div id="mobilePane" class="layout-pane">
@@ -118,14 +118,14 @@
                 </div>
             </div>
         </div>
-        <p style="font-size:.72rem;color:rgba(255,255,255,.4);">📱 A faithful simulation of the rotated, forced-landscape view phones use in portrait. Calibrate here only if squares look off on a phone held upright; leave it alone to reuse the desktop positions (shown pre-filled).</p>
+        <p style="font-size:.72rem;color:rgba(255,255,255,.4);">A faithful simulation of the rotated, forced-landscape view phones use in portrait. Calibrate here only if squares look off on a phone held upright; leave it alone to reuse the desktop positions (shown pre-filled).</p>
     </div>
     <div id="hiddenInputs"></div>
 </form>
 
 {{-- Board settings --}}
 <div class="gs-box mt-6" style="background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.18);">
-    <h2 style="font-weight:900;color:#a5b4fc;font-size:.9rem;margin:0 0 .8rem;">⚙️ Board settings — {{ $board->name }}</h2>
+    <h2 style="font-weight:900;color:#a5b4fc;font-size:.9rem;margin:0 0 .8rem;">Board settings — {{ $board->name }}</h2>
     <form method="POST" action="{{ route('gameset.boards.settings', $board) }}" class="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end">
         @csrf
         <div class="col-span-2"><label class="gs-h">Board name</label><input name="name" value="{{ $board->name }}" class="gs-in" required maxlength="60"></div>
@@ -155,7 +155,7 @@
 
     <form method="POST" action="{{ route('gameset.boards.destroy', $board) }}" class="mt-4" onsubmit="return confirm('Delete this board, its art and all its squares? This cannot be undone.')">
         @csrf @method('DELETE')
-        <button class="gs-btn del">🗑️ Delete this board</button>
+        <button class="gs-btn del">Delete this board</button>
         <span style="font-size:.72rem;color:rgba(255,255,255,.4);margin-left:.5rem;">{{ $roomCount ? "It has {$roomCount} games on record — it can only be retired (untick Active)." : 'Never played — safe to delete.' }}</span>
     </form>
 </div>
@@ -164,8 +164,8 @@
 <form method="POST" action="{{ route('gameset.boards.tiles', $board) }}">
     @csrf
     <div class="flex items-center justify-between mb-2">
-        <h2 style="font-weight:900;color:#fbbf24;font-size:.9rem;margin:0;">🎲 Squares ({{ $tiles->count() }})</h2>
-        <button class="gs-btn go">💾 Save all squares</button>
+        <h2 style="font-weight:900;color:#fbbf24;font-size:.9rem;margin:0;">Squares ({{ $tiles->count() }})</h2>
+        <button class="gs-btn go">Save all squares</button>
     </div>
     <p style="font-size:.72rem;color:rgba(255,255,255,.42);margin:0 0 .8rem;">
         <b>Type</b> decides what happens on landing (hover the dots on the board for a quick look). <b>Target</b> is only for snakes (must be a <i>lower</i> square) and ladders (a <i>higher</i> square).
@@ -185,18 +185,20 @@
             <span class="tile-num">{{ $t->number }}</span>
             <select name="tiles[{{ $t->number }}][kind]" class="gs-in">
                 @foreach($kinds as $key => $k)
-                    <option value="{{ $key }}" {{ $t->kind === $key ? 'selected' : '' }}>{{ $k['icon'] }} {{ $k['label'] }}</option>
+                    <option value="{{ $key }}" {{ $t->kind === $key ? 'selected' : '' }}>{{ $k['label'] }}</option>
                 @endforeach
             </select>
             <input type="number" name="tiles[{{ $t->number }}][target_number]" value="{{ $t->target_number }}" min="1" max="{{ $board->tile_count }}" class="gs-in" placeholder="→">
-            <input name="tiles[{{ $t->number }}][icon]" value="{{ $t->icon }}" class="gs-in" maxlength="10" placeholder="🎯" style="text-align:center;">
+            <input name="tiles[{{ $t->number }}][icon]" value="{{ $t->icon }}" class="gs-in" maxlength="24" list="iconKeys" placeholder="icon" title="A game-icon name such as flag, trophy or duel — leave blank to use the square type's own icon">
             <input name="tiles[{{ $t->number }}][label]" value="{{ $t->label }}" class="gs-in" maxlength="120" placeholder="Random from deck">
         </div>
         @endforeach
     </div>
     @endforeach
-    <button class="gs-btn go">💾 Save all squares</button>
+    <button class="gs-btn go">Save all squares</button>
 </form>
+
+<datalist id="iconKeys">@foreach(\App\Support\Icons::keys() as $iconKey)<option value="{{ $iconKey }}">@endforeach</datalist>
 
 <script>
     // Drag-to-place on one calibrator board — wired once per pane (desktop, mobile).
@@ -287,7 +289,7 @@
                     if (tile) { tile.style.left = pt.left.toFixed(2) + '%'; tile.style.top = pt.top.toFixed(2) + '%'; }
                 });
                 row++;
-                if (row >= counts.length) stop('✅ All rows placed — nudge any square that is off by dragging it, then press Save.');
+                if (row >= counts.length) stop('All rows placed — nudge any square that is off by dragging it, then press Save.');
                 else { clicks = []; ask(); }
             }, true);
         });
@@ -298,7 +300,7 @@
         document.getElementById('desktopPane').classList.toggle('active', name === 'desktop');
         document.getElementById('mobilePane').classList.toggle('active', name === 'mobile');
         document.getElementById('layoutField').value = name;
-        document.getElementById('saveLayoutBtn').textContent = name === 'mobile' ? '💾 Save mobile landscape layout' : '💾 Save board layout';
+        document.getElementById('saveLayoutBtn').textContent = name === 'mobile' ? 'Save mobile landscape layout' : 'Save board layout';
     }
 
     // Only the active pane's positions are submitted, so calibrating one layout never touches the other.

@@ -70,7 +70,7 @@ class GamesetBoardController extends Controller
                 $rows[] = [
                     'board_id' => $board->id, 'number' => $number,
                     'kind' => $kinds[$number]['kind'], 'target_number' => $kinds[$number]['target'],
-                    'icon' => $number === $n ? '🏁' : null,
+                    'icon' => $number === $n ? 'flag' : null,
                     'label' => $number === $n ? 'Finish — reach this square to win' : null,
                     'pos_left' => $left, 'pos_top' => $top, 'created_at' => $now, 'updated_at' => $now,
                 ];

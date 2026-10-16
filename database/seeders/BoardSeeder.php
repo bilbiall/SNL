@@ -30,7 +30,7 @@ class BoardSeeder extends Seeder
             $spec = $kinds[$number];
             $rows[] = [
                 'board_id' => $board->id, 'number' => $number, 'kind' => $spec['kind'], 'target_number' => $spec['target'],
-                'icon' => $number === $n ? '🏁' : null,
+                'icon' => $number === $n ? 'flag' : null,
                 'label' => $number === $n ? 'Finish — reach this square to win' : null,
                 'pos_left' => $left, 'pos_top' => $top, 'created_at' => $now, 'updated_at' => $now,
             ];

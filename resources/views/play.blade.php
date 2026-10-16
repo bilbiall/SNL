@@ -10,15 +10,16 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800,900&display=swap" rel="stylesheet"/>
     <style>:root { --bw: {{ $board->board_width ?: 1264 }}; --bh: {{ $board->board_height ?: 848 }}; }</style>
+    @include('partials.pieces-css')
     @include('partials.play-css')
 </head>
 <body>
 <div class="stage" id="stage">
 
-    {{-- Atmosphere: the board's own art, blurred, behind everything; bubbles drift up in front of it. --}}
+    {{-- Atmosphere: the board's own art, blurred, behind everything; game pieces pop in and drift in front of it. --}}
     <div class="ambient" style="background-image:url('{{ $board->imageUrl() }}')"></div>
     <div class="vignette"></div>
-    <div class="fizz" id="fizz"></div>
+    <div class="pieces" id="pieces"></div>
 
     {{-- The board. Tokens are added here by snl-play.js and positioned as % of this box. --}}
     <div class="board-wrap" id="boardWrap">
@@ -29,8 +30,8 @@
     <div class="hud hud-tl" id="hudTl"></div>
 
     <div class="hud hud-tr">
-        <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound">🔊</button>
-        <button class="icon-btn" id="menuBtn" type="button" aria-label="Menu">☰</button>
+        <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound"><x-icon name="speaker" /></button>
+        <button class="icon-btn" id="menuBtn" type="button" aria-label="Menu"><x-icon name="menu" /></button>
     </div>
 
     <div class="hud hud-left" id="players"></div>
@@ -38,9 +39,9 @@
     @if($room->isOnline())
     <div class="hud hud-bl">
         <div class="reactbar" id="reactBar">
-            @foreach($reactions as $e)<button type="button" data-emoji="{{ $e }}">{{ $e }}</button>@endforeach
+            @foreach($reactions as $key)<button type="button" data-react="{{ $key }}" aria-label="React"><x-icon :name="$key" /></button>@endforeach
         </div>
-        <button class="icon-btn" id="reactToggle" type="button" aria-label="Reactions">😄</button>
+        <button class="icon-btn" id="reactToggle" type="button" aria-label="Reactions"><x-icon name="jester" /></button>
     </div>
     @endif
 
@@ -96,11 +97,14 @@ window.SNL = {
     positions: @json($positions),
     state: @json($state),
     mode: @json($mode),
+    levels: @json(config('snl.intensities')),
     kinds: @json($tileKinds),
     kindColors: @json(collect(config('snl.tile_kinds'))->map(fn ($k) => $k['color'])),
     powersCfg: @json(config('snl.powers')),
     timing: @json($timing),
     boardName: @json($board->name),
+    iconUrl: @json(asset('icons.svg')),
+    iconKeys: @json(\App\Support\Icons::keys()),
 };
 </script>
 <script src="{{ asset('js/snl-play.js') }}?v={{ filemtime(public_path('js/snl-play.js')) }}"></script>

@@ -358,7 +358,7 @@ class GameEngine
             case 'duel':
             case 'swap':
                 $card = $kind === 'swap'
-                    ? ['kind' => 'swap', 'icon' => '🔀', 'text' => $tile?->label ?: 'Swap places with a player of your choice!', 'spin' => $spin]
+                    ? ['kind' => 'swap', 'icon' => 'swap', 'text' => $tile?->label ?: 'Swap places with a player of your choice!', 'spin' => $spin]
                     : $this->cardFor($kind, $tile, $spin);
                 $eligible = $this->activePlayers()->where('id', '!=', $actor->id)->pluck('id')->values()->all();
                 if (!$eligible) {
@@ -391,7 +391,7 @@ class GameEngine
 
             default: // blank / start
                 if ($spin) {
-                    $this->room->log(['type' => 'card', 'kind' => 'blank', 'text' => 'The wheel stops on… nothing! Lucky you.', 'icon' => '🎰', 'spin' => true,
+                    $this->room->log(['type' => 'card', 'kind' => 'blank', 'text' => 'The wheel stops on… nothing! Lucky you.', 'icon' => 'mystery', 'spin' => true,
                         'source_id' => $actor->id, 'target_ids' => [], 'tile' => $number]);
                 }
                 break;
@@ -433,7 +433,7 @@ class GameEngine
     private function cardFor(string $kind, ?Tile $tile, bool $spin): array
     {
         $icon = $tile?->icon
-            ?: (config("snl.mode_icons.{$this->room->content_mode}.$kind") ?? config("snl.tile_kinds.$kind.icon") ?? '🃏');
+            ?: (config("snl.mode_icons.{$this->room->content_mode}.$kind") ?? config("snl.tile_kinds.$kind.icon") ?? 'cards');
         $text = $tile?->label;
         if (!$text || $spin) {
             // A spin ignores the tile's own fixed text — it's a different effect than the tile normally shows.
@@ -804,12 +804,12 @@ class GameEngine
     private function recap(Room $room): array
     {
         $awards = [
-            ['key' => 'hits',    'icon' => '🥴', 'title' => 'Took the most hits'],
-            ['key' => 'dodges',  'icon' => '🛡️', 'title' => 'Master dodger'],
-            ['key' => 'picks',   'icon' => '😈', 'title' => 'Chief mischief-maker'],
-            ['key' => 'snakes',  'icon' => '🐍', 'title' => 'Snake magnet'],
-            ['key' => 'ladders', 'icon' => '🪜', 'title' => 'Lucky climber'],
-            ['key' => 'duels_won', 'icon' => '⚔️', 'title' => 'Duel champion'],
+            ['key' => 'hits',    'icon' => 'skull', 'title' => 'Took the most hits'],
+            ['key' => 'dodges',  'icon' => 'shield', 'title' => 'Master dodger'],
+            ['key' => 'picks',   'icon' => 'pick', 'title' => 'Chief mischief-maker'],
+            ['key' => 'snakes',  'icon' => 'snake', 'title' => 'Snake magnet'],
+            ['key' => 'ladders', 'icon' => 'ladder', 'title' => 'Lucky climber'],
+            ['key' => 'duels_won', 'icon' => 'duel', 'title' => 'Duel champion'],
         ];
         $out = [];
         foreach ($awards as $a) {

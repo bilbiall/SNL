@@ -166,7 +166,7 @@ class RoomController extends Controller
 
     public function react(Request $request, Room $room): JsonResponse
     {
-        $data = $request->validate(['emoji' => 'required|string|max:8']);
+        $data = $request->validate(['emoji' => 'required|string|max:24']);
 
         return $this->act($request, $room, function (?Player $me) use ($room, $data) {
             if ($room->isOnline()) {
