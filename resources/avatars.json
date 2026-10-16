@@ -1,0 +1,121 @@
+{
+  "looks": [
+    {
+      "id": "f1",
+      "gender": "f",
+      "label": "Scrunchie"
+    },
+    {
+      "id": "f2",
+      "gender": "f",
+      "label": "Pigtails"
+    },
+    {
+      "id": "f3",
+      "gender": "f",
+      "label": "Space Buns"
+    },
+    {
+      "id": "f4",
+      "gender": "f",
+      "label": "Braids"
+    },
+    {
+      "id": "f5",
+      "gender": "f",
+      "label": "Curly Puffs"
+    },
+    {
+      "id": "f6",
+      "gender": "f",
+      "label": "Auburn Bob"
+    },
+    {
+      "id": "f7",
+      "gender": "f",
+      "label": "Blonde Shades"
+    },
+    {
+      "id": "f8",
+      "gender": "f",
+      "label": "Cap & Swoop"
+    },
+    {
+      "id": "m1",
+      "gender": "m",
+      "label": "Flat Top"
+    },
+    {
+      "id": "m2",
+      "gender": "m",
+      "label": "Curly Top"
+    },
+    {
+      "id": "m3",
+      "gender": "m",
+      "label": "Frosted Tips"
+    },
+    {
+      "id": "m4",
+      "gender": "m",
+      "label": "Mohawk"
+    },
+    {
+      "id": "m5",
+      "gender": "m",
+      "label": "Backwards Cap"
+    },
+    {
+      "id": "m6",
+      "gender": "m",
+      "label": "Cool Shades"
+    },
+    {
+      "id": "m7",
+      "gender": "m",
+      "label": "Goatee"
+    },
+    {
+      "id": "m8",
+      "gender": "m",
+      "label": "Beanie"
+    }
+  ],
+  "skins": [
+    {
+      "id": 1,
+      "label": "Porcelain",
+      "hex": "#ffdbac"
+    },
+    {
+      "id": 2,
+      "label": "Sand",
+      "hex": "#e0b687"
+    },
+    {
+      "id": 3,
+      "label": "Honey",
+      "hex": "#cb9e6e"
+    },
+    {
+      "id": 4,
+      "label": "Caramel",
+      "hex": "#a26d3d"
+    },
+    {
+      "id": 5,
+      "label": "Chestnut",
+      "hex": "#7b4a28"
+    },
+    {
+      "id": 6,
+      "label": "Espresso",
+      "hex": "#523020"
+    },
+    {
+      "id": 7,
+      "label": "Ebony",
+      "hex": "#33201a"
+    }
+  ]
+}

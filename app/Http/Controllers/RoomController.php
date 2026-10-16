@@ -36,6 +36,9 @@ class RoomController extends Controller
             'names'        => 'required_if:type,party|array|min:2|max:' . config('snl.players.max'),
             'names.*'      => 'nullable|string|max:24',
             'colors'       => 'nullable|array',
+            'avatars'      => 'nullable|array',
+            'avatars.*'    => 'nullable|string|max:12',
+            'avatar'       => 'nullable|string|max:12',
             'host_name'    => 'required_if:type,online|nullable|string|max:24',
             'max_players'  => 'nullable|integer|min:2|max:' . config('snl.players.max'),
         ]);
@@ -49,12 +52,12 @@ class RoomController extends Controller
             if ($data['type'] === 'party') {
                 $entries = [];
                 foreach (array_values($data['names']) as $i => $name) {
-                    $entries[] = ['name' => (string) $name, 'color' => $data['colors'][$i] ?? null];
+                    $entries[] = ['name' => (string) $name, 'color' => $data['colors'][$i] ?? null, 'avatar' => $data['avatars'][$i] ?? null];
                 }
                 $room = $this->engine->createParty($board, $entries, $data['content_mode'], (int) $data['intensity']);
             } else {
                 [$room, $host] = $this->engine->createOnline(
-                    $board, (string) $data['host_name'], $data['content_mode'], (int) $data['intensity'], (int) ($data['max_players'] ?? 8)
+                    $board, (string) $data['host_name'], $data['content_mode'], (int) $data['intensity'], (int) ($data['max_players'] ?? 8), $data['avatar'] ?? null
                 );
                 $this->rememberMe($request, $room, $host);
             }
@@ -71,6 +74,7 @@ class RoomController extends Controller
             'code'  => 'required|string|max:8',
             'name'  => 'required|string|max:24',
             'adult' => 'nullable|boolean',
+            'avatar' => 'nullable|string|max:12',
         ]);
         $room = Room::where('join_code', strtoupper(trim($data['code'])))->where('type', 'online')->first();
         if (!$room) {
@@ -85,7 +89,7 @@ class RoomController extends Controller
             return redirect()->route('play.show', $room->token);
         }
         try {
-            $player = $this->engine->joinOnline($room, $data['name']);
+            $player = $this->engine->joinOnline($room, $data['name'], $data['avatar'] ?? null);
         } catch (GameException $e) {
             return back()->withInput()->withErrors(['code' => $e->getMessage()]);
         }
@@ -166,11 +170,11 @@ class RoomController extends Controller
 
     public function react(Request $request, Room $room): JsonResponse
     {
-        $data = $request->validate(['emoji' => 'required|string|max:24']);
+        $data = $request->validate(['reaction' => 'required|string|max:24']);
 
         return $this->act($request, $room, function (?Player $me) use ($room, $data) {
             if ($room->isOnline()) {
-                $this->engine->react($room, $this->requireMe($me)->id, $data['emoji']);
+                $this->engine->react($room, $this->requireMe($me)->id, $data['reaction']);
             }
         });
     }
@@ -242,7 +246,7 @@ class RoomController extends Controller
             $old = Player::find($oldMeId);
             if ($old) {
                 try {
-                    $seat = $this->engine->joinOnline($room, $old->name);
+                    $seat = $this->engine->joinOnline($room, $old->name, $old->avatar);
                 } catch (GameException) {
                     return null;
                 }

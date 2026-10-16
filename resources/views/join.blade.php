@@ -23,8 +23,12 @@
                    style="text-transform:uppercase;letter-spacing:.3em;text-align:center;font-size:1.5rem;font-weight:900;">
         </div>
         <div>
-            <label class="snl-label" for="name">Your name</label>
-            <input class="snl-input" id="name" name="name" value="{{ old('name') }}" maxlength="24" required autocomplete="off" placeholder="e.g. Brian">
+            <label class="snl-label" for="name">Your name &amp; avatar</label>
+            <div class="flex items-center gap-3">
+                <button type="button" class="avbtn" id="avatarBtn" title="Choose your avatar"><img id="avatarImg" alt=""></button>
+                <input type="hidden" name="avatar" id="avatar" value="{{ old('avatar', $avatarDefault) }}">
+                <input class="snl-input" id="name" name="name" value="{{ old('name') }}" maxlength="24" required autocomplete="off" placeholder="e.g. Brian">
+            </div>
         </div>
         <label class="flex items-start gap-2 text-sm font-bold">
             <input type="checkbox" name="adult" value="1" {{ old('adult') ? 'checked' : '' }} class="mt-1" style="width:1.1rem;height:1.1rem;">
@@ -35,4 +39,14 @@
 
     <footer class="snl-foot">Drink responsibly. Never drive after drinking.</footer>
 </div>
+
+@include('partials.avatar-picker')
+<script>
+(function () {
+    var av = document.getElementById('avatar'), img = document.getElementById('avatarImg');
+    function show() { img.src = SNLAvatars.url(av.value); }
+    document.getElementById('avatarBtn').onclick = function () { SNLAvatars.open(av.value, function (k) { av.value = k; show(); }); };
+    show();
+})();
+</script>
 @endsection

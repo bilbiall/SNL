@@ -100,12 +100,11 @@ return [
 
     'colors' => ['#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#a855f7', '#ec4899', '#14b8a6', '#f97316', '#84cc16', '#06b6d4', '#e11d48', '#6366f1'],
 
-    // Player avatars (icon keys).
-    'avatars' => ['av-tiger', 'av-wolf', 'av-frog', 'av-lion', 'av-panda', 'av-octopus', 'av-unicorn', 'av-monkey', 'av-penguin', 'av-owl', 'av-dragon', 'av-rabbit'],
+    // Player avatars: the retro pixel roster lives in resources/avatars.json (see App\Support\Avatars).
 
     // Reaction buttons (icon keys) — floated over a player's token for everyone to see.
     'reactions' => ['jester', 'fire', 'thumb', 'heart', 'skull', 'party', 'fist', 'sparkles'],
 
     // Board used when none is picked / the default art for the seeded starter board.
-    'default_board_art' => '/img/game/arcade/pesatrail.webp',
+    'default_board_art' => '/img/boards/snl-night.webp',
 ];

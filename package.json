@@ -5,9 +5,12 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "icons": "node scripts/build-icons.mjs"
+        "icons": "node scripts/build-icons.mjs",
+        "avatars": "node scripts/build-avatars.mjs"
     },
     "devDependencies": {
+        "@dicebear/collection": "^9.4.2",
+        "@dicebear/core": "^9.4.3",
         "@iconify-json/game-icons": "^1.2.4",
         "@tailwindcss/forms": "^0.5.2",
         "@tailwindcss/vite": "^4.0.0",

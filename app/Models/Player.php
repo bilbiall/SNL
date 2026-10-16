@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Player extends Model
 {
     protected $fillable = [
-        'room_id', 'name', 'color', 'emoji', 'turn_order', 'position', 'status',
+        'room_id', 'name', 'color', 'avatar', 'turn_order', 'position', 'status',
         'powers', 'stats', 'missed_turns', 'prev_player_id',
     ];
 

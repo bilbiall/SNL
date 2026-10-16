@@ -101,7 +101,7 @@
         <div class="track">
             @php $tiles = [['#94a3b8','start'],['#f59e0b','self'],['#ec4899','pick'],['#10b981','everyone'],['#ef4444','duel'],['#22d3ee','fact'],['#a78bfa','swap'],['#facc15','power'],['#fb7185','trophy']]; @endphp
             @foreach($tiles as $i => [$c, $icon])<div class="tile" style="--c:{{ $c }};--i:{{ $i }}"><x-icon :name="$icon" /></div>@endforeach
-            <div class="tok"><div><x-icon name="av-tiger" /></div></div>
+            <div class="tok"><div style="overflow:hidden;"><img src="{{ asset('avatars/f3-3.svg') }}" alt="" style="width:100%;height:100%;display:block;image-rendering:pixelated;"></div></div>
         </div>
         <div class="die">
             @foreach([[5],[1,9],[1,5,9],[1,3,7,9],[1,3,5,7,9],[1,3,4,6,7,9]] as $n => $pips)

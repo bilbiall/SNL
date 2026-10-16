@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Board;
+use App\Support\Avatars;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -28,12 +29,16 @@ class HomeController extends Controller
             'levels' => config('snl.intensities'),
             'limits' => config('snl.players'),
             'colors' => config('snl.colors'),
-            'avatars' => config('snl.avatars'),
+            'avatarDefaults' => array_map(fn ($i) => Avatars::default($i), range(0, 11)),
         ]);
     }
 
     public function join(Request $request)
     {
-        return view('join', ['code' => strtoupper((string) $request->query('code', '')), 'modes' => config('snl.modes')]);
+        return view('join', [
+            'code' => strtoupper((string) $request->query('code', '')),
+            'modes' => config('snl.modes'),
+            'avatarDefault' => Avatars::default(random_int(0, 15)),
+        ]);
     }
 }

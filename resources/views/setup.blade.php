@@ -89,12 +89,16 @@
                     </div>
                 </div>
                 <div id="playerRows" class="space-y-2"></div>
-                <p class="snl-muted text-xs mt-2">Tap a colour dot to change it. Names can be silly.</p>
+                <p class="snl-muted text-xs mt-2">Tap an avatar to choose a look and skin shade. Names can be silly.</p>
             @else
                 <div class="grid grid-cols-3 gap-3">
                     <div class="col-span-2">
                         <label class="snl-label" for="host_name">Your name</label>
-                        <input class="snl-input" id="host_name" name="host_name" value="{{ old('host_name') }}" maxlength="24" placeholder="e.g. Amina" required autocomplete="off">
+                        <div class="flex items-center gap-3">
+                            <button type="button" class="avbtn" id="hostAvatarBtn" title="Choose your avatar"><img id="hostAvatarImg" alt=""></button>
+                            <input type="hidden" name="avatar" id="hostAvatar" value="{{ old('avatar', $avatarDefaults[0]) }}">
+                            <input class="snl-input" id="host_name" name="host_name" value="{{ old('host_name') }}" maxlength="24" placeholder="e.g. Amina" required autocomplete="off">
+                        </div>
                     </div>
                     <div>
                         <label class="snl-label" for="max_players">Max players</label>
@@ -116,6 +120,8 @@
     <footer class="snl-foot">Drink responsibly. Never drive after drinking.</footer>
 </div>
 
+@include('partials.avatar-picker')
+
 <script>
 (function () {
     const modes = @json($modes);
@@ -132,30 +138,28 @@
 
     @if($type === 'party')
     const colors = @json($colors);
-    const avatars = @json($avatars);
-    const iconUrl = @json(asset('icons.svg'));
-    const ico = (k) => '<svg class="ic" aria-hidden="true"><use href="' + iconUrl + '#i-' + k + '"/></svg>';
+    const defaults = @json($avatarDefaults);
     const limits = @json($limits);
     const rows = document.getElementById('playerRows');
     const oldNames = @json(array_values(old('names', [])));
-    const oldColors = @json(array_values(old('colors', [])));
+    const oldAvatars = @json(array_values(old('avatars', [])));
     let count = Math.max(limits.min, Math.min(limits.max, oldNames.length || 4));
     const names = oldNames.slice();
-    const picked = oldColors.slice();
+    const avs = oldAvatars.slice();
 
+    function keepNames() { rows.querySelectorAll('input[name="names[]"]').forEach((el, i) => names[i] = el.value); }
     function render() {
-        // keep whatever was typed
-        rows.querySelectorAll('input[name="names[]"]').forEach((el, i) => names[i] = el.value);
+        keepNames();
         rows.innerHTML = '';
         for (let i = 0; i < count; i++) {
-            const color = picked[i] || colors[i % colors.length];
-            picked[i] = color;
+            avs[i] = avs[i] || defaults[i % defaults.length];
             const row = document.createElement('div');
-            row.className = 'flex items-center gap-2';
+            row.className = 'flex items-center gap-3';
+            row.style.marginBottom = '.9rem';
             row.innerHTML = `
-                <button type="button" class="dot" data-i="${i}" title="Change colour"
-                    style="width:2.3rem;height:2.3rem;border-radius:50%;border:2px solid #fff;background:${color};flex-shrink:0;font-size:1.15rem;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;padding:0;">${ico(avatars[i % avatars.length])}</button>
-                <input type="hidden" name="colors[]" value="${color}">
+                <button type="button" class="avbtn" data-i="${i}" title="Choose avatar"><img src="${SNLAvatars.url(avs[i])}" alt=""></button>
+                <input type="hidden" name="avatars[]" value="${avs[i]}">
+                <input type="hidden" name="colors[]" value="${colors[i % colors.length]}">
                 <input class="snl-input" name="names[]" maxlength="24" placeholder="Player ${i + 1}" value="${(names[i] || '').replace(/"/g, '&quot;')}" autocomplete="off" required>`;
             rows.appendChild(row);
         }
@@ -164,16 +168,19 @@
         document.getElementById('plusBtn').disabled = count >= limits.max;
     }
     rows.addEventListener('click', e => {
-        const dot = e.target.closest('.dot'); if (!dot) return;
-        const i = +dot.dataset.i;
-        const next = (colors.indexOf(picked[i]) + 1) % colors.length;
-        picked[i] = colors[next];
-        rows.querySelectorAll('input[name="names[]"]').forEach((el, k) => names[k] = el.value);
-        render();
+        const b = e.target.closest('.avbtn'); if (!b) return;
+        const i = +b.dataset.i;
+        keepNames();
+        SNLAvatars.open(avs[i], key => { avs[i] = key; render(); });
     });
     document.getElementById('plusBtn').onclick = () => { if (count < limits.max) { count++; render(); } };
     document.getElementById('minusBtn').onclick = () => { if (count > limits.min) { count--; render(); } };
     render();
+    @else
+    const hostAv = document.getElementById('hostAvatar'), hostImg = document.getElementById('hostAvatarImg');
+    const showHost = () => { hostImg.src = SNLAvatars.url(hostAv.value); };
+    document.getElementById('hostAvatarBtn').onclick = () => SNLAvatars.open(hostAv.value, key => { hostAv.value = key; showHost(); });
+    showHost();
     @endif
 })();
 </script>

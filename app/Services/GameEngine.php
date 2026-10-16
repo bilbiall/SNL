@@ -7,6 +7,7 @@ use App\Models\Card;
 use App\Models\Player;
 use App\Models\Room;
 use App\Models\Tile;
+use App\Support\Avatars;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -79,18 +80,18 @@ class GameEngine
     }
 
     /** Online: creates a lobby with the host seated. @return array{0: Room, 1: Player} */
-    public function createOnline(Board $board, string $hostName, string $mode, int $intensity, int $max): array
+    public function createOnline(Board $board, string $hostName, string $mode, int $intensity, int $max, ?string $hostAvatar = null): array
     {
         $this->validateSetup($board, $mode, $intensity);
         $cfg = config('snl.players');
 
-        return DB::transaction(function () use ($board, $hostName, $mode, $intensity, $max, $cfg) {
+        return DB::transaction(function () use ($board, $hostName, $mode, $intensity, $max, $cfg, $hostAvatar) {
             $room = Room::create([
                 'token' => Room::newToken(), 'join_code' => Room::newJoinCode(), 'board_id' => $board->id, 'type' => 'online',
                 'content_mode' => $mode, 'intensity' => $intensity, 'status' => 'open',
                 'max_players' => max($cfg['min'], min($cfg['max'], $max)),
             ]);
-            $this->seedPlayers($room, [['name' => $hostName]]);
+            $this->seedPlayers($room, [['name' => $hostName, 'avatar' => $hostAvatar]]);
             $host = $room->players()->first();
             $room->update(['host_player_id' => $host->id]);
 
@@ -98,9 +99,9 @@ class GameEngine
         });
     }
 
-    public function joinOnline(Room $room, string $name): Player
+    public function joinOnline(Room $room, string $name, ?string $avatar = null): Player
     {
-        return $this->locked($room, function () use ($name) {
+        return $this->locked($room, function () use ($name, $avatar) {
             $room = $this->room;
             if ($room->status !== 'open') {
                 throw new GameException($room->status === 'completed' ? 'That game has already finished.' : 'That game has already started.');
@@ -109,7 +110,7 @@ class GameEngine
                 throw new GameException('That room is full.');
             }
 
-            return $this->addPlayer($room, ['name' => $name]);
+            return $this->addPlayer($room, ['name' => $name, 'avatar' => $avatar]);
         });
     }
 
@@ -164,7 +165,7 @@ class GameEngine
                 $keep = $keep->where('id', $old->host_player_id)->values();
             }
             $this->seedPlayers($new, $keep->map(fn (Player $p) => [
-                'name' => $p->name, 'color' => $p->color, 'emoji' => $p->emoji, 'prev' => $p->id,
+                'name' => $p->name, 'color' => $p->color, 'avatar' => $p->avatar, 'prev' => $p->id,
             ])->all());
 
             $players = $new->players()->get();
@@ -255,15 +256,15 @@ class GameEngine
         });
     }
 
-    /** Online reactions — an emoji that floats up on everyone's screen. */
-    public function react(Room $room, int $playerId, string $emoji): void
+    /** Online reactions — an icon that floats up over the player's token on everyone's screen. */
+    public function react(Room $room, int $playerId, string $reaction): void
     {
-        if (!in_array($emoji, config('snl.reactions'), true)) {
+        if (!in_array($reaction, config('snl.reactions'), true)) {
             return;
         }
-        $this->locked($room, function () use ($playerId, $emoji) {
+        $this->locked($room, function () use ($playerId, $reaction) {
             if (isset($this->players[$playerId]) && $this->room->status !== 'completed') {
-                $this->room->log(['type' => 'react', 'player_id' => $playerId, 'emoji' => $emoji]);
+                $this->room->log(['type' => 'react', 'player_id' => $playerId, 'reaction' => $reaction]);
             }
         });
     }
@@ -775,7 +776,7 @@ class GameEngine
             : null;
 
         $players = $room->players->map(fn (Player $p) => [
-            'id' => $p->id, 'name' => $p->name, 'color' => $p->color, 'emoji' => $p->emoji,
+            'id' => $p->id, 'name' => $p->name, 'color' => $p->color, 'avatar' => $p->avatar,
             'position' => $p->position, 'status' => $p->status, 'turn_order' => $p->turn_order,
             'powers' => ['shield' => $p->power('shield'), 'reroll' => $p->power('reroll')],
             'is_host' => $p->id === $room->host_player_id, 'missed' => $p->missed_turns,
@@ -819,7 +820,7 @@ class GameEngine
             }
         }
         $ranking = $room->players->sortByDesc(fn (Player $p) => $p->status === 'won' ? PHP_INT_MAX : $p->position)
-            ->map(fn (Player $p) => ['id' => $p->id, 'name' => $p->name, 'color' => $p->color, 'emoji' => $p->emoji,
+            ->map(fn (Player $p) => ['id' => $p->id, 'name' => $p->name, 'color' => $p->color, 'avatar' => $p->avatar,
                 'position' => $p->position, 'status' => $p->status])
             ->values()->all();
 
@@ -845,7 +846,7 @@ class GameEngine
         }
     }
 
-    /** @param array<int, array{name: string, color?: string, emoji?: string, prev?: int}> $entries */
+    /** @param array<int, array{name: string, color?: string, avatar?: string, prev?: int}> $entries */
     private function seedPlayers(Room $room, array $entries): void
     {
         foreach (array_values($entries) as $i => $e) {
@@ -866,7 +867,6 @@ class GameEngine
             $name = mb_substr($base, 0, 21) . ' ' . (++$n);
         }
         $colors = config('snl.colors');
-        $avatars = config('snl.avatars');
 
         $powers = [];
         foreach (config('snl.powers') as $key => $p) {
@@ -876,7 +876,7 @@ class GameEngine
         return Player::create([
             'room_id' => $room->id, 'name' => $name, 'turn_order' => $order,
             'color' => $e['color'] ?? $colors[$order % count($colors)],
-            'emoji' => $e['emoji'] ?? $avatars[$order % count($avatars)],
+            'avatar' => Avatars::valid($e['avatar'] ?? null) ? $e['avatar'] : Avatars::default($order),
             'position' => 0, 'status' => 'active', 'powers' => $powers, 'stats' => [],
             'prev_player_id' => $e['prev'] ?? null,
         ]);

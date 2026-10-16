@@ -37,6 +37,9 @@
         box-shadow: 0 5px 10px rgba(0,0,0,.6), 0 0 0 2px var(--c, #f59e0b); z-index: 20; transition: left .22s linear, top .22s linear;
     }
     .token .ic { filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
+    .avimg { width: 100%; height: 100%; display: block; border-radius: 50%; object-fit: cover; image-rendering: pixelated; }
+    .token .avimg { position: absolute; inset: 0; }
+    .splash .avimg { width: 1.5em; height: 1.5em; flex-shrink: 0; }
     .token.glide { transition: left 1s cubic-bezier(.34,1.2,.64,1), top 1s cubic-bezier(.34,1.2,.64,1); }
     .token.active { z-index: 25; }
     .token.active::before { content: ''; position: absolute; top: -.62em; left: 50%; width: 0; height: 0; border: .38em solid transparent; border-top: .5em solid #fff; border-bottom: 0; transform: translateX(-50%); filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); animation: markerBob .8s ease-in-out infinite; }

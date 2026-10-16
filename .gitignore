@@ -33,3 +33,6 @@ Thumbs.db
 # Admin-uploaded board art (the placeholder board lives in public/img)
 /public/uploads/*
 !public/uploads/.gitkeep
+
+# Source/working art dropped in while designing boards (the shipped board lives in public/img/boards)
+/public/img/game/

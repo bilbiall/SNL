@@ -104,6 +104,7 @@ window.SNL = {
     timing: @json($timing),
     boardName: @json($board->name),
     iconUrl: @json(asset('icons.svg')),
+    avatarBase: @json(asset('avatars')),
     iconKeys: @json(\App\Support\Icons::keys()),
 };
 </script>

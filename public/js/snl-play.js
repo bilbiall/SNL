@@ -40,7 +40,7 @@
 
   const ST = $('stage'), BOARD = $('boardWrap'), DIE = $('dieBtn'), CUBE = $('dieCube');
   const players = () => latest.players;
-  const P = (id) => players().find((p) => p.id === id) || { id, name: 'Someone', color: '#64748b', emoji: 'av-owl', powers: {}, status: 'active' };
+  const P = (id) => players().find((p) => p.id === id) || { id, name: 'Someone', color: '#64748b', avatar: 'm1-3', powers: {}, status: 'active' };
   const iAmActor = (id) => C.isParty || id === C.meId;
   const kindInfo = (k) => C.kinds[k] || { label: k, icon: 'cards', help: '' };
   const kindColor = (k) => C.kindColors[k] || '#f59e0b';
@@ -56,7 +56,9 @@
     box.appendChild(t);
     setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, ms);
   }
-  const avatar = (p) => ic(p.emoji || 'av-owl');
+  // Retro pixel avatars ("f3-4" = look f3, skin shade 4) are images; anything else falls back to a game icon.
+  const AV = /^[fm]d+-d+$/;
+  const avatar = (p) => AV.test(p.avatar || '') ? `<img class="avimg" src="${C.avatarBase}/${p.avatar}.svg" alt="">` : ic(p.avatar || 'cards');
   const chip = (p) => `<span class="tgt static" style="--c:${p.color}"><span class="av">${avatar(p)}</span>${esc(p.name)}</span>`;
   function show(id, html) { const el = $(id); if (html !== undefined) el.innerHTML = html; el.classList.add('show'); return el; }
   function hide(id) { $(id).classList.remove('show'); }
@@ -323,7 +325,7 @@
 
       case 'left': toast(`${ic('exit')} ${esc(who.name)} left the game`, 2400); await sleep(350); break;
       case 'skip': toast(`${ic('clock')} ${esc(who.name)} ran out of time`, 2200); await sleep(250); break;
-      case 'react': floater(a.player_id, a.emoji); snd('reaction'); break;
+      case 'react': floater(a.player_id, a.reaction); snd('reaction'); break;
       default: break;
     }
   }
@@ -751,7 +753,7 @@
   const rt = $('reactToggle');
   if (rt) {
     rt.onclick = () => $('reactBar').classList.toggle('show');
-    $('reactBar').querySelectorAll('button').forEach((b) => (b.onclick = () => { post(C.urls.react, { emoji: b.dataset.react }); }));
+    $('reactBar').querySelectorAll('button').forEach((b) => (b.onclick = () => { post(C.urls.react, { reaction: b.dataset.react }); }));
   }
 
   // ───────────────────────── polling & clocks ─────────────────────────
