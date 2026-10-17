@@ -234,7 +234,7 @@
         <p class="ga-tip" id="gaTip"></p>
     </section>
 
-    <div class="lp-foot"><span class="lf-x"><a href="{{ route('app.page') }}">Android app</a> · </span>18+ for Drinks mode · Drink responsibly · Icons <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a> · <a href="{{ route('login') }}">Admin</a> · <button type="button" class="faq-link" id="faqLink">FAQ</button></div>
+    <div class="lp-foot">18+ for Drinks mode · Drink responsibly · <a href="{{ route('login') }}">Admin</a> · <button type="button" class="faq-link" id="faqLink">FAQ</button></div>
 </div>
 
 <section class="about" id="aboutSec" aria-label="About Snakes & Liquor" hidden>
@@ -243,6 +243,7 @@
     @foreach($faq as $f)
         <details class="faq"><summary>{{ $f[0] }}</summary><div>{{ $f[1] }}</div></details>
     @endforeach
+    <p style="font-size:.78rem;color:#94a3b8;">Icons by <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a> (CC BY 3.0).</p>
 </section>
 
 <script>
