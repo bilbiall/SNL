@@ -71,6 +71,31 @@
 
   // ───────────────────────────── small helpers ─────────────────────────────
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+  /** Shuffle bag: work through a deck before anything repeats; Spicy rooms lean towards Spicy cards. state lives in game.deck_state. */
+  function bagPick(g, key, pool, intensity, bias) {
+    if (!pool.length) return null;
+    var st = g.deck_state || (g.deck_state = {}), used = (st.used || (st.used = {}))[key] || [];
+    var fresh = pool.filter(function (p) { return used.indexOf(p.id) === -1; });
+    if (!fresh.length) {                                   // lap finished — start again, but not on the last few
+      used = used.slice(-Math.min(4, Math.floor(pool.length / 2)));
+      fresh = pool.filter(function (p) { return used.indexOf(p.id) === -1; });
+      if (!fresh.length) { fresh = pool.slice(); used = []; }
+    }
+    var exact = fresh.filter(function (p) { return p.intensity === intensity; });
+    var from = (exact.length && rnd() < (bias == null ? 0.65 : bias)) ? exact : fresh;
+    var pick = from[Math.floor(rnd() * from.length)];
+    used.push(pick.id);
+    st.used[key] = used.slice(-600);
+    return pick;
+  }
+  var FALLBACK_POOL = {
+    quickfire: ['Name five animals — 10 seconds!', 'Name five countries — go!', 'Name five songs — quick!', 'Name five foods that are red.', 'Name five things in a bathroom.', 'Name five singers — fast!', 'Name five things that fly.', 'Name five brands of shoes.'],
+    rollagain: ['Lucky break — roll again!', 'Bonus turn — roll again!', 'The dice want another go!', 'Go on, roll again!'],
+    gift: ['A little gift from the board!', 'You found something shiny!', 'Lucky find — enjoy it!', 'The board slips you a present.'],
+    groupgame: ['Everybody name a movie, round the table — first to stall pays.', 'Everybody name a city, round the table — no repeats.', 'Everybody name a song — first to stall pays.', 'Everybody name a snack, round the table.'],
+    neutral: ['Free square — breathe.', 'Nothing happens. Enjoy it.', 'Safe square — sip of water?', 'A quiet moment on the board.', 'Free square — stretch your legs.', 'The board lets you off this time.'],
+  };
   function isPlainEmpty(v) { return Array.isArray(v) && v.length === 0; }
   function obj(v) { return (v && !isPlainEmpty(v)) ? v : {}; }
   function cp(s) { return Array.from(String(s)); }
@@ -185,8 +210,12 @@
       return true;
     });
     var ok = base.filter(function (c) { return c.intensity <= intensity; });
-    if (ok.length) return arrayRand(ok);
-    return base.length ? arrayRand(base) : null;
+    var list = ok.length ? ok : base;
+    if (!list.length) return null;
+    var byId = {};
+    var pool = list.map(function (c) { var id = c.kind + '|' + c.text; byId[id] = c; return { id: id, intensity: c.intensity }; });
+    var picked = bagPick(this.g, kind + (random ? '#r' : ''), pool, intensity, 0.65);
+    return picked ? byId[picked.id] : null;
   };
 
   // WordList::pick
@@ -194,8 +223,11 @@
     var room = this.g.room, mode = room.content_mode, intensity = room.intensity;
     var base = this.pack.words.filter(function (w) { return w.slot === slot && (w.mode === 'all' || w.mode === mode); });
     var ok = base.filter(function (w) { return w.intensity <= intensity; });
-    if (ok.length) return arrayRand(ok).text;
-    return base.length ? arrayRand(base).text : null;
+    var list = ok.length ? ok : base;
+    if (!list.length) return null;
+    var pool = list.map(function (w) { return { id: w.text, intensity: w.intensity }; });
+    var picked = bagPick(this.g, 'w:' + slot, pool, intensity, 0.5);
+    return picked ? picked.id : null;
   };
 
   P.fill = function (text) {
@@ -226,7 +258,8 @@
     if (!preDrawn && (!text || spin)) {
       // A spin ignores the tile's own fixed text — it's a different effect than the tile normally shows.
       drawn = this.draw(kind, null);
-      var fb = (FALLBACK[room.content_mode] && FALLBACK[room.content_mode][kind]) || FALLBACK.family[kind] || 'Enjoy the moment!';
+      var fp = FALLBACK_POOL[kind];
+      var fb = fp ? fp[Math.floor(rnd() * fp.length)] : ((FALLBACK[room.content_mode] && FALLBACK[room.content_mode][kind]) || FALLBACK.family[kind] || 'Enjoy the moment!');
       text = drawn && drawn.text != null ? drawn.text : fb;
     }
     return {
@@ -435,11 +468,21 @@
 
   /** Some free squares do something small and fun (the rest stay calm). Returns true when an event ran. */
   P.freeEvent = function (actor, number) {
+    var st = this.g.deck_state || (this.g.deck_state = {});
+    if ((st.cool || 0) > 0) { st.cool -= 1; return false; }     // a calm square follows every event
     if (randInt(1, 100) > (parseInt(this.cfg.free_event_chance || 0, 10) || 0)) return false;
-    var table = obj(this.cfg.free_events), keys = Object.keys(table), total = 0, i;
+    var self = this, defs = this.powers();
+    var table = Object.assign({}, obj(this.cfg.free_events));
+    var hasOpen = Object.keys(defs).some(function (k) { return self.power(actor, k) < defs[k].max; });
+    if (!hasOpen) delete table.gift;                              // a gift of a full power would be wasted
+    var recent = (st.events || []).slice(-2);
+    var fresh = Object.keys(table).filter(function (k) { return recent.indexOf(k) === -1; });
+    var keys = fresh.length ? fresh : Object.keys(table), total = 0, i;
     for (i = 0; i < keys.length; i++) total += table[keys[i]];
     var roll = randInt(1, Math.max(1, total)), event = null;
     for (i = 0; i < keys.length; i++) { roll -= table[keys[i]]; if (roll <= 0) { event = keys[i]; break; } }
+    st.events = (st.events || []).concat([event]).slice(-3);
+    st.cool = 1;
     var card;
     switch (event) {
       case 'quickfire':

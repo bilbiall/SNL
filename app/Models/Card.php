@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ShuffleBag;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -16,8 +17,8 @@ class Card extends Model
         return $this->belongsTo(Board::class);
     }
 
-    /** A random live card of this kind for the room's mode (or "all" modes), never wilder than the
-     *  room's intensity. Falls back to ignoring intensity before giving up. */
+    /** The next card of this kind for the room's mode (or "all" modes), never wilder than the room's intensity.
+     *  Drawn from a per-game shuffle bag: the whole deck is used before any card repeats, and Spicy rooms mostly get Spicy cards. */
     public static function draw(Room $room, string $kind, ?bool $random = null): ?self
     {
         $base = fn () => static::where('kind', $kind)
@@ -27,7 +28,13 @@ class Card extends Model
             ->when($kind === 'pick', fn ($q) => $q->where('text', $random ? 'like' : 'not like', '%{target}%'))
             ->where(fn ($q) => $q->whereNull('board_id')->orWhere('board_id', $room->board_id));
 
-        return $base()->where('intensity', '<=', $room->intensity)->inRandomOrder()->first()
-            ?? $base()->inRandomOrder()->first();
+        $pool = $base()->where('intensity', '<=', $room->intensity)->pluck('intensity', 'id')->all()
+            ?: $base()->pluck('intensity', 'id')->all();
+        if (!$pool) {
+            return null;
+        }
+        $id = ShuffleBag::pick($room, $kind . ($random ? '#r' : ''), $pool, (int) $room->intensity);
+
+        return static::find($id);
     }
 }

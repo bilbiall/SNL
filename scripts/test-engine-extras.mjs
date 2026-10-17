@@ -31,3 +31,23 @@ const done = E.create(pack, { boardId: pack.boards[0].id, mode: 'family', intens
 done.room.status = 'completed';
 assert.throws(() => E.addPlayer(pack, done, { name: 'Late' }), /over/);
 console.log('extras ok — card kinds:', JSON.stringify(seen), '| quickfire prompts:', quick, '| bonus turns:', extra);
+
+// ── no back-to-back repeats: a shuffle bag works through a deck before anything comes round again ──
+{
+  const g = E.create(pack, { boardId: pack.boards[0].id, mode: 'drinks', intensity: 3, entries: [{ name: 'A' }, { name: 'B' }] });
+  const seen = []; let repeatsInRow = 0, free = 0, events = [];
+  for (let n = 0; n < 2500 && g.room.status === 'active'; n++) {
+    E.roll(pack, g); answer(g);
+    g.actions.filter((a) => a.seq > (g._s2 || 0)).forEach((a) => {
+      if (a.type === 'neutral' || a.type === 'extra_turn' || (a.type === 'card' && a.kind === 'groupgame')) { free++; const t = a.text; if (seen.length && seen[seen.length - 1] === t) repeatsInRow++; seen.push(t); }
+      if (a.type === 'extra_turn') events.push('roll'); if (a.type === 'card' && a.kind === 'groupgame') events.push('group');
+    });
+    g._s2 = g.room.event_seq;
+    if (g.room.status !== 'active') { Object.assign(g, E.rematch(pack, g)); }
+  }
+  assert(repeatsInRow === 0, 'the same free-square text never appears twice in a row (' + repeatsInRow + ')');
+  let streak = 0, maxStreak = 0; for (let i = 1; i < events.length; i++) { streak = events[i] === events[i - 1] ? streak + 1 : 0; maxStreak = Math.max(maxStreak, streak); }
+  assert(maxStreak <= 2, 'free-square events are not repeated in long streaks (max ' + maxStreak + ')');
+  const distinct = new Set(seen).size;
+  console.log('shuffle bag ok — free-square lines shown:', seen.length, 'distinct:', distinct);
+}

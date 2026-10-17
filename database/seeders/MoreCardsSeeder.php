@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Card;
+use App\Models\WordList;
 use Illuminate\Database\Seeder;
 
 /**
@@ -53,6 +54,37 @@ class MoreCardsSeeder extends Seeder
                     }
                 }
             }
+        }
+
+        // Content pack 2: bigger decks, templated quickfire / group games, word lists, spicier tails.
+        $p = require __DIR__ . '/data/content-pack-2.php';
+        foreach ($p['words'] as [$slot, $mode, $intensity, $text]) {
+            WordList::firstOrCreate(['slot' => $slot, 'mode' => $mode, 'text' => $text], ['intensity' => $intensity, 'is_active' => true]);
+        }
+        foreach ($p['quickfire'] as [$i, $text, $secs]) {
+            Card::firstOrCreate(['kind' => 'quickfire', 'mode' => 'all', 'text' => $text],
+                ['board_id' => null, 'intensity' => $i, 'timer' => $secs, 'penalty' => $i === 3 ? 2 : 1, 'is_active' => true]);
+        }
+        foreach ($p['cards'] as $kind => $modes) {
+            foreach ($modes as $mode => $tiers) {
+                foreach ($tiers as $intensity => $lines) {
+                    foreach ($lines as $text) {
+                        Card::firstOrCreate(['kind' => $kind, 'mode' => $mode, 'text' => $text], ['board_id' => null, 'intensity' => $intensity, 'is_active' => true]);
+                    }
+                }
+            }
+        }
+        foreach ($p['facts'] as [$i, $text, $answer, $explain, $penalty]) {
+            Card::firstOrCreate(['kind' => 'fact', 'mode' => 'all', 'text' => $text],
+                ['board_id' => null, 'intensity' => $i, 'answer' => $answer, 'explain' => $explain, 'penalty' => $penalty, 'is_active' => true]);
+        }
+        foreach ($p['spotlight'] as [$i, $text, $secs]) {
+            Card::firstOrCreate(['kind' => 'spotlight', 'mode' => 'all', 'text' => $text],
+                ['board_id' => null, 'intensity' => $i, 'timer' => $secs, 'penalty' => $i === 3 ? 2 : 1, 'is_active' => true]);
+        }
+        foreach ($p['bluff'] as [$mode, $i, $text]) {
+            Card::firstOrCreate(['kind' => 'bluff', 'mode' => $mode, 'text' => $text],
+                ['board_id' => null, 'intensity' => $i, 'penalty' => $i === 3 ? 2 : 1, 'is_active' => true]);
         }
 
         foreach ($d['facts'] as [$i, $text, $answer, $explain, $penalty]) {

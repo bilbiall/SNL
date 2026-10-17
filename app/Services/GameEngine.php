@@ -9,6 +9,7 @@ use App\Models\Room;
 use App\Models\Tile;
 use App\Models\WordList;
 use App\Support\Avatars;
+use App\Support\ShuffleBag;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -61,6 +62,25 @@ class GameEngine
             'quickfire' => 'Name five fruits — 10 seconds!', 'rollagain' => 'Lucky break — roll again!', 'gift' => 'Lucky find — a free shield!', 'groupgame' => 'Everybody name an animal, round the table. First to stall does a silly dance.',
         ],
     ];
+
+    /** Used only when a deck is empty — still varied, so a missing deck never shows one line over and over. */
+    private const FALLBACK_POOL = [
+        'quickfire' => ['Name five animals — 10 seconds!', 'Name five countries — go!', 'Name five songs — quick!', 'Name five foods that are red.', 'Name five things in a bathroom.', 'Name five singers — fast!', 'Name five things that fly.', 'Name five brands of shoes.'],
+        'rollagain' => ['Lucky break — roll again!', 'Bonus turn — roll again!', 'The dice want another go!', 'Go on, roll again!'],
+        'gift' => ['A little gift from the board!', 'You found something shiny!', 'Lucky find — enjoy it!', 'The board slips you a present.'],
+        'groupgame' => ['Everybody name a movie, round the table — first to stall pays.', 'Everybody name a city, round the table — no repeats.', 'Everybody name a song — first to stall pays.', 'Everybody name a snack, round the table.'],
+        'neutral' => ['Free square — breathe.', 'Nothing happens. Enjoy it.', 'Safe square — sip of water?', 'A quiet moment on the board.', 'Free square — stretch your legs.', 'The board lets you off this time.'],
+    ];
+
+    private function fallbackText(string $kind): string
+    {
+        $pool = self::FALLBACK_POOL[$kind] ?? null;
+        if ($pool) {
+            return $pool[array_rand($pool)];
+        }
+
+        return self::FALLBACK[$this->room->content_mode][$kind] ?? self::FALLBACK['family'][$kind] ?? 'Enjoy the moment!';
+    }
 
     // ───────────────────────────── Room setup ─────────────────────────────
 
@@ -473,10 +493,25 @@ class GameEngine
     /** Some free squares do something small and fun (the rest stay calm). Returns true when an event ran. */
     private function freeEvent(Player $actor, int $number): bool
     {
+        // Never in streaks: a calm square follows every event, and the last two events can't repeat straight away.
+        $st = ShuffleBag::eventState($this->room);
+        if ($st['cool'] > 0) {
+            ShuffleBag::saveEventState($this->room, $st['events'], $st['cool'] - 1);
+
+            return false;
+        }
         if (random_int(1, 100) > (int) config('snl.free_event_chance', 0)) {
             return false;
         }
         $table = (array) config('snl.free_events', []);
+        // A gift of a power the player is already full on would be wasted — leave it out.
+        $open = array_filter(array_keys(config('snl.powers')), fn ($k) => $actor->power($k) < config("snl.powers.$k.max"));
+        if (!$open) {
+            unset($table['gift']);
+        }
+        $recent = array_slice($st['events'], -2);
+        $fresh = array_diff_key($table, array_flip($recent));
+        $table = $fresh ?: $table;
         $roll = random_int(1, max(1, array_sum($table)));
         $event = null;
         foreach ($table as $k => $w) {
@@ -486,6 +521,7 @@ class GameEngine
                 break;
             }
         }
+        ShuffleBag::saveEventState($this->room, array_merge($st['events'], [$event]), 1);
         switch ($event) {
             case 'quickfire':
                 $card = $this->cardFor('quickfire', null, false);
@@ -585,8 +621,7 @@ class GameEngine
         if (!$preDrawn && (!$text || $spin)) {
             // A spin ignores the tile's own fixed text — it's a different effect than the tile normally shows.
             $drawn = Card::draw($this->room, $kind);
-            $text = $drawn?->text
-                ?? (self::FALLBACK[$this->room->content_mode][$kind] ?? self::FALLBACK['family'][$kind] ?? 'Enjoy the moment!');
+            $text = $drawn?->text ?? $this->fallbackText($kind);
         }
 
         return [

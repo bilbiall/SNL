@@ -149,21 +149,22 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // The game pack: instant from cache, refreshed behind the scenes.
+  // The game pack: freshest wins — the network (so new cards show up at once), the stored copy when offline or slow.
   if (url.pathname === '/offline/pack.json') {
     e.respondWith((async () => {
       const hit = await fromCache(req);
-      const refresh = fetch(req).then(async (res) => {
-        if (res.ok) {
+      try {
+        const res = await Promise.race([fetch(req), timeout(2500)]);
+        if (res && res.ok) {
           const c = await caches.open(await currentCache());
           const old = hit ? await hit.clone().json().catch(() => null) : null;
           const fresh = await res.clone().json().catch(() => null);
           await c.put(req, res.clone());
           if (old && fresh && old.version !== fresh.version) say({ type: 'snl-pack-updated', version: fresh.version });
+          return res;
         }
-        return res;
-      }).catch(() => null);
-      return hit || (await refresh) || Response.error();
+      } catch (_) { /* offline or slow — use what is stored */ }
+      return hit || Response.error();
     })());
     return;
   }

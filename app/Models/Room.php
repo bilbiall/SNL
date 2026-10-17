@@ -12,12 +12,13 @@ class Room extends Model
     protected $fillable = [
         'token', 'join_code', 'board_id', 'type', 'content_mode', 'intensity', 'status',
         'host_player_id', 'current_player_id', 'winner_player_id', 'turn_started_at', 'round',
-        'max_players', 'active_rule', 'event_seq', 'actions', 'pending', 'pending_started_at', 'rematch_token', 'rematch_of',
+        'max_players', 'active_rule', 'event_seq', 'actions', 'pending', 'pending_started_at', 'rematch_token', 'rematch_of', 'deck_state',
     ];
 
     protected $casts = [
         'actions'            => 'array',
         'pending'            => 'array',
+        'deck_state'        => 'array',
         'current_player_id' => 'integer',
         'host_player_id'    => 'integer',
         'winner_player_id'  => 'integer',
