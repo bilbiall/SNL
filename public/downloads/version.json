@@ -1,15 +1,14 @@
 {
-  "versionName": "1.9.1",
-  "versionCode": 21,
-  "sizeBytes": 28239355,
+  "versionName": "1.9.2",
+  "versionCode": 22,
+  "sizeBytes": 28425260,
   "notes": [
-    "Pass button now really appears on \"take a shot if you have ever…\" cards",
-    "Tap outside a card to close it",
-    "Clearer, more relatable cards",
-    "New illustrated avatars including dreadlocks",
-    "Home screen: content centred with the background photos showing again"
+    "Now installs on Android TV and Fire TV — it opens the big-screen table",
+    "Pass button on conditional cards, tap outside a card to close it",
+    "Clearer cards, new illustrated avatars including dreadlocks",
+    "Home screen centred with background photos back"
   ],
-  "sha256": "eb2f3ff32d2e2635c21cddf1de5af72e8377032c574753edd2479dca13658f01",
-  "builtAt": "2026-10-17T08:45:03.790Z",
+  "sha256": "3c5bbb0d6c2353dfdfc338e1b46ad3a15b790b13b64406f288ceca413dfcec31",
+  "builtAt": "2026-10-17T08:55:48.939Z",
   "certSha256": "2a4dce20c1650504c343933159a6682a0362a0420e0e0ade01bba1347ee7d7f3"
 }

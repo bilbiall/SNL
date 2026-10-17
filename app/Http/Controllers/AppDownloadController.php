@@ -52,6 +52,12 @@ class AppDownloadController extends Controller
         return redirect(url('downloads/' . $info['file']));
     }
 
+    /** Android TV / Fire TV use the same app as phones — it opens the TV screen when it detects a TV. */
+    public function tv()
+    {
+        return $this->android();
+    }
+
     public function android()
     {
         $file = public_path('downloads/snakes-and-liquor.apk');

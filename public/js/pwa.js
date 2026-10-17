@@ -26,7 +26,7 @@
   // inside the Android / Windows app the live site (online play) opens in the same window — give a way back to the app's own home
   (function () {
     var app = window.Capacitor || window.SNLDesktop, local = location.hostname === 'localhost' || location.protocol === 'app:';
-    if (!app || local) return;
+    if (!app || local || /^\/tv/.test(location.pathname)) return;
     document.addEventListener('DOMContentLoaded', function () {
       var a = document.createElement('a');
       a.href = window.SNLDesktop ? 'app://snl/index.html' : 'https://localhost/index.html';

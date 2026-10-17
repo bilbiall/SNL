@@ -73,6 +73,19 @@
     };
   }
 
+  // Android TV: the home screen of the app is the TV start screen on the website (phones play, the TV shows the table)
+  (function () {
+    var plug = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AppUpdater;
+    if (!plug || !plug.isTv || !/(^\/$|index\.html$)/.test(location.pathname)) return;
+    plug.isTv().then(function (r) {
+      if (!r || !r.tv) return;
+      me().then(function (mine) {
+        if (!mine || !mine.site) return;
+        fetch(mine.site + '/favicon.ico', { mode: 'no-cors', cache: 'no-store' }).then(function () { location.replace(mine.site + '/tv'); }, function () {});
+      });
+    }, function () {});
+  })();
+
   // automatic check on every screen except the table (nothing should pop up mid-game; the menu has a button for that)
   if (!/\/play(\.html)?$/.test(location.pathname)) {
     check().then(function (res) { if (res.newer) bar(res); });

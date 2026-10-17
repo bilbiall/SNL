@@ -56,6 +56,18 @@
             <p>Android shows this warning because the app isn't from Google Play. It's the same app as this website. You can switch “Install unknown apps” back off afterwards.</p>
         </div>
 
+        <div class="ap-card">
+            <h2>Android TV &amp; Fire TV</h2>
+            <p style="margin-top:0;">The same app also installs on <b>Android TV, Google TV and Fire TV</b>. On a TV it opens the <b>big-screen table</b>: the TV shows the board, the cards and a QR code, and everyone plays from their own phone. It needs internet.</p>
+            <ol>
+                <li>On the TV, install the free <b>Downloader</b> app (Fire TV: Appstore · Android TV: Google Play).</li>
+                <li>Open Downloader and type <b>{{ preg_replace('#^https?://#', '', rtrim(config('snl.public_url'), '/')) }}/download/tv</b>, then choose <b>Go</b>.</li>
+                <li>When it asks, allow Downloader to install apps, then tap <b>Install</b> and <b>Open</b>.</li>
+                <li>Start an online game on a phone and enter its room code on the TV (or pick a public game).</li>
+            </ol>
+            <p style="margin-bottom:0;">Prefer a browser? Open <b>{{ preg_replace('#^https?://#', '', rtrim(config('snl.public_url'), '/')) }}/tv</b> on the TV's web browser — no install needed.</p>
+        </div>
+
         @if(!empty($win))
         <div class="ap-card">
             <h2>Windows PC app</h2>

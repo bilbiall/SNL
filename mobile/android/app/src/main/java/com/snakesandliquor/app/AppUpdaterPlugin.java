@@ -29,6 +29,14 @@ import java.security.MessageDigest;
 public class AppUpdaterPlugin extends Plugin {
     private volatile boolean busy = false;
 
+    /** True on Android TV / Fire TV — the app then opens the TV start screen. */
+    @PluginMethod
+    public void isTv(PluginCall call) {
+        android.app.UiModeManager um = (android.app.UiModeManager) getContext().getSystemService(android.content.Context.UI_MODE_SERVICE);
+        boolean tv = um != null && um.getCurrentModeType() == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION;
+        JSObject r = new JSObject(); r.put("tv", tv); call.resolve(r);
+    }
+
     @PluginMethod
     public void install(final PluginCall call) {
         final String url = call.getString("url");

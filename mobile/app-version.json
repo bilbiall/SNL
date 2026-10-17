@@ -1,11 +1,10 @@
 {
-  "versionName": "1.9.1",
-  "versionCode": 21,
+  "versionName": "1.9.2",
+  "versionCode": 22,
   "notes": [
-    "Pass button now really appears on \"take a shot if you have ever…\" cards",
-    "Tap outside a card to close it",
-    "Clearer, more relatable cards",
-    "New illustrated avatars including dreadlocks",
-    "Home screen: content centred with the background photos showing again"
+    "Now installs on Android TV and Fire TV — it opens the big-screen table",
+    "Pass button on conditional cards, tap outside a card to close it",
+    "Clearer cards, new illustrated avatars including dreadlocks",
+    "Home screen centred with background photos back"
   ]
 }
