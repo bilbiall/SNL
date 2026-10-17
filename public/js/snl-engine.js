@@ -387,6 +387,7 @@
         break;
 
       case 'self':
+        if (!spin && this.chillPass(actor, number)) break;
         card = this.publicCard(this.cardFor('self', tile, spin));
         this.hit(actor, [actor], card, number);
         break;
@@ -397,6 +398,7 @@
         break;
 
       case 'everyone':
+        if (!spin && this.chillPass(actor, number)) break;
         card = this.publicCard(this.cardFor('everyone', tile, spin));
         this.commitHit(actor, this.activePlayers(), card, number);
         break;
@@ -404,6 +406,7 @@
       case 'pick':
       case 'duel':
       case 'swap':
+        if (kind === 'pick' && !spin && this.chillPass(actor, number)) break;
         if (kind === 'pick' && this.tryRandomPick(actor, tile, number, spin)) break;
         card = this.publicCard(this.cardFor(kind, tile, spin));
         eligible = this.activePlayers().filter(function (p) { return p.id !== actor.id; }).map(function (p) { return p.id; });
@@ -453,6 +456,7 @@
         break;
 
       default: // blank / start
+        if (!spin && kind === 'blank' && tile && this.spiceShot(actor, number)) break;
         if (!spin && kind === 'blank' && tile && this.freeEvent(actor, number)) break;
         if (!spin && kind === 'blank' && tile) {
           // A free square: no action, but a little flavour so it feels deliberate (a breather, a hydration nudge…).
@@ -467,6 +471,28 @@
         }
         break;
     }
+  };
+
+  /** Chill: some You-do-it / Pick / Everyone cards are simply waved through, so a Chill game is lighter on drinks. */
+  P.chillPass = function (actor, number) {
+    var tune = obj(this.cfg.intensity_tuning)[this.g.room.intensity] || {}, chance = parseInt(tune.skip_hit || 0, 10) || 0;
+    if (chance <= 0 || randInt(1, 100) > chance) return false;
+    var lines = this.cfg.chill_passes || ['Chill vibes — you\'re off the hook this time.'];
+    this.log({ type: 'neutral', player_id: actor.id, text: lines[Math.floor(rnd() * lines.length)], icon: 'thumb', tile: number });
+    return true;
+  };
+
+  /** Spicy: even a free square sometimes bites — a shot (Drinks) or a forfeit (Family). Never two in a row. */
+  P.spiceShot = function (actor, number) {
+    var tune = obj(this.cfg.intensity_tuning)[this.g.room.intensity] || {}, chance = parseInt(tune.free_shot || 0, 10) || 0;
+    if (chance <= 0) return false;
+    var st = this.g.deck_state || (this.g.deck_state = {});
+    if ((st.spice_cool || 0) > 0) { st.spice_cool -= 1; return false; }
+    if (randInt(1, 100) > chance) return false;
+    st.spice_cool = 2;
+    var intros = this.cfg.spice_intros || ['Spicy square — nothing is free tonight.'];
+    this.hit(actor, [actor], { kind: 'self', icon: 'fire', spin: false, intensity: 3, units: 1, text: intros[Math.floor(rnd() * intros.length)] + ' ' + this.penaltyText(1) }, number);
+    return true;
   };
 
   /** Some free squares do something small and fun (the rest stay calm). Returns true when an event ran. */

@@ -127,6 +127,25 @@ return [
 
     'players' => ['min' => 2, 'max' => 12],
 
+    /*
+    | How much each level asks of the table (percent chances, per landing):
+    |   skip_hit  — Chill only: a You-do-it / Pick-a-friend / Everyone card is waved through ("you're off the hook"), so the game is lighter.
+    |   free_shot — Spicy: even a free square can bite (a shot in Drinks mode, a forfeit in Family mode). Normal stays as written.
+    */
+    'intensity_tuning' => [
+        1 => ['skip_hit' => 28, 'free_shot' => 0],
+        2 => ['skip_hit' => 0,  'free_shot' => 0],
+        3 => ['skip_hit' => 0,  'free_shot' => 30],
+    ],
+    'spice_intros' => [
+        'Spicy square — nothing is free tonight.', 'Even empty squares bite on Spicy.', 'No such thing as a safe square when it\'s Spicy.',
+        'The board is feeling mean.', 'Surprise! This free square has a catch.', 'Spicy rule: free squares are a myth.', 'Plot twist — the quiet square bites.',
+    ],
+    'chill_passes' => [
+        'Chill vibes — you\'re off the hook this time.', 'The board takes it easy on you.', 'A gentle moment — nothing to drink here.',
+        'Chill mode: you get a pass.', 'Lucky you — the card looks away.', 'Easy does it — no penalty this round.',
+    ],
+
     // The live site (used by the Android app to look for a newer APK). Set SNL_PUBLIC_URL in .env if it changes.
     'public_url' => env('SNL_PUBLIC_URL', 'https://snl.moski.org'),
 

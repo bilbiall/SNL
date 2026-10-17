@@ -1,8 +1,8 @@
 {
-  "versionName": "1.6.0",
-  "versionCode": 7,
-  "sizeBytes": 7618451,
-  "sha256": "6f11e29844683fba13daa640b7f0216d7f8645ab58f0b028ecf66499f1ea6ae1",
-  "builtAt": "2026-10-17T02:33:33.298Z",
+  "versionName": "1.7.0",
+  "versionCode": 8,
+  "sizeBytes": 7620483,
+  "sha256": "8b65e72d031e7f5d365cf3e0808b789a490e294a2239232db957e35593df3288",
+  "builtAt": "2026-10-17T02:49:53.887Z",
   "certSha256": "2a4dce20c1650504c343933159a6682a0362a0420e0e0ade01bba1347ee7d7f3"
 }

@@ -490,6 +490,7 @@
 
   /** The one card shell every pop-up uses: foil border, corner indices, watermark icon, intensity pips, footer. */
   function cardShell({ color, head, icon, who = '', text = '', sub = '', extra = '', buttons = '', intensity = 0, mid = '', cls = '' }) {
+    if (!cls && (String(buttons).match(/<button/g) || []).length >= 2) cls = 'fit';   // answer cards: a compact layout that always fits
     const pips = intensity ? `<div class="pc-pips" title="Intensity">${[1, 2, 3].map((i) => `<i class="${i <= intensity ? 'on' : ''}"></i>`).join('')}</div>` : '';
     return `<div class="pcard ${cls}" style="--k:${color}">
       <span class="pc-corner tl">${ic(icon)}</span><span class="pc-corner br">${ic(icon)}</span>
@@ -1066,10 +1067,26 @@
       ${r.active_rule ? `<div class="htp">${ic('rule')}<span><b>Table rule now:</b> ${esc(r.active_rule)}</span></div>` : ''}
       <div class="ov-title" style="text-align:left;display:flex;align-items:center;justify-content:space-between;">Players${C.isParty && r.status === 'active' ? `<button class="obtn ok" id="addPlayerBtn" style="padding:.25rem .7rem;">${ic('team')} Add a player</button>` : ''}</div>${roster}
       ${C.isParty ? '<div class="ov-sub" style="text-align:left;">Someone had enough? Remove them — the game carries on.</div>' : ''}
+      <div class="htp" id="appRow" style="display:none;margin-top:.4rem;">${ic('info')}<span>App version <b id="appVer">…</b> · <a href="#" id="chkUpd" style="color:#f9a8d4;font-weight:800;">Check for updates</a><span id="updMsg" style="display:block;color:#9ca3af;"></span></span></div>
       <div class="ov-sub" style="text-align:left;margin-top:.5rem;">Any drink can be swapped for water. Never drive after drinking.</div>
       <div class="ov-btns" style="justify-content:flex-start;"><a class="obtn alt" href="${C.urls.home}">${ic('home')} Leave to home</a></div></div>`);
     $('menuClose').onclick = () => hide('ovMenu');
     const ap = $('addPlayerBtn'); if (ap) ap.onclick = openAddPlayer;
+    if (window.SNLUpdate) {                      // inside the Android app: show the version and let people look for a newer one
+      SNLUpdate.info().then((mine) => {
+        if (!mine) return;
+        $('appRow').style.display = 'flex'; $('appVer').textContent = mine.versionName;
+        $('chkUpd').onclick = (ev) => {
+          ev.preventDefault();
+          const msg = $('updMsg'); msg.textContent = 'Checking…';
+          SNLUpdate.check().then((res) => {
+            if (!res.remote) msg.textContent = 'Could not reach the site — connect to the internet and try again.';
+            else if (res.newer) msg.innerHTML = `New version <b>${esc(res.remote.versionName || '')}</b> is ready — <a href="${esc(res.me.site)}/download/android" style="color:#6ee7b7;font-weight:900;">download &amp; install it</a> (install over this one; your game is kept).`;
+            else msg.textContent = 'You have the latest version.';
+          });
+        };
+      });
+    }
     $('ovMenu').querySelectorAll('[data-out]').forEach((b) => (b.onclick = () => confirmLeave(+b.dataset.out)));
   }
 

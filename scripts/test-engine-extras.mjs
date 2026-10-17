@@ -67,3 +67,30 @@ console.log('extras ok — card kinds:', JSON.stringify(seen), '| quickfire prom
   assert(gained > 0, 'somebody gets buzzed');
   console.log('buzz meter ok —', any, 'games, players with a buzz:', gained);
 }
+
+// ── Intensity tuning: Chill is lighter, Normal is as written, Spicy makes even free squares bite ──
+{
+  const tileKind = {}; pack.boards[0].tiles.forEach((t) => { tileKind[t.number] = t.kind; });
+  const res = {};
+  for (const intensity of [1, 2, 3]) {
+    let spice = 0, passes = 0, hits = 0, rolls = 0;
+    for (let n = 0; n < 80; n++) {
+      const g = E.create(pack, { boardId: pack.boards[0].id, mode: n % 2 ? 'drinks' : 'family', intensity, entries: [{ name: 'A' }, { name: 'B' }, { name: 'C' }] });
+      let seen = 0;
+      for (let i = 0; i < 40 && g.room.status === 'active'; i++) {
+        E.roll(pack, g); rolls++;
+        g.actions.filter((a) => a.seq > seen).forEach((a) => {
+          if (a.type === 'card' && a.kind === 'self' && tileKind[a.tile] === 'blank') spice++;
+          if (a.type === 'neutral' && (pack.config.chill_passes || []).includes(a.text)) passes++;
+          if (a.type === 'card' && ['self', 'pick', 'everyone', 'duel'].includes(a.kind)) hits++;
+        });
+        seen = g.room.event_seq; answer(g);
+      }
+    }
+    res[intensity] = { spice, passes, hitsPerRoll: +(hits / rolls).toFixed(3) };
+  }
+  assert(res[3].spice > 0, 'Spicy: free squares sometimes bite'); assert(res[1].spice === 0 && res[2].spice === 0, 'only Spicy bites on free squares');
+  assert(res[1].passes > 0 && res[2].passes === 0 && res[3].passes === 0, 'only Chill waves cards through');
+  assert(res[1].hitsPerRoll < res[2].hitsPerRoll, 'Chill hands out fewer hits than Normal');
+  console.log('intensity tuning ok —', JSON.stringify(res));
+}

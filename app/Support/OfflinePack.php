@@ -32,7 +32,7 @@ class OfflinePack
             'config' => [
                 'modes' => $cfg['modes'], 'intensities' => $cfg['intensities'], 'players' => $cfg['players'], 'colors' => $cfg['colors'],
                 'powers' => $cfg['powers'], 'tile_kinds' => $cfg['tile_kinds'], 'mode_icons' => $cfg['mode_icons'], 'spin_table' => $cfg['spin_table'],
-                'random_pick_chance' => $cfg['random_pick_chance'], 'free_event_chance' => $cfg['free_event_chance'], 'free_events' => $cfg['free_events'], 'event_icons' => $cfg['event_icons'], 'penalties' => $cfg['penalties'], 'timing' => $cfg['timing'], 'reactions' => $cfg['reactions'],
+                'random_pick_chance' => $cfg['random_pick_chance'], 'intensity_tuning' => $cfg['intensity_tuning'], 'spice_intros' => $cfg['spice_intros'], 'chill_passes' => $cfg['chill_passes'], 'free_event_chance' => $cfg['free_event_chance'], 'free_events' => $cfg['free_events'], 'event_icons' => $cfg['event_icons'], 'penalties' => $cfg['penalties'], 'timing' => $cfg['timing'], 'reactions' => $cfg['reactions'],
             ],
             'boards' => $boards,
             'cards' => Card::where('is_active', true)->get(['board_id', 'kind', 'mode', 'intensity', 'text', 'answer', 'explain', 'penalty', 'timer'])

@@ -400,6 +400,9 @@ class GameEngine
                 break;
 
             case 'self':
+                if (!$spin && $this->chillPass($actor, $number)) {
+                    break;
+                }
                 $card = $this->publicCard($this->cardFor('self', $tile, $spin));
                 $this->hit($actor, [$actor], $card, $number);
                 break;
@@ -410,6 +413,9 @@ class GameEngine
                 break;
 
             case 'everyone':
+                if (!$spin && $this->chillPass($actor, $number)) {
+                    break;
+                }
                 $card = $this->publicCard($this->cardFor('everyone', $tile, $spin));
                 $this->commitHit($actor, $this->activePlayers()->all(), $card, $number);
                 break;
@@ -417,6 +423,9 @@ class GameEngine
             case 'pick':
             case 'duel':
             case 'swap':
+                if ($kind === 'pick' && !$spin && $this->chillPass($actor, $number)) {
+                    break;
+                }
                 if ($kind === 'pick' && $this->tryRandomPick($actor, $tile, $number, $spin)) {
                     break;
                 }
@@ -478,6 +487,9 @@ class GameEngine
                 break;
 
             default: // blank / start
+                if (!$spin && $kind === 'blank' && $tile && $this->spiceShot($actor, $number)) {
+                    break;
+                }
                 if (!$spin && $kind === 'blank' && $tile && $this->freeEvent($actor, $number)) {
                     break;
                 }
@@ -492,6 +504,47 @@ class GameEngine
                 }
                 break;
         }
+    }
+
+    /** Chill: some You-do-it / Pick / Everyone cards are simply waved through, so a Chill game is lighter on drinks. */
+    private function chillPass(Player $actor, int $number): bool
+    {
+        $chance = (int) config('snl.intensity_tuning.' . $this->room->intensity . '.skip_hit', 0);
+        if ($chance <= 0 || random_int(1, 100) > $chance) {
+            return false;
+        }
+        $lines = config('snl.chill_passes');
+        $this->room->log(['type' => 'neutral', 'player_id' => $actor->id, 'text' => $lines[array_rand($lines)], 'icon' => 'thumb', 'tile' => $number]);
+
+        return true;
+    }
+
+    /** Spicy: even a free square sometimes bites — a shot (Drinks) or a forfeit (Family). Never two in a row. */
+    private function spiceShot(Player $actor, int $number): bool
+    {
+        $chance = (int) config('snl.intensity_tuning.' . $this->room->intensity . '.free_shot', 0);
+        if ($chance <= 0) {
+            return false;
+        }
+        $st = $this->room->deck_state ?? [];
+        if (($st['spice_cool'] ?? 0) > 0) {
+            $st['spice_cool']--;
+            $this->room->deck_state = $st;
+
+            return false;
+        }
+        if (random_int(1, 100) > $chance) {
+            return false;
+        }
+        $st['spice_cool'] = 2;
+        $this->room->deck_state = $st;
+        $intros = config('snl.spice_intros');
+        $this->hit($actor, [$actor], [
+            'kind' => 'self', 'icon' => 'fire', 'spin' => false, 'intensity' => 3, 'units' => 1,
+            'text' => $intros[array_rand($intros)] . ' ' . $this->penaltyText(1),
+        ], $number);
+
+        return true;
     }
 
     /** Some free squares do something small and fun (the rest stay calm). Returns true when an event ran. */

@@ -99,6 +99,7 @@
 <script src="{{ \App\Support\OfflineAssets::js('arcade-sounds.js') }}"></script>
 <script src="{{ \App\Support\OfflineAssets::js('snl-audio.js') }}"></script>
 <script src="{{ \App\Support\OfflineAssets::js('pwa.js') }}"></script>
+<script src="{{ \App\Support\OfflineAssets::js('app-update.js') }}"></script>
 @if($local ?? false)
 {{-- Local (offline-capable) party table: the game runs in this browser; snl-local.js fills in the saved game, then snl-play.js starts. --}}
 <script>

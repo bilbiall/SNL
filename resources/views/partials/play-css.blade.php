@@ -373,6 +373,18 @@
         .stage.feed-mini .fi { font-size: clamp(.5rem, 2cqh, .66rem); padding: .22rem .4rem; border-radius: .5rem; line-height: 1.25; }
         .stage.feed-mini .fi:nth-last-child(n+6) { display: none; }
     }
+    /* ═════ answer cards (two or more buttons): balanced, compact, everything visible at a glance — no scrolling ═════ */
+    .pcard.fit { width: min(92cqw, 540px); aspect-ratio: auto; height: auto; max-height: 96cqh; }
+    .pcard.fit .pc-body { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'icon mid' 'btns btns' 'foot foot'; align-items: center; justify-content: stretch; gap: .35rem .9rem; padding: clamp(.4rem, 2cqh, .8rem) clamp(.7rem, 3cqh, 1.1rem) clamp(.35rem, 1.6cqh, .6rem); }
+    .pcard.fit .pc-icon { grid-area: icon; width: clamp(44px, 15cqh, 66px); height: clamp(44px, 15cqh, 66px); font-size: clamp(1.4rem, 7.6cqh, 2.3rem); }
+    .pcard.fit .pc-mid { grid-area: mid; width: auto; min-width: 0; overflow: hidden; align-items: center; justify-content: center; text-align: center; gap: .15rem; }
+    .pcard.fit .pc-text { font-size: clamp(.82rem, 3.7cqh, 1.2rem); line-height: 1.25; overflow-wrap: anywhere; }
+    .pcard.fit .tgt-row { margin: 0 0 .15rem; } .pcard.fit .ov-sub { margin: .1rem 0 0; }
+    .pcard.fit .spot-clock { margin: .15rem 0 0; } .pcard.fit .spot-clock b { font-size: clamp(1.1rem, 6cqh, 1.9rem); min-width: 2em; padding: .05em .45em; }
+    .pcard.fit .ov-btns { grid-area: btns; display: flex; flex-wrap: nowrap; justify-content: stretch; gap: .6rem; width: 100%; margin: 0; }
+    .pcard.fit .ov-btns .obtn { flex: 1 1 0; min-width: 0; padding-inline: .6rem; white-space: nowrap; font-size: clamp(.78rem, 3.1cqh, 1.02rem); }
+    .pcard.fit .pc-foot { grid-area: foot; }
+    .pcard.fit .pc-mark { font-size: min(34cqh, 120px); }
     .board-dim { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,.10) 40%, rgba(0,0,0,.30) 100%), rgba(4,6,18,.14); }
     .pcard .spark { position: absolute; color: var(--k); font-size: clamp(.7rem, 3cqh, 1rem); opacity: .9; animation: twinkle 1.6s ease-in-out infinite; pointer-events: none; }
     @keyframes twinkle { 0%,100% { transform: scale(.6) rotate(0); opacity: .3; } 50% { transform: scale(1.15) rotate(25deg); opacity: 1; } }
