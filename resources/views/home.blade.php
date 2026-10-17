@@ -90,6 +90,7 @@
     .ga-btns { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .5rem; }
     .ga-b { display: inline-flex; align-items: center; gap: .45rem; padding: .55rem .95rem; border-radius: .8rem; border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.1); color: #fff; font: inherit; font-weight: 800; font-size: .82rem; text-decoration: none; cursor: pointer; }
     .ga-b:hover { background: rgba(255,255,255,.18); } .ga-b small { opacity: .7; font-weight: 700; }
+    .ga-main { background: linear-gradient(135deg, #10b981, #059669); border-color: transparent; box-shadow: 0 8px 22px rgba(16,185,129,.4); }
     #gaInstall { background: linear-gradient(135deg, #8b5cf6, #6366f1); border-color: transparent; }
     .ga-tip { grid-column: 1 / -1; margin: 0; font-size: .72rem; color: #94a3b8; font-weight: 600; line-height: 1.4; }
     .lp-foot { position: absolute; bottom: 1rem; left: 0; right: 0; font-size: .74rem; color: #94a3b8; animation: fadeUp .8s ease 2s both; }
@@ -150,15 +151,16 @@
 
     <section class="getapp" id="getApp" aria-label="Get the app" style="display:none;">
         <img src="{{ asset('icons/icon-96.png') }}" alt="" width="56" height="56">
-        <div class="ga-tx"><b>Take it with you</b><span>Install the app and play party mode anywhere — even with no signal.</span></div>
+        <div class="ga-tx"><b>Get the app</b><span>Download it once and play party mode anywhere — even with no signal.</span></div>
         <div class="ga-btns">
-            <button type="button" class="ga-b" id="gaInstall" style="display:none;"><x-icon name="play" /> Install app</button>
-            @if($apk)<a class="ga-b" id="gaApk" href="{{ asset('downloads/snakes-and-liquor.apk') }}" download><x-icon name="phone" /> Android app (.apk) <small>v{{ $apk['versionName'] }} · {{ number_format($apk['sizeBytes'] / 1048576, 1) }} MB</small></a>@endif
+            @if($apk)<a class="ga-b ga-main" id="gaApk" href="{{ route('app.android') }}" download><x-icon name="phone" /> Download for Android <small>v{{ $apk['versionName'] }} · {{ number_format($apk['sizeBytes'] / 1048576, 1) }} MB</small></a>
+            <a class="ga-b" href="{{ route('app.page') }}">How to install</a>@endif
+            <button type="button" class="ga-b" id="gaInstall" style="display:none;"><x-icon name="play" /> Install from browser</button>
         </div>
         <p class="ga-tip" id="gaTip"></p>
     </section>
 
-    <div class="lp-foot">18+ for Drinks mode · Drink responsibly · Icons <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a> · <a href="{{ route('login') }}">Admin</a></div>
+    <div class="lp-foot"><a href="{{ route('app.page') }}">Android app</a> · 18+ for Drinks mode · Drink responsibly · Icons <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a> · <a href="{{ route('login') }}">Admin</a></div>
 </div>
 
 <script>
@@ -177,14 +179,12 @@
     var inApp = (window.SNLPwa && SNLPwa.isStandalone()) || !!window.Capacitor;
     if (inApp) return; // already the app
     card.style.display = 'grid';
-    if (apk && !android) apk.style.display = 'none';
     function sync() {
         var can = window.SNLPwa && SNLPwa.canInstall();
         btn.style.display = can ? 'inline-flex' : 'none';
         if (ios) tip.textContent = 'iPhone / iPad: tap Share, then "Add to Home Screen". It then works offline like an app.';
-        else if (android && apk) tip.textContent = 'Android: install from here, or download the .apk and open it (allow "install unknown apps" for your browser once).';
-        else if (!can) tip.textContent = 'On a PC: use the install icon in the address bar of Chrome or Edge. After that it opens like an app, offline too.';
-        else tip.textContent = 'Works offline once installed — your game is saved on your device.';
+        else if (apk) tip.textContent = android ? 'Tap Download, then open the file. If Android asks, allow "install unknown apps" for your browser once.' : 'The .apk is for Android phones — download it here and send it to your phone, or open this page on your phone. On a PC you can also install from the address bar of Chrome or Edge.';
+        else tip.textContent = 'On a PC: use the install icon in the address bar of Chrome or Edge. It then opens like an app, offline too.';
     }
     btn.onclick = function () { SNLPwa.install(); };
     if (window.SNLPwa) SNLPwa.onChange(sync);
