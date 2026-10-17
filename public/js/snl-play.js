@@ -1127,6 +1127,7 @@
           const msg = $('updMsg'); msg.textContent = 'Checking…';
           SNLUpdate.check().then((res) => {
             if (!res.remote) msg.textContent = 'Could not reach the site — connect to the internet and try again.';
+            else if (res.newer && SNLUpdate.show) { msg.textContent = 'Version ' + (res.remote.versionName || '') + ' is ready.'; hide('ovMenu'); SNLUpdate.show(res); }
             else if (res.newer) msg.innerHTML = `New version <b>${esc(res.remote.versionName || '')}</b> is ready — <a href="${esc(res.me.site)}${window.SNLDesktop ? '/download/windows' : '/download/android'}" style="color:#6ee7b7;font-weight:900;">download &amp; install it</a> (install over this one; your game is kept).`;
             else msg.textContent = 'You have the latest version.';
           });

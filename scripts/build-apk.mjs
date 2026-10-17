@@ -44,5 +44,5 @@ const buf = fs.readFileSync(apk);
 const sha256 = crypto.createHash('sha256').update(buf).digest('hex');
 const v = JSON.parse(fs.readFileSync(path.join(mobile, 'app-version.json'), 'utf8'));
 fs.writeFileSync(path.join(dest, 'snakes-and-liquor.apk.sha256'), `${sha256}  snakes-and-liquor.apk\n`);
-fs.writeFileSync(path.join(dest, 'version.json'), JSON.stringify({ versionName: v.versionName, versionCode: v.versionCode, sizeBytes: buf.length, sha256, builtAt: new Date().toISOString(), certSha256 }, null, 2) + '\n');
+fs.writeFileSync(path.join(dest, 'version.json'), JSON.stringify({ versionName: v.versionName, versionCode: v.versionCode, sizeBytes: buf.length, notes: v.notes || [], sha256, builtAt: new Date().toISOString(), certSha256 }, null, 2) + '\n');
 console.log(`\nSigned APK ready: public/downloads/snakes-and-liquor.apk (${(buf.length / 1048576).toFixed(2)} MB)\nSHA-256: ${sha256}\nSigning cert SHA-256: ${certSha256}`);

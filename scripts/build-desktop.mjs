@@ -34,6 +34,6 @@ const out = path.join(root, 'public', 'downloads');
 fs.mkdirSync(out, { recursive: true });
 for (const f of fs.readdirSync(out)) if (/^Snakes-and-Liquor-(Setup|Portable)-.*\.exe$/.test(f)) fs.rmSync(path.join(out, f));
 for (const f of [setup, portable]) if (fs.existsSync(path.join(desk, 'dist', f))) fs.copyFileSync(path.join(desk, 'dist', f), path.join(out, f));
-fs.writeFileSync(path.join(out, 'desktop-version.json'), JSON.stringify({ versionName: ver.versionName, versionCode: ver.versionCode, file: setup, portable }) + '\n');
+fs.writeFileSync(path.join(out, 'desktop-version.json'), JSON.stringify({ versionName: ver.versionName, versionCode: ver.versionCode, notes: ver.notes || [], builtAt: new Date().toISOString(), file: setup, portable }) + '\n');
 
 console.log(`\nDone. Upload public/downloads/${setup} (and the portable .exe + desktop-version.json) to the server's public/downloads/.`);

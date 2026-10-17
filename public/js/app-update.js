@@ -29,16 +29,26 @@
         .catch(function () { clearTimeout(timer); return { me: mine, remote: null, newer: false }; });
     });
   }
-  window.SNLUpdate = { check: check, info: me };
+  window.SNLUpdate = { check: check, info: me, show: function (res) { bar(res, true); } };
 
-  function bar(res) {
+  function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  /** Pop-up card: current → new version, what's new, and an Update button (or "Later"). */
+  function bar(res, force) {
     var remote = res.remote, site = res.me.site;
     var seen = null; try { seen = localStorage.getItem('snl_update_dismissed'); } catch (e) {}
-    if (seen === String(remote.versionCode) || document.getElementById('snlUpdateBar')) return;
+    if ((!force && seen === String(remote.versionCode)) || document.getElementById('snlUpdateBar')) return;
+    var notes = (remote.notes || []).slice(0, 6).map(function (n) { return '<li style="margin:.2rem 0;">' + esc(n) + '</li>'; }).join('');
+    var size = remote.sizeBytes ? ' · ' + (remote.sizeBytes / 1048576).toFixed(1) + ' MB' : '';
     var el = document.createElement('div');
     el.id = 'snlUpdateBar';
-    el.style.cssText = 'position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:2500;display:flex;align-items:center;gap:.7rem;max-width:92vw;padding:.55rem .6rem .55rem 1rem;border-radius:999px;background:rgba(16,185,129,.95);color:#fff;font:800 .85rem Figtree,system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.5);';
-    el.innerHTML = '<span>New version ' + (remote.versionName || '') + ' is ready</span><a style="background:#fff;color:#065f46;border-radius:999px;padding:.4rem .9rem;text-decoration:none;font-weight:900;" href="' + site + DOWNLOAD_PATH + '">Update</a><button type="button" aria-label="Dismiss" style="background:none;border:0;color:#fff;font-size:1.1rem;cursor:pointer;padding:0 .4rem;">×</button>';
+    el.style.cssText = 'position:fixed;inset:0;z-index:2500;display:flex;align-items:flex-end;justify-content:center;padding:16px 16px calc(16px + env(safe-area-inset-bottom));background:rgba(5,4,12,.5);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font-family:Figtree,system-ui,sans-serif;';
+    el.innerHTML = '<div style="width:100%;max-width:23rem;border-radius:1.2rem;padding:1rem 1.1rem;background:linear-gradient(160deg,#1f1a3a,#12101f);border:1px solid rgba(255,255,255,.16);box-shadow:0 20px 50px rgba(0,0,0,.6);color:#fff;">'
+      + '<div style="font-weight:900;font-size:1rem;">New update available</div>'
+      + '<div style="margin:.25rem 0 .6rem;font-size:.78rem;color:#94a3b8;font-weight:700;">v' + esc(res.me.versionName) + ' &rarr; <span style="color:#6ee7b7;">v' + esc(remote.versionName) + '</span>' + size + '</div>'
+      + (notes ? '<div style="font-size:.7rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#cbd5e1;">What&#39;s new</div><ul style="margin:.25rem 0 .7rem;padding-left:1.1rem;font-size:.82rem;color:#e2e8f0;">' + notes + '</ul>' : '')
+      + '<div style="display:flex;gap:.5rem;"><a href="' + site + DOWNLOAD_PATH + '" style="flex:1;text-align:center;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-radius:.8rem;padding:.6rem;text-decoration:none;font-weight:900;font-size:.86rem;">Get the update</a>'
+      + '<button type="button" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#e5e7eb;border-radius:.8rem;padding:.6rem .9rem;font:800 .82rem inherit;cursor:pointer;">Later</button></div>'
+      + '<div style="margin-top:.5rem;font-size:.68rem;color:#94a3b8;">Install it over this one — your saved game stays.</div></div>';
     el.querySelector('button').onclick = function () { try { localStorage.setItem('snl_update_dismissed', String(remote.versionCode)); } catch (e) {} el.remove(); };
     document.body.appendChild(el);
   }

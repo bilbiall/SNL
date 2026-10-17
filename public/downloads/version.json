@@ -1,8 +1,14 @@
 {
-  "versionName": "1.8.1",
-  "versionCode": 10,
-  "sizeBytes": 10821456,
-  "sha256": "584a15333d5b8de68def63ac41695247be00fe38237d72303905681d5eb43cdc",
-  "builtAt": "2026-10-17T03:13:52.080Z",
+  "versionName": "1.8.2",
+  "versionCode": 11,
+  "sizeBytes": 10821465,
+  "notes": [
+    "Calmer waiting room: blurred board, a small loader while players join, and a card you can actually click",
+    "Public games list refreshes quietly in the background",
+    "Slimmer buttons on phones and a tidier home screen",
+    "Slower, softer loading animation"
+  ],
+  "sha256": "cbba43ff9b00053310f08c8c2f0ee4f659a9c497899f031223f5987e53635c7c",
+  "builtAt": "2026-10-17T03:50:09.517Z",
   "certSha256": "2a4dce20c1650504c343933159a6682a0362a0420e0e0ade01bba1347ee7d7f3"
 }
