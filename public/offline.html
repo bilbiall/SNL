@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0a16">
+<title>Offline — Snakes &amp; Liquor</title>
+<link rel="icon" href="/icons/favicon-32.png">
+<link rel="stylesheet" href="/css/fonts.css">
+<style>
+  body { margin: 0; min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; box-sizing: border-box; background: radial-gradient(ellipse at 50% 30%, #2a1550, #0b0a16 70%); color: #fff; font-family: 'Figtree', system-ui, sans-serif; text-align: center; }
+  .card { max-width: 24rem; width: 100%; }
+  img { width: 7rem; height: 7rem; border-radius: 1.6rem; box-shadow: 0 10px 40px rgba(236,72,153,.45); }
+  h1 { font-size: 1.7rem; margin: 1rem 0 .3rem; font-weight: 900; }
+  p { color: #cbd5e1; font-weight: 600; margin: .3rem 0 1.2rem; line-height: 1.45; }
+  a.btn { display: block; margin: .6rem 0; padding: .95rem 1rem; border-radius: 1rem; color: #fff; text-decoration: none; font-weight: 900; font-size: 1.05rem; background: linear-gradient(135deg, #f59e0b, #ec4899); box-shadow: 0 10px 30px rgba(236,72,153,.4); }
+  a.btn.alt { background: rgba(255,255,255,.08); box-shadow: none; border: 1px solid rgba(255,255,255,.18); }
+  small { color: #94a3b8; display: block; margin-top: 1rem; }
+</style>
+</head>
+<body>
+<div class="card">
+  <img src="/icons/icon-192.png" alt="">
+  <h1>No signal? No problem.</h1>
+  <p>Online rooms need a connection, but party mode runs right here on your phone.</p>
+  <a class="btn" id="cont" href="/play/local" style="display:none;">Continue your game</a>
+  <a class="btn" href="/new?type=party">Start a new party game</a>
+  <a class="btn alt" href="/">Home</a>
+  <small>Your game is saved on this device after every move.</small>
+</div>
+<script>
+try {
+  var g = JSON.parse(localStorage.getItem('snl_game_v1') || 'null');
+  if (g && g.room && g.room.status === 'active') {
+    var b = document.getElementById('cont');
+    b.style.display = 'block';
+    b.textContent = 'Continue your game (' + g.players.filter(function (p) { return p.status === 'active'; }).length + ' players · round ' + g.room.round + ')';
+  }
+} catch (e) {}
+</script>
+</body>
+</html>

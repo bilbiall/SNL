@@ -6,7 +6,8 @@
         "build": "vite build",
         "dev": "vite",
         "icons": "node scripts/build-icons.mjs",
-        "avatars": "node scripts/build-avatars.mjs"
+        "avatars": "node scripts/build-avatars.mjs",
+        "apk": "node scripts/build-apk.mjs"
     },
     "devDependencies": {
         "@dicebear/collection": "^9.4.2",

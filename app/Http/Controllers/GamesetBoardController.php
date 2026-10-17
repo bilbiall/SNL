@@ -183,6 +183,26 @@ class GamesetBoardController extends Controller
         return back()->with('success', ($mobile ? 'Mobile landscape layout' : 'Board layout') . ' saved — ' . count($data['positions']) . ' square positions updated.');
     }
 
+    /** The rectangle where players wait before their first roll (percent of the art). Empty = back to square 1. */
+    public function zone(Request $request, Board $board)
+    {
+        if ($request->boolean('clear')) {
+            $board->update(['start_zone' => null]);
+
+            return back()->with('success', 'Start zone removed — players will wait on square 1.');
+        }
+        $d = $request->validate([
+            'zone_left' => 'required|numeric|min:0|max:100', 'zone_top' => 'required|numeric|min:0|max:100',
+            'zone_width' => 'required|numeric|min:3|max:100', 'zone_height' => 'required|numeric|min:3|max:100',
+        ]);
+        $board->update(['start_zone' => [
+            'left' => round($d['zone_left'], 2), 'top' => round($d['zone_top'], 2),
+            'width' => round(min($d['zone_width'], 100 - $d['zone_left']), 2), 'height' => round(min($d['zone_height'], 100 - $d['zone_top']), 2),
+        ]]);
+
+        return back()->with('success', 'Start zone saved — players now wait there before their first roll.');
+    }
+
     public function tiles(Request $request, Board $board)
     {
         $kinds = array_keys(config('snl.tile_kinds'));

@@ -174,6 +174,14 @@ class RoomController extends Controller
         });
     }
 
+    /** Party games: seat another player while the game is running (hamburger menu → Add a player). */
+    public function addPlayer(Request $request, Room $room): JsonResponse
+    {
+        $data = $request->validate(['name' => 'required|string|max:24', 'avatar' => 'nullable|string|max:12']);
+
+        return $this->act($request, $room, fn (?Player $me) => $this->engine->addPlayerMidGame($room, $data['name'], $data['avatar'] ?? null));
+    }
+
     public function react(Request $request, Room $room): JsonResponse
     {
         $data = $request->validate(['reaction' => 'required|string|max:24']);

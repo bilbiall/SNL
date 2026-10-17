@@ -1,0 +1,8 @@
+{
+  "appId": "com.snakesandliquor.app",
+  "appName": "Snakes & Liquor",
+  "webDir": "www",
+  "backgroundColor": "#0b0a16",
+  "server": { "androidScheme": "https", "cleartext": false },
+  "android": { "allowMixedContent": false, "backgroundColor": "#0b0a16" }
+}

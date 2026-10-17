@@ -41,6 +41,10 @@
     .track { position: relative; display: flex; gap: calc(var(--t) * .2); padding-top: calc(var(--t) * 1.1); }
     .tile { width: var(--t); height: var(--t); border-radius: 24%; display: flex; align-items: center; justify-content: center; font-size: calc(var(--t) * .56); color: rgba(10,8,20,.85); background: linear-gradient(160deg, color-mix(in srgb, var(--c) 100%, #fff 18%), var(--c)); box-shadow: inset 0 -4px 0 rgba(0,0,0,.25), 0 8px 16px rgba(0,0,0,.5); animation: tilePop 10s ease-in-out infinite; animation-delay: calc(var(--i) * 1s - .35s); }
     .tile:first-child { animation: none; }
+    /* the token is driven by script now (smooth arcs) — no stepped keyframes */
+    .mini .tile { animation: none !important; }
+    .tok { animation: none !important; transform-origin: 50% 100%; }
+    .tok > div { animation: none !important; }
     @keyframes tilePop { 0%, 9% { transform: none; filter: none; } 3.5% { transform: translateY(6px) scale(1.14); filter: brightness(1.4); } }
     .tok { position: absolute; left: 0; bottom: calc(var(--t) * .98); width: var(--t); height: var(--t); animation: hopX 10s linear infinite; }
     .tok > div { width: 100%; height: 100%; border-radius: 50%; border: 3px solid #fff; display: flex; align-items: center; justify-content: center; font-size: calc(var(--t) * .56); color: #fff; background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.55), transparent 45%), #f59e0b; box-shadow: 0 8px 14px rgba(0,0,0,.55); animation: hopY 10s linear infinite; }
@@ -79,6 +83,15 @@
     .tw { position: absolute; width: var(--s); height: var(--s); fill: #fff; opacity: 0; filter: drop-shadow(0 0 5px rgba(253,224,71,.9)); animation: twinkle 4.2s ease-in-out var(--d) infinite; }
     .tw:nth-child(3n) { fill: #fde68a; } .tw:nth-child(4n) { fill: #f9a8d4; filter: drop-shadow(0 0 5px rgba(244,114,182,.9)); }
     @keyframes twinkle { 0%, 100% { opacity: 0; transform: scale(.4) rotate(0); } 45% { opacity: .95; transform: scale(1) rotate(45deg); } 60% { opacity: .5; transform: scale(.8) rotate(60deg); } }
+    .go.c { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 12px 34px rgba(16,185,129,.4); margin-bottom: 1.1rem; animation: fadeUp .6s ease both; }
+    .getapp { margin-top: 1.6rem; display: grid; grid-template-columns: auto 1fr; gap: .4rem .9rem; align-items: center; max-width: 30rem; width: 100%; padding: .9rem 1rem; text-align: left; border-radius: 1.2rem; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(8px); animation: fadeUp .8s ease 1.9s both; }
+    .getapp img { width: 3.2rem; height: 3.2rem; border-radius: .9rem; box-shadow: 0 6px 18px rgba(236,72,153,.4); }
+    .ga-tx { display: flex; flex-direction: column; } .ga-tx b { font-size: .95rem; } .ga-tx span { font-size: .74rem; color: #cbd5e1; font-weight: 600; line-height: 1.35; }
+    .ga-btns { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .5rem; }
+    .ga-b { display: inline-flex; align-items: center; gap: .45rem; padding: .55rem .95rem; border-radius: .8rem; border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.1); color: #fff; font: inherit; font-weight: 800; font-size: .82rem; text-decoration: none; cursor: pointer; }
+    .ga-b:hover { background: rgba(255,255,255,.18); } .ga-b small { opacity: .7; font-weight: 700; }
+    #gaInstall { background: linear-gradient(135deg, #8b5cf6, #6366f1); border-color: transparent; }
+    .ga-tip { grid-column: 1 / -1; margin: 0; font-size: .72rem; color: #94a3b8; font-weight: 600; line-height: 1.4; }
     .lp-foot { position: absolute; bottom: 1rem; left: 0; right: 0; font-size: .74rem; color: #94a3b8; animation: fadeUp .8s ease 2s both; }
     .lp-foot a { color: #94a3b8; }
 
@@ -128,33 +141,134 @@
         </div>
     </div>
 
+    <a href="{{ route('play.local') }}" class="go c" id="contBtn" style="display:none;"><x-icon name="replay" /> <span id="contTxt">Continue your game</span></a>
+
     <div class="cta">
         <a href="{{ route('setup', ['type' => 'party']) }}" class="go a"><x-icon name="phone" /> Play here</a>
         <a href="{{ route('setup', ['type' => 'online']) }}" class="go b"><x-icon name="globe" /> Play online</a>
     </div>
 
+    <section class="getapp" id="getApp" aria-label="Get the app" style="display:none;">
+        <img src="{{ asset('icons/icon-96.png') }}" alt="" width="56" height="56">
+        <div class="ga-tx"><b>Take it with you</b><span>Install the app and play party mode anywhere — even with no signal.</span></div>
+        <div class="ga-btns">
+            <button type="button" class="ga-b" id="gaInstall" style="display:none;"><x-icon name="play" /> Install app</button>
+            @if($apk)<a class="ga-b" id="gaApk" href="{{ asset('downloads/snakes-and-liquor.apk') }}" download><x-icon name="phone" /> Android app (.apk) <small>v{{ $apk['versionName'] }} · {{ number_format($apk['sizeBytes'] / 1048576, 1) }} MB</small></a>@endif
+        </div>
+        <p class="ga-tip" id="gaTip"></p>
+    </section>
+
     <div class="lp-foot">18+ for Drinks mode · Drink responsibly · Icons <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a> · <a href="{{ route('login') }}">Admin</a></div>
 </div>
 
 <script>
-// The bouncing token puts on a different avatar every time it lands on a square.
+// "Continue your game" — a party game saved on this device — and the get-the-app card.
+(function () {
+    try {
+        var g = JSON.parse(localStorage.getItem('snl_game_v1') || 'null');
+        if (g && g.room && g.room.status === 'active') {
+            var n = g.players.filter(function (p) { return p.status === 'active'; }).length;
+            document.getElementById('contTxt').textContent = 'Continue your game (' + n + ' players · round ' + g.room.round + ')';
+            document.getElementById('contBtn').style.display = 'inline-flex';
+        }
+    } catch (e) {}
+    var card = document.getElementById('getApp'), btn = document.getElementById('gaInstall'), tip = document.getElementById('gaTip'), apk = document.getElementById('gaApk');
+    var ua = navigator.userAgent || '', ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1), android = /Android/i.test(ua);
+    var inApp = (window.SNLPwa && SNLPwa.isStandalone()) || !!window.Capacitor;
+    if (inApp) return; // already the app
+    card.style.display = 'grid';
+    if (apk && !android) apk.style.display = 'none';
+    function sync() {
+        var can = window.SNLPwa && SNLPwa.canInstall();
+        btn.style.display = can ? 'inline-flex' : 'none';
+        if (ios) tip.textContent = 'iPhone / iPad: tap Share, then "Add to Home Screen". It then works offline like an app.';
+        else if (android && apk) tip.textContent = 'Android: install from here, or download the .apk and open it (allow "install unknown apps" for your browser once).';
+        else if (!can) tip.textContent = 'On a PC: use the install icon in the address bar of Chrome or Edge. After that it opens like an app, offline too.';
+        else tip.textContent = 'Works offline once installed — your game is saved on your device.';
+    }
+    btn.onclick = function () { SNLPwa.install(); };
+    if (window.SNLPwa) SNLPwa.onChange(sync);
+    sync();
+})();
+</script>
+
+<script>
+// The token hops along the squares in smooth arcs, squashes on landing, changes avatar on every landing,
+// celebrates on the trophy, then pops back at the start. One requestAnimationFrame loop drives everything (no stepped keyframes).
 (function () {
     var tok = document.querySelector('.tok'), img = document.getElementById('tokAv');
-    if (!tok || !img || !tok.getAnimations || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    var base = '{{ asset('avatars') }}', pool = @json($pool), i = 0, last = -1;
+    var tiles = [].slice.call(document.querySelectorAll('.mini .tile'));
+    if (!tok || !img || tiles.length < 3) return;
+    var body = tok.firstElementChild;
+    var base = '{{ asset('avatars') }}', pool = @json($pool), ai = 0;
     pool.forEach(function (k) { var p = new Image(); p.src = base + '/' + k + '.svg'; });
-    (function loop() {
-        var an = tok.getAnimations()[0];
-        if (an && an.currentTime != null) {
-            var phase = Math.floor((an.currentTime % 10000) / 1000);
-            if (phase !== last) {
-                last = phase;
-                i = (i + 1) % pool.length; img.src = base + '/' + pool[i] + '.svg';
-                img.animate([{ transform: 'scale(1.3) rotate(-8deg)', filter: 'brightness(1.6)' }, { transform: 'none', filter: 'none' }], { duration: 320, easing: 'cubic-bezier(.34,1.56,.64,1)' });
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    var HOPS = tiles.length - 1, HOP = 620, GAP = 110, LEAD = 700;
+    var ease = function (t) { return t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; };  // easeInOutQuad
+    var pitch = 0, t0 = performance.now(), landed = -1, size = 0;
+
+    function measure() {
+        pitch = tiles[1].offsetLeft - tiles[0].offsetLeft;
+        size = tiles[0].offsetWidth;
+        tok.style.willChange = 'transform';
+    }
+    function setAvatar() {
+        ai = (ai + 1) % pool.length;
+        img.src = base + '/' + pool[ai] + '.svg';
+        body.animate([{ filter: 'brightness(1.7)' }, { filter: 'none' }], { duration: 300, easing: 'ease-out' });
+    }
+    function pop(i) {
+        var el = tiles[i]; if (!el) return;
+        el.animate([{ transform: 'translateY(0) scale(1)', filter: 'brightness(1)' }, { transform: 'translateY(5px) scale(1.12, .9)', filter: 'brightness(1.4)', offset: .35 }, { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' }], { duration: 340, easing: 'cubic-bezier(.3,.7,.4,1)' });
+    }
+    var CYCLE = LEAD + HOPS * (HOP + GAP) + 1500 + 700;
+
+    function frame(now) {
+        if (!pitch) measure();
+        var t = (now - t0) % CYCLE, x = 0, y = 0, sx = 1, sy = 1, rot = 0, op = 1, sc = 1;
+        var run = t - LEAD;
+        if (run < 0) {                                   // pop in at the start
+            sc = Math.min(1, Math.max(0, 1 - (-run) / LEAD * 0)) ;
+            if (t < 260) { var u = t / 260; sc = 1 - Math.pow(1 - u, 3); sc = sc * (1 + Math.sin(u * Math.PI) * .18); }
+            if (landed !== -1 && t < 50) landed = -1;
+        } else if (run < HOPS * (HOP + GAP)) {
+            var h = Math.floor(run / (HOP + GAP)), local = run - h * (HOP + GAP);
+            if (local < HOP) {
+                var u = local / HOP;
+                x = (h + ease(u)) * pitch;
+                y = -Math.sin(Math.PI * u) * size * 1.05;            // a real parabola-like arc
+                var stretch = Math.sin(Math.PI * u) * .12;
+                sy = 1 + stretch; sx = 1 - stretch * .6;              // stretch while airborne
+                rot = (u - .5) * 14;
+            } else {                                                  // landing squash, settling
+                var s = (local - HOP) / GAP;
+                x = (h + 1) * pitch;
+                var sq = Math.sin((1 - s) * Math.PI / 2) * .2;
+                sy = 1 - sq; sx = 1 + sq * .8;
+                if (landed < h) { landed = h; pop(h + 1); setAvatar(); }
+            }
+        } else {
+            var c = run - HOPS * (HOP + GAP);                          // celebrate on the trophy
+            x = HOPS * pitch;
+            if (c < 1500) {
+                var cu = c / 750, bounce = Math.abs(Math.sin(cu * Math.PI));
+                y = -bounce * size * (cu < 1 ? 1.4 : .9);
+                rot = Math.sin(cu * Math.PI * 2) * 18;
+                sy = 1 + bounce * .1; sx = 1 - bounce * .06;
+                if (c < 40 && landed !== 99) { landed = 99; pop(HOPS); }
+            } else {                                                   // shrink away, ready to pop back in
+                var f = Math.min(1, (c - 1500) / 600);
+                x = HOPS * pitch; sc = 1 - ease(f); op = 1 - f;
+                if (landed === 99 && f >= 1) landed = -1;
             }
         }
-        requestAnimationFrame(loop);
-    })();
+        tok.style.transform = 'translate3d(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px,0) rotate(' + rot.toFixed(2) + 'deg) scale(' + (sx * sc).toFixed(3) + ',' + (sy * sc).toFixed(3) + ')';
+        tok.style.opacity = op;
+        requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+    window.addEventListener('resize', function () { pitch = 0; });
 })();
 </script>
 

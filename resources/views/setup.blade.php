@@ -131,6 +131,10 @@
 
 @include('partials.avatar-picker')
 
+@if($type === 'party')
+<script src="{{ \App\Support\OfflineAssets::js('snl-engine.js') }}"></script>
+<script src="{{ \App\Support\OfflineAssets::js('snl-local.js') }}"></script>
+@endif
 <script>
 (function () {
     const modes = @json($modes);
@@ -185,6 +189,30 @@
     document.getElementById('plusBtn').onclick = () => { if (count < limits.max) { count++; render(); } };
     document.getElementById('minusBtn').onclick = () => { if (count > limits.min) { count--; render(); } };
     render();
+
+    // Party games run on this device (works with no signal): build the game here instead of posting to the server.
+    const showErr = (msg) => {
+        let box = document.getElementById('localErr');
+        if (!box) { box = document.createElement('div'); box.id = 'localErr'; box.className = 'snl-alert err'; form.parentNode.insertBefore(box, form); }
+        box.textContent = msg;
+        box.scrollIntoView({ block: 'center' });
+    };
+    if (typeof SNLLocal !== 'undefined') SNLLocal.loadPack(); // make sure the game files are on the device
+    form.addEventListener('submit', async (e) => {
+        if (typeof SNLLocal === 'undefined' || !SNLLocal.hasEngine()) return; // old browser → the server path below still works
+        e.preventDefault();
+        const fd = new FormData(form);
+        const mode = fd.get('content_mode');
+        if (modes[mode] && modes[mode].adult && !fd.get('adult')) { showErr('Please confirm that everyone playing is 18 or over for this mode.'); return; }
+        const nm = fd.getAll('names[]'), co = fd.getAll('colors[]'), av = fd.getAll('avatars[]');
+        try {
+            await SNLLocal.create({ boardId: +fd.get('board_id'), mode: mode, intensity: +fd.get('intensity'), entries: nm.map((n, i) => ({ name: n, color: co[i], avatar: av[i] })) });
+            location.href = @json(route('play.local'));
+        } catch (err) {
+            if (navigator.onLine && !(err && err.name === 'GameError')) { form.submit(); return; }
+            showErr((err && err.message) || 'Could not start the game.');
+        }
+    });
     @else
     const hostAv = document.getElementById('hostAvatar'), hostImg = document.getElementById('hostAvatarImg');
     const showHost = () => { hostImg.src = SNLAvatars.url(hostAv.value); };

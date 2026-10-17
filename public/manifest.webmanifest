@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "Snakes & Liquor",
+  "short_name": "Snakes & Liquor",
+  "description": "The party board game where every square has a story. Play on one phone — even with no signal — or online with friends.",
+  "lang": "en",
+  "start_url": "/?source=app",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#0b0a16",
+  "theme_color": "#0b0a16",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Play here", "short_name": "Play here", "description": "Start a new party game on this device", "url": "/new?type=party", "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Continue game", "short_name": "Continue", "description": "Pick up the game you were playing", "url": "/play/local", "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }] }
+  ],
+  "prefer_related_applications": false
+}

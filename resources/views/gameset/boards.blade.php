@@ -127,6 +127,60 @@
     <div id="hiddenInputs"></div>
 </form>
 
+{{-- Start zone: where players wait before their first roll --}}
+@php $zone = $board->start_zone ?: ['left' => 2, 'top' => 78, 'width' => 12, 'height' => 16]; @endphp
+<div class="gs-box mt-6" style="background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.2);">
+    <h2 style="font-weight:900;color:#6ee7b7;font-size:.9rem;margin:0 0 .3rem;">Start zone — where players wait before their first roll</h2>
+    <p style="font-size:.72rem;color:rgba(255,255,255,.45);margin:0 0 .7rem;">Drag the green box over the area you want (the START sign works well) and pull its corner to resize. Players spread out inside it instead of piling on square 1; once they roll they hop onto the board. {{ $board->start_zone ? '' : 'None is set yet — players stack on square 1.' }}</p>
+    <form method="POST" action="{{ route('gameset.boards.zone', $board) }}" id="zoneForm">
+        @csrf
+        <div id="zoneBoard" style="position:relative;border-radius:1rem;overflow:hidden;touch-action:none;">
+            <img src="{{ $board->imageUrl() }}" alt="" class="w-full h-auto block" draggable="false">
+            <div id="zoneRect" style="position:absolute;left:{{ $zone['left'] }}%;top:{{ $zone['top'] }}%;width:{{ $zone['width'] }}%;height:{{ $zone['height'] }}%;border:3px dashed #34d399;background:rgba(16,185,129,.22);border-radius:12px;cursor:move;box-shadow:0 0 0 9999px rgba(0,0,0,.28);">
+                <div id="zoneDots" style="position:absolute;inset:0;pointer-events:none;"></div>
+                <span style="position:absolute;left:6px;top:4px;font-size:.62rem;font-weight:900;color:#d1fae5;letter-spacing:.08em;text-transform:uppercase;pointer-events:none;">Start zone</span>
+                <div id="zoneHandle" style="position:absolute;right:-9px;bottom:-9px;width:20px;height:20px;border-radius:50%;background:#34d399;border:3px solid #fff;cursor:nwse-resize;"></div>
+            </div>
+        </div>
+        <input type="hidden" name="zone_left" id="zl" value="{{ $zone['left'] }}"><input type="hidden" name="zone_top" id="zt" value="{{ $zone['top'] }}">
+        <input type="hidden" name="zone_width" id="zw" value="{{ $zone['width'] }}"><input type="hidden" name="zone_height" id="zh" value="{{ $zone['height'] }}">
+        <div class="flex flex-wrap gap-2 mt-3"><button class="gs-btn go">Save start zone</button><button class="gs-btn" name="clear" value="1" formnovalidate style="background:rgba(255,255,255,.08);">Remove (use square 1)</button></div>
+    </form>
+</div>
+<script>
+(function () {
+    var box = document.getElementById('zoneBoard'), rect = document.getElementById('zoneRect'), handle = document.getElementById('zoneHandle'), dots = document.getElementById('zoneDots');
+    var f = { l: document.getElementById('zl'), t: document.getElementById('zt'), w: document.getElementById('zw'), h: document.getElementById('zh') };
+    var colors = ['#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#a855f7', '#ec4899'];
+    function show() {
+        f.l.value = parseFloat(rect.style.left).toFixed(2); f.t.value = parseFloat(rect.style.top).toFixed(2); f.w.value = parseFloat(rect.style.width).toFixed(2); f.h.value = parseFloat(rect.style.height).toFixed(2);
+        // preview: six sample tokens spread the same way the game does it
+        var k = 6, bw = box.clientWidth, bh = box.clientHeight, zw = parseFloat(rect.style.width) / 100 * bw, zh = parseFloat(rect.style.height) / 100 * bh;
+        var cols = Math.max(1, Math.min(k, Math.round(Math.sqrt(k * zw / zh)))), rows = Math.ceil(k / cols), html = '';
+        for (var i = 0; i < k; i++) {
+            var r = Math.floor(i / cols), c = i % cols, inRow = Math.min(cols, k - r * cols);
+            var x = (c + 0.5 + (cols - inRow) / 2) / cols * 100, y = (r + 0.5) / rows * 100;
+            html += '<i style="position:absolute;left:' + x + '%;top:' + y + '%;width:22px;height:22px;margin:-11px;border-radius:50%;background:' + colors[i % colors.length] + ';border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)"></i>';
+        }
+        dots.innerHTML = html;
+    }
+    function pct(e) { var b = box.getBoundingClientRect(); return { x: (e.clientX - b.left) / b.width * 100, y: (e.clientY - b.top) / b.height * 100 }; }
+    var mode = null, start = null, orig = null;
+    rect.addEventListener('pointerdown', function (e) { mode = e.target === handle ? 'size' : 'move'; start = pct(e); orig = { l: parseFloat(rect.style.left), t: parseFloat(rect.style.top), w: parseFloat(rect.style.width), h: parseFloat(rect.style.height) }; rect.setPointerCapture(e.pointerId); e.preventDefault(); });
+    rect.addEventListener('pointermove', function (e) {
+        if (!mode) return;
+        var p = pct(e), dx = p.x - start.x, dy = p.y - start.y;
+        if (mode === 'move') { rect.style.left = Math.max(0, Math.min(100 - orig.w, orig.l + dx)) + '%'; rect.style.top = Math.max(0, Math.min(100 - orig.h, orig.t + dy)) + '%'; }
+        else { rect.style.width = Math.max(4, Math.min(100 - orig.l, orig.w + dx)) + '%'; rect.style.height = Math.max(4, Math.min(100 - orig.t, orig.h + dy)) + '%'; }
+        show();
+    });
+    rect.addEventListener('pointerup', function () { mode = null; });
+    rect.addEventListener('pointercancel', function () { mode = null; });
+    window.addEventListener('resize', show);
+    show();
+})();
+</script>
+
 {{-- Board settings --}}
 <div class="gs-box mt-6" style="background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.18);">
     <h2 style="font-weight:900;color:#a5b4fc;font-size:.9rem;margin:0 0 .8rem;">Board settings — {{ $board->name }}</h2>

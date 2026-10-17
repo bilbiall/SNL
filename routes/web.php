@@ -5,6 +5,7 @@ use App\Http\Controllers\GamesetBoardController;
 use App\Http\Controllers\GamesetCardController;
 use App\Http\Controllers\GamesetWordController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OfflineController;
 use App\Http\Controllers\RoomController;
 use Illuminate\Support\Facades\Route;
 
@@ -16,6 +17,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/new', [HomeController::class, 'create'])->name('setup');
 Route::get('/join', [HomeController::class, 'join'])->name('join');
+
+// Offline: the pack, the file list and the in-browser party table (must come before play/{room}).
+Route::get('/offline/pack.json', [OfflineController::class, 'pack'])->name('offline.pack');
+Route::get('/offline/assets.json', [OfflineController::class, 'assets'])->name('offline.assets');
+Route::get('/play/local', [OfflineController::class, 'local'])->name('play.local');
 
 Route::post('/new', [RoomController::class, 'store'])->middleware('throttle:snl-create')->name('rooms.store');
 Route::post('/join', [RoomController::class, 'joinStore'])->middleware('throttle:snl-create')->name('join.store');
@@ -29,6 +35,7 @@ Route::prefix('play/{room:token}')->name('play.')->group(function () {
     Route::post('/leave', [RoomController::class, 'leave'])->name('leave');
     Route::post('/react', [RoomController::class, 'react'])->middleware('throttle:snl-play')->name('react');
     Route::post('/rematch', [RoomController::class, 'rematch'])->name('rematch');
+    Route::post('/addplayer', [RoomController::class, 'addPlayer'])->middleware('throttle:snl-play')->name('addplayer');
 });
 
 /*
@@ -50,6 +57,7 @@ Route::middleware(['auth', 'gameset'])->prefix('gameset')->name('gameset.')->gro
     Route::post('/boards/{board}/resize', [GamesetBoardController::class, 'resize'])->name('boards.resize');
     Route::post('/boards/{board}/tiles', [GamesetBoardController::class, 'tiles'])->name('boards.tiles');
     Route::post('/boards/{board}/positions', [GamesetBoardController::class, 'positions'])->name('boards.positions');
+    Route::post('/boards/{board}/zone', [GamesetBoardController::class, 'zone'])->name('boards.zone');
     Route::delete('/boards/{board}', [GamesetBoardController::class, 'destroy'])->name('boards.destroy');
 
     Route::get('/cards', [GamesetCardController::class, 'index'])->name('cards.index');

@@ -82,7 +82,7 @@ class GamesetCardController extends Controller
             }
             Card::firstOrCreate(
                 ['kind' => $data['kind'], 'mode' => $data['mode'], 'text' => $line, 'board_id' => $data['board_id'] ?? null],
-                ['intensity' => $data['intensity'], 'is_active' => true, 'penalty' => $data['penalty'] ?? 1, 'timer' => $data['kind'] === 'spotlight' ? ($data['timer'] ?? 15) : null] + $extra
+                ['intensity' => $data['intensity'], 'is_active' => true, 'penalty' => $data['penalty'] ?? 1, 'timer' => in_array($data['kind'], ['spotlight', 'quickfire'], true) ? ($data['timer'] ?? 15) : null] + $extra
             );
             $added++;
         }
@@ -123,8 +123,8 @@ class GamesetCardController extends Controller
         $data['board_id'] = $data['board_id'] ?? null;
         $data['answer']   = $data['kind'] === 'fact' ? ($data['answer'] === 'true') : null;
         $data['explain']  = $data['kind'] === 'fact' ? ($data['explain'] ?? null) : null;
-        $data['penalty']  = in_array($data['kind'], ['fact', 'bluff', 'spotlight'], true) ? ($data['penalty'] ?? 1) : 1;
-        $data['timer']    = $data['kind'] === 'spotlight' ? ($data['timer'] ?? 15) : null;
+        $data['penalty']  = in_array($data['kind'], ['fact', 'bluff', 'spotlight', 'quickfire'], true) ? ($data['penalty'] ?? 1) : 1;
+        $data['timer']    = in_array($data['kind'], ['spotlight', 'quickfire'], true) ? ($data['timer'] ?? 15) : null;
 
         return $data;
     }

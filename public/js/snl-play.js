@@ -62,15 +62,41 @@
   const AV = /^[a-z][0-9]+-[0-9]+$/;
   const avatar = (p) => AV.test(p.avatar || '') ? `<img class="avimg" src="${C.avatarBase}/${p.avatar}.svg" alt="">` : ic(p.avatar || 'cards');
   const chip = (p) => `<span class="tgt static" style="--c:${p.color}"><span class="av">${avatar(p)}</span>${esc(p.name)}</span>`;
-  function show(id, html) { const el = $(id); if (html !== undefined) el.innerHTML = html; el.classList.add('show'); return el; }
+  const CARD_OVERLAYS = ['ovCard', 'ovPrompt', 'ovConfirm', 'ovMenu', 'ovWin', 'ovLobby'];
+  /** Shows an overlay; a freshly dealt card gets its whoosh and a tick for every word that lands. */
+  function show(id, html) {
+    const el = $(id);
+    const fresh = html !== undefined && !el.classList.contains('show');
+    if (html !== undefined) el.innerHTML = html;
+    el.classList.add('show');
+    if (fresh && CARD_OVERLAYS.indexOf(id) !== -1) {
+      snd('deal');
+      el.querySelectorAll('.pc-text .w').forEach((w, i) => { if (i < 16) setTimeout(() => snd('pip'), 560 + i * 70 + 40); });
+    }
+    return el;
+  }
   function hide(id) { $(id).classList.remove('show'); }
 
   const isRotated = () => innerWidth < 1024 && matchMedia('(orientation: portrait)').matches;
-  function xy(n) {
+  /** Where player `id` waits before their first roll: a slot inside the GameSet start zone (spread in a grid, centred). */
+  function zoneSlot(id, z) {
+    const ids = players().filter((q) => q.status !== 'left' && (shown[q.id] === undefined ? q.position : shown[q.id]) === 0).sort((a, b) => a.turn_order - b.turn_order).map((q) => q.id);
+    const i = ids.indexOf(id);
+    if (i < 0) return null;
+    const k = ids.length;
+    const cs = getComputedStyle(document.documentElement);
+    const ratio = (parseFloat(cs.getPropertyValue('--bw')) || 1264) / (parseFloat(cs.getPropertyValue('--bh')) || 848);
+    const cols = Math.max(1, Math.min(k, Math.round(Math.sqrt(k * (z.width * ratio) / z.height))));
+    const rows = Math.ceil(k / cols);
+    const r = Math.floor(i / cols), c = i % cols, inRow = Math.min(cols, k - r * cols);
+    return { l: z.left + z.width * ((c + 0.5 + (cols - inRow) / 2) / cols), t: z.top + z.height * ((r + 0.5) / rows) };
+  }
+  function xy(n, id) {
     const p = C.positions[n] || C.positions[0] || { left: 8, top: 90, left_m: 8, top_m: 90 };
+    if (n === 0 && p.zone && id != null) { const s = zoneSlot(id, p.zone); if (s) return s; }
     return isRotated() ? { l: p.left_m, t: p.top_m } : { l: p.left, t: p.top };
   }
-  function place(el, n) { const { l, t } = xy(n); el.style.left = l + '%'; el.style.top = t + '%'; }
+  function place(el, n) { const { l, t } = xy(n, +el.dataset.pid); el.style.left = l + '%'; el.style.top = t + '%'; }
 
   // ───────────────────────── tokens ─────────────────────────
   function ensureTokens() {
@@ -78,6 +104,7 @@
       if (tokens[p.id]) return;
       const el = document.createElement('div');
       el.className = 'token';
+      el.dataset.pid = p.id;
       el.style.setProperty('--c', p.color);
       el.innerHTML = `${avatar(p)}<span class="tname">${esc(p.name)}</span>`;
       BOARD.appendChild(el);
@@ -98,10 +125,13 @@
       if (p.status === 'left') return;
       (groups[shown[p.id]] = groups[shown[p.id]] || []).push(p.id);
     });
-    Object.values(groups).forEach((ids) => {
+    const zone = C.positions[0] && C.positions[0].zone;
+    if (zone && groups[0]) groups[0].forEach((id) => place(tokens[id], 0)); // re-spread everyone still waiting
+    Object.keys(groups).forEach((key) => {
+      const ids = groups[key];
       ids.forEach((id, i) => {
         const el = tokens[id];
-        if (ids.length === 1) { el.style.setProperty('--ox', '0px'); el.style.setProperty('--oy', '0px'); return; }
+        if (ids.length === 1 || (zone && +key === 0)) { el.style.setProperty('--ox', '0px'); el.style.setProperty('--oy', '0px'); return; }
         const a = (Math.PI * 2 * i) / ids.length - Math.PI / 2;
         const r = Math.min(14, 6 + ids.length * 2.2);
         el.style.setProperty('--ox', (Math.cos(a) * r).toFixed(1) + 'px');
@@ -155,7 +185,7 @@
     if (!el) return;
     el.classList.remove('landed'); void el.offsetWidth; el.classList.add('landed');
     setTimeout(() => el.classList.remove('landed'), 520); // so the idle bob can resume
-    const { l, t } = xy(shown[id]);
+    const { l, t } = xy(shown[id], id);
     const r = document.createElement('div');
     r.className = 'ripple'; r.style.left = l + '%'; r.style.top = t + '%';
     BOARD.appendChild(r);
@@ -163,7 +193,7 @@
   }
   /** The number rolled, floating up off the roller's token. */
   function rollPop(id, value) {
-    const { l, t } = xy(shown[id] ?? 0);
+    const { l, t } = xy(shown[id] ?? 0, id);
     const r = document.createElement('div');
     r.className = 'rollpop'; r.style.left = l + '%'; r.style.top = t + '%'; r.style.setProperty('--c', P(id).color);
     r.innerHTML = `${ic('dice')}<span>${value}</span>`;
@@ -193,6 +223,12 @@
 
   // ───────────────────────── talking to the server ─────────────────────────
   async function post(url, body = {}) {
+    if (typeof url === 'string' && url.indexOf('local:') === 0) { // a party game running on this device — no server involved
+      const res = SNLLocal.act(url.slice(6), body);
+      if (res.error) { toast(`${ic('info')} ${esc(res.error)}`, 3400, '#f87171'); if (res.state) ingest(res.state); return null; }
+      ingest(res.state);
+      return res.state;
+    }
     try {
       const r = await fetch(url, {
         method: 'POST',
@@ -215,6 +251,7 @@
       return data;
     } catch (_) {
       toast(`${ic('info')} Connection problem — try again.`, 3000, '#f87171');
+      if (++netFails >= 2) netLost();
       return null;
     }
   }
@@ -266,6 +303,8 @@
       case 'power': return [`${ic('power')} ${n(who)} found a power-up`, '#eab308'];
       case 'rule': return [`${ic('rule')} New rule: ${clip(a.text, 60)}`, kindColor('rule')];
       case 'neutral': return [`${ic('hourglass')} ${n(who)}: ${clip(a.text, 50)}`, '#6b7280'];
+      case 'extra_turn': return [`${ic('dice')} ${n(who)} rolls again`, '#38bdf8'];
+      case 'joined': return [`${ic('team')} ${n(who)} joined the game`, '#34d399'];
       case 'factcheck': return [`${ic(a.correct ? 'check' : 'cross')} ${n(who)} ${a.correct ? 'got it right' : 'got it wrong'} — it's <b>${a.answer ? 'TRUE' : 'FALSE'}</b>`, a.correct ? '#34d399' : '#f87171'];
       case 'bluff_said': return [`${ic('jester')} ${n(who)} made a claim`, '#14b8a6'];
       case 'bluff_pass': return [`${ic('check')} Nobody doubted ${n(who)}`, '#34d399'];
@@ -364,6 +403,20 @@
 
       case 'random_pick': await randomPickOverlay(a); break;
 
+      case 'extra_turn':
+        snd('bonus');
+        flavorSplash(who, a.text, 'dice', 'bonus turn');
+        await sleep(3600);
+        break;
+
+      case 'joined': {
+        ensureTokens();
+        snd('arrive');
+        toast(`${ic('team')} <b>${esc(who.name)}</b> joined the game`, 2800, '#34d399');
+        await sleep(500);
+        break;
+      }
+
       case 'neutral':
         snd('arrive');
         flavorSplash(who, a.text);
@@ -422,9 +475,9 @@
   const EMBERS = Array.from({ length: 9 }, (_, i) => `<i class="ember" style="left:${8 + i * 10.5}%;--d:${(i * 0.37) % 2.4}s;--s:${0.5 + (i % 3) * 0.25}"></i>`).join('');
 
   /** The one card shell every pop-up uses: foil border, corner indices, watermark icon, intensity pips, footer. */
-  function cardShell({ color, head, icon, who = '', text = '', sub = '', extra = '', buttons = '', intensity = 0, mid = '' }) {
+  function cardShell({ color, head, icon, who = '', text = '', sub = '', extra = '', buttons = '', intensity = 0, mid = '', cls = '' }) {
     const pips = intensity ? `<div class="pc-pips" title="Intensity">${[1, 2, 3].map((i) => `<i class="${i <= intensity ? 'on' : ''}"></i>`).join('')}</div>` : '';
-    return `<div class="pcard" style="--k:${color}">
+    return `<div class="pcard ${cls}" style="--k:${color}">
       <span class="pc-corner tl">${ic(icon)}</span><span class="pc-corner br">${ic(icon)}</span>
       <div class="pc-mark">${ic(icon)}</div><div class="pc-rays"></div>${EMBERS}
       <div class="pc-head">${head}</div>${SPARKS}
@@ -443,7 +496,7 @@
 
   function holdCard(id, { color = '#f59e0b', head, icon, who = '', text, sub = '', seconds = 7, intensity = 0 }) {
     return new Promise((resolve) => {
-      snd('open'); try { SNLAudio.duck(true); } catch (_) {}
+      try { SNLAudio.duck(true); } catch (_) {}
       const auto = !C.isParty;
       show(id, cardShell({ color, head, icon, who, text, sub, intensity,
         buttons: '<button class="obtn" data-ok>Got it</button>',
@@ -468,10 +521,11 @@
       case 'duel': head = `${esc(targets[0]?.name || 'Someone')} lost the duel`; who = targets.map(chip).join(''); break;
       case 'fact': head = `${spin}Fun fact`; break;
       case 'heart': head = `${spin}Love ladder · ${esc(src.name)}`; who = chip(src); break;
+      case 'groupgame': head = 'Everybody plays!'; break;
       case 'blank': head = 'Mystery spin'; break;
       default: head = 'Card';
     }
-    snd(a.kind === 'heart' ? 'heart' : a.kind === 'everyone' ? (C.mode.label === 'Drinks' ? 'cheers' : 'sparkle') : a.kind === 'fact' ? 'notify' : (a.kind === 'self' || a.kind === 'pick') ? (C.mode.label === 'Drinks' ? 'clink' : 'decisionPing') : 'mystery');
+    snd(a.kind === 'heart' ? 'heart' : (a.kind === 'everyone' || a.kind === 'groupgame') ? (C.mode.label === 'Drinks' ? 'cheers' : 'sparkle') : a.kind === 'fact' ? 'notify' : (a.kind === 'self' || a.kind === 'pick') ? (C.mode.label === 'Drinks' ? 'clink' : 'decisionPing') : 'mystery');
     return holdCard('ovCard', { color: a.kind === 'blank' || a.spin ? kindColor('spin') : kindColor(a.kind), head, icon: a.icon || 'cards', who, text: a.text, intensity: a.intensity || 0 });
   }
 
@@ -595,11 +649,11 @@
 
   // ───────────────────────── drawing the table ─────────────────────────
   /** A free square's flavour line — the same banner as "your turn", just with a line of text that lingers and animates in. */
-  function flavorSplash(p, text, icon = 'hourglass') {
+  function flavorSplash(p, text, icon = 'hourglass', label = 'free square') {
     const el = document.createElement('div');
     el.className = 'splash flavor';
     el.style.setProperty('--c', p.color);
-    el.innerHTML = `<b><span class="spl-av">${avatar(p)}</span><span class="spl-tx"><small>${ic(icon)} ${esc(p.name)} · free square</small><span class="fl-t">${words(text)}</span></span></b>`;
+    el.innerHTML = `<b><span class="spl-av">${avatar(p)}</span><span class="spl-tx"><small>${ic(icon)} ${esc(p.name)} · ${esc(label)}</small><span class="fl-t">${words(text)}</span></span></b>`;
     ST.appendChild(el);
     setTimeout(() => el.remove(), 4500);
   }
@@ -715,8 +769,8 @@
 
   // ── prompts that wait on a player ──
   /** A card-shaped prompt with answer buttons — the same standard card as every pop-up. */
-  function promptCard({ color, head, icon, who = '', text, sub = '', buttons = '', extra = '' }) {
-    return cardShell({ color, head, icon, who, text, sub, extra, buttons });
+  function promptCard({ color, head, icon, who = '', text, sub = '', buttons = '', extra = '', cls = '' }) {
+    return cardShell({ color, head, icon, who, text, sub, extra, buttons, cls });
   }
 
   /** A slim, non-blocking card for everyone who isn't the one being asked (online): what's being decided, and by whom. */
@@ -725,7 +779,7 @@
     const card = p.card;
     const who = P(p.actor_id);
     const heads = {
-      tf: 'True or false?', bluff_say: 'Fact or bluff', bluff_call: 'Call bluff?', bluff_verdict: 'Was it proven?', spot: 'Spotlight',
+      tf: 'True or false?', bluff_say: 'Fact or bluff', bluff_call: 'Call bluff?', bluff_verdict: 'Was it proven?', spot: (p.card && p.card.kind === 'quickfire') ? 'Quickfire!' : 'Spotlight',
     };
     if (!card || !heads[p.type]) { w.classList.remove('show'); return; }
     const status = {
@@ -735,7 +789,7 @@
       bluff_verdict: `${esc(P(p.caller_id).name)} called bluff on ${esc(who.name)} — judges are deciding…`,
       spot: `${esc(who.name)} is on the clock…`,
     }[p.type];
-    w.style.setProperty('--k', kindColor(p.type === 'tf' ? 'fact' : p.type === 'spot' ? 'spotlight' : 'bluff'));
+    w.style.setProperty('--k', kindColor(p.type === 'tf' ? 'fact' : p.type === 'spot' ? (card.kind === 'quickfire' ? 'quickfire' : 'spotlight') : 'bluff'));
     w.innerHTML = `<div class="w-ic">${ic(card.icon || 'cards')}</div><div class="w-tx"><b>${heads[p.type]}</b>
       <div>${p.type === 'bluff_verdict' ? '' : esc(card.text)}</div><span>${status}</span></div>`;
     w.classList.add('show');
@@ -770,14 +824,11 @@
     if (p.type === 'reroll') {
       const k = p.preview_kind === 'finish' ? { label: 'the finish', icon: 'flag' } : kindInfo(p.preview_kind);
       const n = actor.powers.reroll || 0;
-      show('ovPrompt', `<div class="ov-card" style="--k:${kindColor(p.preview_kind)}">
-        <div class="ov-icon">${ic('dice')}</div>
-        <div class="ov-title">${esc(actor.name)} rolled</div>
-        <div class="ov-text" style="font-size:clamp(1.8rem,11cqh,3rem)">${p.roll}</div>
-        <div class="ov-sub">Lands on square <b>${p.preview_tile}</b> — ${ic(k.icon)} ${esc(k.label)}. Reroll?</div>
-        <div class="ov-btns">
-          <button class="obtn" data-act="use">${ic(cfg.reroll.icon)} Reroll (${n} left)</button>
-          <button class="obtn alt" data-act="skip">Keep it</button></div>${left}</div>`);
+      show('ovPrompt', promptCard({
+        color: kindColor(p.preview_kind), head: `${esc(actor.name)} rolled`, icon: 'dice', who: chip(actor), text: String(p.roll),
+        sub: `Lands on square <b>${p.preview_tile}</b> — ${ic(k.icon)} ${esc(k.label)}. Reroll?${left}`,
+        buttons: `<button class="obtn" data-act="use">${ic(cfg.reroll.icon)} Reroll (${n} left)</button><button class="obtn alt" data-act="skip">Keep it</button>`,
+      }));
       $('ovPrompt').querySelectorAll('[data-act]').forEach((b) => (b.onclick = () => answer({ choice: b.dataset.act })));
       return;
     }
@@ -786,30 +837,25 @@
       const src = P(p.source_id);
       const n = actor.powers.shield || 0;
       const own = p.source_id === p.actor_id; // a card the player landed on themselves
-      show('ovPrompt', `<div class="ov-card" style="--k:#38bdf8">
-        <div class="ov-icon">${ic('shield')}</div>
-        <div class="ov-title">${own ? 'Your card' : (C.isParty ? `Pass the phone to ${esc(actor.name)}` : 'Incoming!')}</div>
-        <div class="tgt-row">${chip(actor)}</div>
-        <div class="ov-text">${esc(p.card.text)}</div>
-        <div class="ov-sub">${own ? 'Spend a Shield to dodge it?' : `${esc(src.name)} landed this on you. Block it?`}</div>
-        <div class="ov-btns">
-          <button class="obtn vio" data-act="use">${ic(cfg.shield.icon)} Block it (${n} left)</button>
-          <button class="obtn alt" data-act="skip">Take it</button></div>${left}</div>`);
+      show('ovPrompt', promptCard({
+        color: '#38bdf8', head: own ? 'Your card' : (C.isParty ? `Pass the phone to ${esc(actor.name)}` : 'Incoming!'), icon: 'shield', who: chip(actor), text: p.card.text,
+        sub: (own ? 'Spend a Shield to dodge it?' : `${esc(src.name)} landed this on you. Block it?`) + left,
+        buttons: `<button class="obtn vio" data-act="use">${ic(cfg.shield.icon)} Block it (${n} left)</button><button class="obtn alt" data-act="skip">Take it</button>`,
+      }));
       $('ovPrompt').querySelectorAll('[data-act]').forEach((b) => (b.onclick = () => answer({ choice: b.dataset.act })));
       return;
     }
 
     if (p.type === 'pick') {
       const head = { pick: 'Choose a friend', duel: 'Choose your opponent', swap: 'Choose who to swap with' }[p.sub] || 'Choose a player';
-      const btns = p.eligible.map((id) => {
+      const tiles = p.eligible.map((id, i) => {
         const t = P(id);
-        return `<button class="tgt" data-id="${id}" style="--c:${t.color}"><span class="av">${avatar(t)}</span>${esc(t.name)} <span style="color:#9ca3af;font-weight:700;">· ${t.position}</span></button>`;
+        return `<button class="ptile" data-id="${id}" style="--c:${t.color};--i:${i}"><span class="pav">${avatar(t)}</span><b>${esc(t.name)}</b><small>square ${t.position}</small></button>`;
       }).join('');
-      show('ovPrompt', `<div class="ov-card wide" style="--k:${kindColor(p.sub)}">
-        <div class="ov-icon">${ic(p.card.icon || 'pick')}</div>
-        <div class="ov-title">${esc(actor.name)} — ${head}</div>
-        <div class="ov-text">${esc(p.card.text)}</div>
-        <div class="tgt-row">${btns}</div>${left}</div>`);
+      show('ovPrompt', promptCard({
+        color: kindColor(p.sub), head: `${esc(actor.name)} · ${head}`, icon: p.card.icon || 'pick', text: p.card.text, sub: left,
+        extra: `<div class="pgrid">${tiles}</div>`, cls: 'wide',
+      }));
       $('ovPrompt').querySelectorAll('[data-id]').forEach((b) => (b.onclick = () => answer({ choice: 'target', target_id: +b.dataset.id })));
       return;
     }
@@ -874,8 +920,9 @@
     // ── Spotlight: a creative prompt on the clock ──
     if (p.type === 'spot') {
       const secs = p.card.timer || 15;
+      const qf = p.card.kind === 'quickfire';
       show('ovPrompt', promptCard({
-        color: kindColor('spotlight'), head: `${esc(actor.name)} · Spotlight`, icon: p.card.icon || 'mic', text: p.card.text,
+        color: kindColor(qf ? 'quickfire' : 'spotlight'), head: `${esc(actor.name)} · ${qf ? 'Quickfire!' : 'Spotlight'}`, icon: p.card.icon || (qf ? 'clock' : 'mic'), text: p.card.text,
         extra: `<div class="spot-clock"><b data-spot>${secs}</b></div>`,
         buttons: `<button class="obtn ok" data-spotr="nailed">${ic('check')} Nailed it</button><button class="obtn no" data-spotr="failed">${ic('cross')} Couldn't</button>`,
       }));
@@ -889,7 +936,7 @@
     if (answering) return;
     answering = true;
     $('ovPrompt').querySelectorAll('button').forEach((b) => (b.disabled = true));
-    snd('toggle');
+    snd('press');
     const res = await post(C.urls.decide, body);
     answering = false;
     if (!res) renderPrompt(); // failed — let them try again
@@ -943,6 +990,7 @@
       <div class="ov-sub" style="margin-top:.5rem;">Thanks for playing — drink responsibly and never drive after drinking.</div></div>`);
     $('winAgain').onclick = async () => {
       if (r.rematch_token) { location.href = C.urls.base + '/' + r.rematch_token; return; }
+      if (C.local) { SNLLocal.act('rematch'); location.reload(); return; }
       $('winAgain').disabled = true;
       const res = await fetch(C.urls.rematch, { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': C.csrf } }).then((x) => x.json()).catch(() => ({}));
       if (res.redirect) location.href = res.redirect; else { $('winAgain').disabled = false; toast(`${ic('info')} ${esc(res.error || 'Could not start a rematch')}`, 3000, '#f87171'); }
@@ -973,12 +1021,36 @@
       <div class="htp">${ic('dice')}<span>Roll to move. <b>First to the finish wins.</b> Roll too high and you bounce back.</span></div>
       ${kinds}${pw}
       ${r.active_rule ? `<div class="htp">${ic('rule')}<span><b>Table rule now:</b> ${esc(r.active_rule)}</span></div>` : ''}
-      <div class="ov-title" style="text-align:left;">Players</div>${roster}
+      <div class="ov-title" style="text-align:left;display:flex;align-items:center;justify-content:space-between;">Players${C.isParty && r.status === 'active' ? `<button class="obtn ok" id="addPlayerBtn" style="padding:.25rem .7rem;">${ic('team')} Add a player</button>` : ''}</div>${roster}
       ${C.isParty ? '<div class="ov-sub" style="text-align:left;">Someone had enough? Remove them — the game carries on.</div>' : ''}
       <div class="ov-sub" style="text-align:left;margin-top:.5rem;">Any drink can be swapped for water. Never drive after drinking.</div>
       <div class="ov-btns" style="justify-content:flex-start;"><a class="obtn alt" href="${C.urls.home}">${ic('home')} Leave to home</a></div></div>`);
     $('menuClose').onclick = () => hide('ovMenu');
+    const ap = $('addPlayerBtn'); if (ap) ap.onclick = openAddPlayer;
     $('ovMenu').querySelectorAll('[data-out]').forEach((b) => (b.onclick = () => confirmLeave(+b.dataset.out)));
+  }
+
+  /** Hamburger menu → Add a player: a new seat while the game is running. */
+  function openAddPlayer() {
+    hide('ovMenu');
+    if (typeof SNLAvatars === 'undefined') return;
+    let av = SNLAvatars.random();
+    show('ovConfirm', cardShell({
+      color: '#10b981', head: 'Add a player', icon: 'team', cls: 'wide',
+      mid: `<div class="addp"><button type="button" class="avbtn lg" id="apAv" title="Choose avatar"><img id="apImg" src="${SNLAvatars.url(av)}" alt=""></button><input id="apName" class="apname" maxlength="24" placeholder="Name" autocomplete="off"></div>`,
+      sub: 'They join at the start zone and play last in the order. Up to 12 players.',
+      buttons: `<button class="obtn alt" id="apNo">Cancel</button><button class="obtn ok" id="apYes">${ic('check')} Add to game</button>`,
+    }));
+    $('apAv').onclick = () => SNLAvatars.open(av, (k) => { av = k; $('apImg').src = SNLAvatars.url(av); });
+    $('apNo').onclick = () => hide('ovConfirm');
+    setTimeout(() => { const n = $('apName'); if (n) n.focus(); }, 700);
+    $('apYes').onclick = async () => {
+      const name = $('apName').value.trim();
+      if (!name) { $('apName').focus(); toast(`${ic('info')} Give the new player a name`, 2200, '#f87171'); return; }
+      $('apYes').disabled = true;
+      const res = await post(C.urls.addplayer, { name, avatar: av });
+      if (res) hide('ovConfirm'); else $('apYes').disabled = false;
+    };
   }
 
   function confirmLeave(id) {
@@ -1044,13 +1116,41 @@
     $('reactBar').querySelectorAll('button').forEach((b) => (b.onclick = () => { post(C.urls.react, { reaction: b.dataset.react }); }));
   }
 
+  // ───────────────────────── connection watch (online rooms) ─────────────────────────
+  let netFails = 0;
+  let netBar = null;
+  function netLost() {
+    if (C.isParty || netBar || !latest || latest.room.status !== 'active') return;
+    netBar = document.createElement('div');
+    netBar.className = 'netbar';
+    const can = typeof SNLLocal !== 'undefined' && SNLLocal.hasEngine();
+    netBar.innerHTML = `<span>${ic('info')} Connection lost — reconnecting…</span>${can ? '<button type="button" id="carryOn">Carry on on this phone</button>' : ''}`;
+    ST.appendChild(netBar);
+    const b = netBar.querySelector('#carryOn'); if (b) b.onclick = carryOnLocally;
+  }
+  function netBack() {
+    netFails = 0;
+    if (netBar) { netBar.remove(); netBar = null; toast(`${ic('check')} Back online`, 1800, '#34d399'); }
+  }
+  /** No signal for good? Turn this room into a pass-the-phone game, right where everyone is. */
+  function carryOnLocally() {
+    show('ovConfirm', `<div class="pcard" style="--k:#f59e0b"><div class="pc-head">Carry on offline?</div><div class="pc-body"><div class="pc-mid"><div class="pc-text">Everyone plays on THIS phone from where you all are. The room on the other phones stops.</div></div><div class="ov-btns"><button class="obtn alt" id="coNo">Not yet</button><button class="obtn" id="coYes">Carry on here</button></div></div></div>`);
+    $('coNo').onclick = () => hide('ovConfirm');
+    $('coYes').onclick = async () => {
+      try { await SNLLocal.carryOn(latest); location.href = C.urls.local || '/play/local'; }
+      catch (e) { hide('ovConfirm'); toast(`${ic('info')} ${esc(e.message || 'Could not switch to offline play')}`, 4000, '#f87171'); }
+    };
+  }
+  window.addEventListener('offline', () => { netFails = 3; netLost(); });
+  window.addEventListener('online', () => { fetch(C.urls.state, { headers: { Accept: 'application/json' } }).then((r) => { if (r.ok) { netBack(); return r.json().then(ingest); } }).catch(() => {}); });
+
   // ───────────────────────── polling & clocks ─────────────────────────
   async function poll() {
     if (!C.isParty) {
       try {
         const r = await fetch(C.urls.state, { headers: { Accept: 'application/json' } });
-        if (r.ok) ingest(await r.json());
-      } catch (_) { /* a missed poll is fine — the next one catches up from the log */ }
+        if (r.ok) { netBack(); ingest(await r.json()); }
+      } catch (_) { if (++netFails >= 3) netLost(); /* a missed poll is fine — the next one catches up from the log */ }
     }
     setTimeout(poll, document.hidden ? 4000 : (latest.room.status === 'completed' ? 4000 : 1400));
   }

@@ -15,7 +15,12 @@ class HomeController extends Controller
         shuffle($looks);
         $pool = array_map(fn ($l) => $l['id'] . '-' . random_int(1, 7), array_slice($looks, 0, 24));
 
-        return view('home', ['boards' => Board::playable(), 'pool' => $pool]);
+        $apk = null;
+        if (is_file(public_path('downloads/snakes-and-liquor.apk')) && is_file(public_path('downloads/version.json'))) {
+            $apk = json_decode(file_get_contents(public_path('downloads/version.json')), true);
+        }
+
+        return view('home', ['boards' => Board::playable(), 'pool' => $pool, 'apk' => $apk]);
     }
 
     /** Game setup. ?type=party (one device) or ?type=online (room code). */

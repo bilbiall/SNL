@@ -45,6 +45,8 @@ The seeder creates an admin from `SNL_ADMIN_EMAIL` / `SNL_ADMIN_PASSWORD` in `.e
 | **Fact or bluff** | The roller says a fact out loud (true or invented). Anyone can *call bluff*. A neutral judge (or the table, in party mode) rules: proven → the caller pays; caught → the roller pays. Nobody calls → safe. |
 | **Spotlight** | A creative prompt on a clock — a movie for the moment, a song, a hot take. Fail it and take the penalty. |
 | **Mystery spin** | Spins into any of the above. |
+| **Free square** | Calm by default — a breather or a hydration nudge. But about 4 in 10 landings now do something small and fun: a **Quickfire** 10-second challenge, a **Roll again** bonus turn, a free **Shield** gift, or a **Group game** everybody joins. Tune it in `config/snl.php` (`free_event_chance`, `free_events`) and write more lines in GameSet → Cards (kinds *Quickfire*, *Group game*, *Free gift*, *Roll again*). |
+| **Love ladder** | A sweet moment — compliments, memories, toasts. No penalty. |
 
 Intensity (**Chill / Normal / Spicy**) decides which cards can appear and how hard penalties bite.
 
@@ -54,6 +56,11 @@ Intensity (**Chill / Normal / Spicy**) decides which cards can appear and how ha
 * **Templates**: card text can contain `{you}`, `{other}` (a random player) and any word-list slot such as `{scene}`, `{vibe}`, `{genre}`, `{hot_topic}`. One card — *"Recommend a movie for {scene}"* — reads differently every time.
 * **Words** (GameSet → Words) hold the slot lists. Add hundreds; add brand-new slots just by naming them.
 * Bulk-add both: one per line. True-or-false lines look like `T | statement | optional explanation`.
+
+## Players, start zone and joining late
+
+* **Start zone** (GameSet → Boards → *Start zone*): drag a green box over the area where players wait before their first roll (the START sign works well). They spread out inside it instead of stacking on square 1, then hop onto the board when they roll. Remove it to go back to square 1.
+* **Add a player mid-game** (party mode): hamburger menu → *Add a player*. They take a seat at the start zone and play last in the order (up to 12 players).
 
 ## Boards
 

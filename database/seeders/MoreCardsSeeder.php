@@ -39,6 +39,22 @@ class MoreCardsSeeder extends Seeder
             }
         }
 
+        // Free-square events (quickfire, group games, gifts, roll-again lines).
+        $e = require __DIR__ . '/data/event-cards.php';
+        foreach ($e['quickfire'] as [$i, $text, $secs]) {
+            Card::firstOrCreate(['kind' => 'quickfire', 'mode' => 'all', 'text' => $text],
+                ['board_id' => null, 'intensity' => $i, 'timer' => $secs, 'penalty' => $i === 3 ? 2 : 1, 'is_active' => true]);
+        }
+        foreach ($e['cards'] as $kind => $modes) {
+            foreach ($modes as $mode => $tiers) {
+                foreach ($tiers as $intensity => $lines) {
+                    foreach ($lines as $text) {
+                        Card::firstOrCreate(['kind' => $kind, 'mode' => $mode, 'text' => $text], ['board_id' => null, 'intensity' => $intensity, 'is_active' => true]);
+                    }
+                }
+            }
+        }
+
         foreach ($d['facts'] as [$i, $text, $answer, $explain, $penalty]) {
             Card::firstOrCreate(['kind' => 'fact', 'mode' => 'all', 'text' => $text],
                 ['board_id' => null, 'intensity' => $i, 'answer' => $answer, 'explain' => $explain, 'penalty' => $penalty, 'is_active' => true]);

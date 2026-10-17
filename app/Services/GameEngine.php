@@ -42,6 +42,7 @@ class GameEngine
     /** Milliseconds the most recent movement will visibly take on screen. */
     private int $delay = 0;
     private ?Player $fillTarget = null;
+    private bool $extraTurn = false;
 
     /** Whose turn it is right now — used to fill {you} / {other} in card text. */
     private ?Player $turnActor = null;
@@ -51,11 +52,13 @@ class GameEngine
             'self' => 'Take a sip.', 'pick' => 'Pick someone to take a sip.', 'everyone' => 'Everybody take a sip.',
             'duel' => 'The loser takes a sip.', 'fact' => 'Share a fun fact with the table.', 'rule' => 'No pointing for the rest of the game.',
             'swap' => 'Swap places with a player of your choice!', 'neutral' => 'Free square — you are safe. Sip of water?', 'heart' => 'Give {other} a genuine compliment.',
+            'quickfire' => 'Name five fruits — 10 seconds!', 'rollagain' => 'Lucky break — roll again!', 'gift' => 'Lucky find — a free shield!', 'groupgame' => 'Everybody name a cocktail, round the table. First to stall takes a sip.',
         ],
         'family' => [
             'self' => 'Do your best victory dance!', 'pick' => 'Pick someone to do ten star jumps.', 'everyone' => 'Everybody cheer as loud as you can!',
             'duel' => 'The loser does a silly walk.', 'fact' => 'Share a fun fact with the table.', 'rule' => 'Everyone must speak in a whisper until the next rule.',
             'swap' => 'Swap places with a player of your choice!', 'neutral' => 'Free square — you are safe. Take a breath!', 'heart' => 'Give {other} a genuine compliment.',
+            'quickfire' => 'Name five fruits — 10 seconds!', 'rollagain' => 'Lucky break — roll again!', 'gift' => 'Lucky find — a free shield!', 'groupgame' => 'Everybody name an animal, round the table. First to stall does a silly dance.',
         ],
     ];
 
@@ -250,6 +253,25 @@ class GameEngine
         });
     }
 
+    /** Party games: seat one more player while the game is running (from the menu). They start at the start zone and play last in the order. */
+    public function addPlayerMidGame(Room $room, string $name, ?string $avatar = null): Player
+    {
+        return $this->locked($room, function () use ($name, $avatar) {
+            $room = $this->room;
+            if (!$room->isParty()) {
+                throw new GameException('Friends join an online room with its code.');
+            }
+            $this->assertPlaying();
+            if ($this->players->where('status', '!=', 'left')->count() >= config('snl.players.max')) {
+                throw new GameException('The table is full (' . config('snl.players.max') . ' players).');
+            }
+            $p = $this->addPlayer($room, ['name' => $name, 'avatar' => $avatar]);
+            $room->log(['type' => 'joined', 'player_id' => $p->id]);
+
+            return $p;
+        });
+    }
+
     /** A player bows out ("I'm out"). Never penalises; the game carries on without them. */
     public function leave(Room $room, int $playerId): void
     {
@@ -328,7 +350,7 @@ class GameEngine
 
         $this->resolveTile($actor, $this->tile($actor->position));
 
-        if (!$room->pending) {
+        if (!$room->pending && !$this->extraTurn) {
             $this->endTurn($this->delay);
         }
     }
@@ -432,6 +454,9 @@ class GameEngine
                 break;
 
             default: // blank / start
+                if (!$spin && $kind === 'blank' && $tile && $this->freeEvent($actor, $number)) {
+                    break;
+                }
                 if (!$spin && $kind === 'blank' && $tile) {
                     // A free square: no action, but a little flavour so it feels deliberate (a breather, a hydration nudge…).
                     $card = $this->cardFor('neutral', $tile, false);
@@ -443,6 +468,57 @@ class GameEngine
                 }
                 break;
         }
+    }
+
+    /** Some free squares do something small and fun (the rest stay calm). Returns true when an event ran. */
+    private function freeEvent(Player $actor, int $number): bool
+    {
+        if (random_int(1, 100) > (int) config('snl.free_event_chance', 0)) {
+            return false;
+        }
+        $table = (array) config('snl.free_events', []);
+        $roll = random_int(1, max(1, array_sum($table)));
+        $event = null;
+        foreach ($table as $k => $w) {
+            $roll -= $w;
+            if ($roll <= 0) {
+                $event = $k;
+                break;
+            }
+        }
+        switch ($event) {
+            case 'quickfire':
+                $card = $this->cardFor('quickfire', null, false);
+                $timer = (int) ($card['timer'] ?: 10);
+                $this->setPending([
+                    'type' => 'spot', 'actor_id' => $actor->id, 'card' => $this->publicCard($card) + ['timer' => $timer],
+                    'penalty' => (int) $card['penalty'], 'tile' => $number, 'ttl' => $timer + 14,
+                ]);
+
+                return true;
+            case 'rollagain':
+                $card = $this->cardFor('rollagain', null, false);
+                $this->room->log(['type' => 'extra_turn', 'player_id' => $actor->id, 'text' => $card['text'], 'icon' => $card['icon'], 'tile' => $number]);
+                $this->extraTurn = true;
+
+                return true;
+            case 'gift':
+                $card = $this->cardFor('gift', null, false);
+                $this->room->log(['type' => 'neutral', 'player_id' => $actor->id, 'text' => $card['text'], 'icon' => $card['icon'], 'tile' => $number]);
+                $this->grantPower($actor, false);
+
+                return true;
+            case 'groupgame':
+                $card = $this->publicCard($this->cardFor('groupgame', null, false));
+                $this->room->log([
+                    'type' => 'card', 'kind' => 'groupgame', 'text' => $card['text'], 'icon' => $card['icon'], 'spin' => false, 'intensity' => $card['intensity'], 'random' => false,
+                    'source_id' => $actor->id, 'target_ids' => $this->activePlayers()->pluck('id')->all(), 'tile' => $number,
+                ]);
+
+                return true;
+        }
+
+        return false;
     }
 
     /** Sometimes the wheel - not the roller - picks the victim. Uses cards written with {target}; otherwise falls back to a normal pick. */
@@ -503,7 +579,7 @@ class GameEngine
     private function cardFor(string $kind, ?Tile $tile, bool $spin, ?Card $preDrawn = null): array
     {
         $icon = $tile?->icon
-            ?: (config("snl.mode_icons.{$this->room->content_mode}.$kind") ?? config("snl.tile_kinds.$kind.icon") ?? 'cards');
+            ?: (config("snl.event_icons.$kind") ?? config("snl.mode_icons.{$this->room->content_mode}.$kind") ?? config("snl.tile_kinds.$kind.icon") ?? 'cards');
         $text = $preDrawn ? $preDrawn->text : $tile?->label;
         $drawn = $preDrawn;
         if (!$preDrawn && (!$text || $spin)) {
@@ -1155,6 +1231,7 @@ class GameEngine
                 $this->players = Player::where('room_id', $room->id)->orderBy('turn_order')->get()->keyBy('id');
                 unset($this->tiles);
                 $this->delay = 0;
+                $this->extraTurn = false;
 
                 $result = $fn();
 

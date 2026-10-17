@@ -6,9 +6,8 @@
     <meta name="theme-color" content="#0b0a16">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="robots" content="noindex">
-    <title>{{ $room->isOnline() ? 'Room ' . $room->join_code : 'Party game' }} — Snakes & Liquor</title>
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800,900&display=swap" rel="stylesheet"/>
+    <title>{{ ($local ?? false) ? 'Party game' : ($room->isOnline() ? 'Room ' . $room->join_code : 'Party game') }} — Snakes & Liquor</title>
+    @include('partials.pwa-head')
     <style>:root { --bw: {{ $board->board_width ?: 1264 }}; --bh: {{ $board->board_height ?: 848 }}; }</style>
     @include('partials.pieces-css')
     @include('partials.play-css')
@@ -17,13 +16,13 @@
 <div class="stage" id="stage">
 
     {{-- Atmosphere: the board's own art, blurred, behind everything; game pieces pop in and drift in front of it. --}}
-    <div class="ambient" style="background-image:url('{{ $board->imageUrl() }}')"></div>
+    <div class="ambient" id="ambientBg" style="background-image:url('{{ $board->imageUrl() }}')"></div>
     <div class="vignette"></div>
     <div class="pieces" id="pieces"></div>
 
     {{-- The board. Tokens are added here by snl-play.js and positioned as % of this box. --}}
     <div class="board-wrap" id="boardWrap">
-        <img src="{{ $board->imageUrl() }}" alt="{{ $board->name }} board" draggable="false">
+        <img id="boardImg" src="{{ $board->imageUrl() }}" alt="{{ $board->name }} board" draggable="false">
         <div class="board-dim"></div>
         <div id="glow" class="tile-glow"></div>
     </div>
@@ -31,7 +30,7 @@
     {{-- HUD. On phones the two .side wrappers vanish (display:contents) and each piece floats in a corner of the stage.
          On a wide screen they become two matching sidebars: info + players on the left, controls + moves on the right. --}}
     <header class="topnav" id="topnav">
-        <a class="brand" href="{{ route('home') }}" aria-label="Snakes &amp; Liquor home"><img src="{{ asset('img/logo.svg') }}" alt=""><span><b>Snakes</b> &amp; <b>Liquor</b></span></a>
+        <a class="brand" href="{{ route('home') }}" aria-label="Snakes &amp; Liquor home"><img src="{{ asset('img/logo-96.png') }}" alt=""><span><b>Snakes</b> &amp; <b>Liquor</b></span></a>
         <div class="nav-mid" id="navMid"></div>
         <div class="nav-btns">
             @if($music)<button class="icon-btn" id="musicBtn" type="button" aria-label="Music"><x-icon name="music" /></button>@endif
@@ -51,7 +50,7 @@
             <div class="feed-list" id="feedList"></div>
         </div>
 
-        @if($room->isOnline())
+        @if(!($local ?? false) && $room->isOnline())
         <div class="hud hud-bl">
             <div class="reactbar" id="reactBar">
                 @foreach($reactions as $key)<button type="button" data-react="{{ $key }}" aria-label="React"><x-icon :name="$key" /></button>@endforeach
@@ -92,9 +91,51 @@
     <div class="ov" id="ovConfirm"></div>
 </div>
 
-<script src="{{ asset('js/arcade-sounds.js') }}"></script>
-<script>window.SNL = { audioBase: @json(asset('audio')), music: @json($music) };</script>
-<script src="{{ asset('js/snl-audio.js') }}"></script>
+@if(($local ?? false) || $room->isParty())
+@include('partials.avatar-picker')
+@endif
+<script src="{{ \App\Support\OfflineAssets::js('arcade-sounds.js') }}"></script>
+<script src="{{ \App\Support\OfflineAssets::js('snl-audio.js') }}"></script>
+<script src="{{ \App\Support\OfflineAssets::js('pwa.js') }}"></script>
+@if($local ?? false)
+{{-- Local (offline-capable) party table: the game runs in this browser; snl-local.js fills in the saved game, then snl-play.js starts. --}}
+<script>
+window.SNL = {
+    local: true,
+    audioBase: @json(asset('audio')), music: @json($music),
+    token: 'local', csrf: '',
+    packUrl: @json(url('/offline/pack.json')),
+    urls: {
+        state: 'local:state', roll: 'local:roll', decide: 'local:decide', start: 'local:start', leave: 'local:leave', react: 'local:react', rematch: 'local:rematch', addplayer: 'local:addplayer',
+        home: @json(url('/')), setup: @json(route('setup', ['type' => 'party'])), join: '', base: @json(url('/play')),
+    },
+    isParty: true,
+    meId: null,
+    positions: null,
+    state: null,
+    mode: null,
+    levels: @json(config('snl.intensities')),
+    kinds: null,
+    kindColors: @json(collect(config('snl.tile_kinds'))->map(fn ($k) => $k['color'])->merge(config('snl.event_colors'))),
+    powersCfg: @json(config('snl.powers')),
+    timing: @json($timing),
+    boardName: '',
+    iconUrl: @json(asset('icons.svg')),
+    avatarBase: @json(asset('avatars')),
+    iconKeys: @json(\App\Support\Icons::keys()),
+};
+</script>
+<script src="{{ \App\Support\OfflineAssets::js('snl-engine.js') }}"></script>
+<script src="{{ \App\Support\OfflineAssets::js('snl-local.js') }}"></script>
+<script>
+SNLLocal.boot(window.SNL).then(function (ok) {
+    if (!ok) return;
+    var s = document.createElement('script');
+    s.src = @json(\App\Support\OfflineAssets::js('snl-play.js'));
+    document.body.appendChild(s);
+});
+</script>
+@else
 <script>
 window.SNL = {
     audioBase: @json(asset('audio')), music: @json($music),
@@ -111,7 +152,11 @@ window.SNL = {
         home:    @json(route('home')),
         join:    @json(route('join', ['code' => $room->join_code])),
         base:    @json(url('/play')),
+        setup:   @json(route('setup', ['type' => 'party'])),
+        local:   @json(route('play.local')),
+        addplayer: @json(route('play.addplayer', $room->token)),
     },
+    packUrl: @json(url('/offline/pack.json')),
     isParty: @json($room->isParty()),
     meId: @json($meId),
     positions: @json($positions),
@@ -119,7 +164,7 @@ window.SNL = {
     mode: @json($mode),
     levels: @json(config('snl.intensities')),
     kinds: @json($tileKinds),
-    kindColors: @json(collect(config('snl.tile_kinds'))->map(fn ($k) => $k['color'])),
+    kindColors: @json(collect(config('snl.tile_kinds'))->map(fn ($k) => $k['color'])->merge(config('snl.event_colors'))),
     powersCfg: @json(config('snl.powers')),
     timing: @json($timing),
     boardName: @json($board->name),
@@ -128,6 +173,11 @@ window.SNL = {
     iconKeys: @json(\App\Support\Icons::keys()),
 };
 </script>
-<script src="{{ asset('js/snl-play.js') }}?v={{ filemtime(public_path('js/snl-play.js')) }}"></script>
+@if($room->isOnline())
+<script src="{{ \App\Support\OfflineAssets::js('snl-engine.js') }}"></script>
+<script src="{{ \App\Support\OfflineAssets::js('snl-local.js') }}"></script>
+@endif
+<script src="{{ \App\Support\OfflineAssets::js('snl-play.js') }}"></script>
+@endif
 </body>
 </html>

@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Board extends Model
 {
-    protected $fillable = ['slug', 'name', 'board_image', 'board_width', 'board_height', 'tile_count', 'is_active', 'sort_order'];
+    protected $fillable = ['slug', 'name', 'board_image', 'board_width', 'board_height', 'tile_count', 'is_active', 'sort_order', 'start_zone'];
 
-    protected $casts = ['is_active' => 'boolean'];
+    protected $casts = ['is_active' => 'boolean', 'start_zone' => 'array'];
 
     /** Boards players can pick from. */
     public static function playable()
@@ -51,6 +51,10 @@ class Board extends Model
         }
         // Square 0 = "before the start" — sits on the first square.
         $out[0] = $out[1] ?? ['left' => 8, 'top' => 90, 'left_m' => 8, 'top_m' => 90];
+        // …unless GameSet set a start zone: then players wait spread out inside that rectangle.
+        if (!empty($this->start_zone)) {
+            $out[0]['zone'] = $this->start_zone;
+        }
 
         return $out;
     }

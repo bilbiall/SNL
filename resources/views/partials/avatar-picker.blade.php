@@ -97,6 +97,7 @@ window.SNLAvatars = (function () {
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && el('avp').classList.contains('show')) close(false); });
     return {
         url: url,
+        random: function () { var l = LOOKS[Math.floor(Math.random() * LOOKS.length)], sw = R.skins; return l.id + '-' + sw[Math.floor(Math.random() * sw.length)].id; },
         open: function (key, cb) {
             var p = parse(key); st.look = p.look; st.col = colOf(p.look); st.skin = p.skin; st.cb = cb; st.f = 'all';
             draw(); el('avp').classList.add('show');

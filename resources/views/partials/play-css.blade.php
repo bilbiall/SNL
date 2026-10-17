@@ -304,6 +304,52 @@
     .rw .tgt { opacity: .45; transform: scale(.92); transition: all .12s; }
     .rw .tgt.hot { opacity: 1; transform: scale(1.12); border-color: var(--c); box-shadow: 0 0 16px var(--c); }
     .rw .tgt.won { animation: none; transform: scale(1.22); }
+    .netbar { position: absolute; left: 50%; top: calc(var(--nav) + 8px); transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: .7rem; padding: .45rem .5rem .45rem .9rem; border-radius: 999px; background: rgba(120,20,20,.92); border: 1px solid rgba(248,113,113,.7); font-weight: 800; font-size: clamp(.64rem, 2.4cqh, .82rem); box-shadow: 0 10px 28px rgba(0,0,0,.5); animation: chipPop .4s ease both; }
+    .netbar button { border: 0; border-radius: 999px; padding: .38rem .9rem; font: inherit; font-weight: 900; color: #1b1830; background: linear-gradient(135deg, #fbbf24, #f59e0b); cursor: pointer; white-space: nowrap; }
+    /* ═════ v3 polish: every pop-up shares the card look (frosted glass, foil frame, rays, staggered entrance) ═════ */
+    .pcard { border-radius: 1.25rem; }
+    .pcard::before { inset: 6px; border-radius: .95rem; border: 1px solid color-mix(in srgb, var(--k) 42%, rgba(255,255,255,.22)); z-index: 2;
+        background: radial-gradient(circle at 50% -8%, color-mix(in srgb, var(--k) 30%, transparent), transparent 55%), repeating-linear-gradient(135deg, transparent 0 13px, color-mix(in srgb, var(--k) 8%, transparent) 13px 15px); }
+    .pcard .pc-head { margin: 8px 8px 0; border-radius: .7rem .7rem .3rem .3rem; padding: .38rem .5rem; box-shadow: 0 4px 12px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.35); text-shadow: 0 1px 3px rgba(0,0,0,.55); }
+    .pcard.wide { width: min(90cqw, 440px); aspect-ratio: auto; max-height: 94cqh; }
+    .pcard.wide .pc-body { justify-content: flex-start; }
+    .pcard .obtn { box-shadow: 0 6px 14px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.35); }
+
+    /* buttons: glossy, lift on hover, big and clear for the answer buttons */
+    .obtn { position: relative; overflow: hidden; border-radius: .9rem; text-shadow: 0 1px 2px rgba(0,0,0,.35); box-shadow: 0 5px 12px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.35), inset 0 -3px 0 rgba(0,0,0,.18); transition: transform .12s, filter .15s; }
+    .obtn::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,.35) 50%, transparent 62%); transform: translateX(-130%); transition: transform .5s; pointer-events: none; }
+    .obtn:hover { transform: translateY(-2px); filter: brightness(1.1); } .obtn:hover::after { transform: translateX(130%); }
+    .obtn.ok { background: linear-gradient(135deg, #34d399, #059669); } .obtn.no { background: linear-gradient(135deg, #fb7185, #dc2626); }
+    .pcard .ov-btns .obtn.ok, .pcard .ov-btns .obtn.no { min-width: 36%; font-size: clamp(.78rem, 3cqh, 1rem); padding-block: clamp(.45rem, 2cqh, .7rem); }
+
+    /* player tiles for "choose a friend" */
+    .pgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: .5rem; width: 100%; margin-top: .4rem; }
+    .ptile { position: relative; display: flex; flex-direction: column; align-items: center; gap: .15rem; padding: .5rem .3rem .4rem; border-radius: .95rem; border: 1.5px solid color-mix(in srgb, var(--c) 55%, rgba(255,255,255,.2)); background: linear-gradient(165deg, color-mix(in srgb, var(--c) 22%, #1a1730), #12101e); color: #fff; cursor: pointer; font: inherit;
+        box-shadow: 0 6px 14px rgba(0,0,0,.4); animation: tilePopIn .5s calc(.5s + var(--i, 0) * .06s) cubic-bezier(.34,1.56,.64,1) both; transition: transform .14s, box-shadow .14s; }
+    .ptile:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 0 0 2px var(--c), 0 10px 22px color-mix(in srgb, var(--c) 45%, transparent); }
+    .ptile:active { transform: scale(.95); }
+    .ptile .pav { width: clamp(40px, 13cqh, 58px); height: clamp(40px, 13cqh, 58px); border-radius: 50%; overflow: hidden; border: 3px solid var(--c); background: #14121f; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 14px color-mix(in srgb, var(--c) 55%, transparent); }
+    .ptile .pav .avimg { width: 100%; height: 100%; }
+    .ptile b { font-size: clamp(.64rem, 2.5cqh, .82rem); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ptile small { font-size: clamp(.5rem, 1.9cqh, .62rem); color: #9ca3af; font-weight: 700; }
+    @keyframes tilePopIn { from { opacity: 0; transform: translateY(18px) scale(.6); } to { opacity: 1; transform: none; } }
+
+    /* add-a-player form */
+    .addp { display: flex; align-items: center; gap: .7rem; width: 100%; justify-content: center; }
+    .apname { flex: 1; min-width: 0; max-width: 12rem; padding: .55rem .8rem; border-radius: .8rem; border: 1.5px solid rgba(255,255,255,.25); background: rgba(8,7,16,.55); color: #fff; font: 800 1rem Figtree, system-ui, sans-serif; outline: none; }
+    .apname:focus { border-color: #34d399; box-shadow: 0 0 0 3px rgba(52,211,153,.3); }
+
+    /* the older .ov-card pop-ups (menu, win, lobby, confirm) get the same glass + foil + entrance */
+    .ov-card { --k: #f59e0b; position: relative; border: 2.5px solid color-mix(in srgb, var(--k) 70%, #fff); background: linear-gradient(165deg, rgba(38,32,64,.82), rgba(16,14,28,.74) 62%);
+        -webkit-backdrop-filter: blur(8px) saturate(1.2); backdrop-filter: blur(8px) saturate(1.2); border-radius: 1.2rem;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 0 30px color-mix(in srgb, var(--k) 38%, transparent), 0 18px 44px rgba(0,0,0,.5); animation: cardDeal .6s cubic-bezier(.2,.9,.3,1.1) both; }
+    .ov-card::before { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--k) 26%, transparent), transparent 60%), repeating-linear-gradient(135deg, transparent 0 13px, color-mix(in srgb, var(--k) 7%, transparent) 13px 15px); }
+    .ov-card::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.18) 50%, transparent 62%); background-size: 250% 100%; background-position: 130% 0; animation: foilSweep 1.1s .45s ease-out 1 both; }
+    .ov-card > * { position: relative; animation: chipPop .5s calc(.2s + var(--n, 0) * .06s) cubic-bezier(.34,1.56,.64,1) both; }
+    .ov-card > *:nth-child(2) { --n: 1; } .ov-card > *:nth-child(3) { --n: 2; } .ov-card > *:nth-child(4) { --n: 3; } .ov-card > *:nth-child(5) { --n: 4; } .ov-card > *:nth-child(6) { --n: 5; }
+    .ov-title { color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.5); background: linear-gradient(135deg, color-mix(in srgb, var(--k) 85%, #000), color-mix(in srgb, var(--k) 45%, #000)); padding: .28rem .7rem; border-radius: .6rem; display: inline-block; letter-spacing: .12em; }
+    .ov-icon { animation: iconPop .8s .2s cubic-bezier(.34,1.56,.64,1) both, iconPulse 1.8s 1.1s ease-in-out infinite !important; background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.22), transparent 55%), color-mix(in srgb, var(--k) 22%, #14121f); box-shadow: 0 0 20px color-mix(in srgb, var(--k) 55%, transparent); }
+    @media (prefers-reduced-motion: reduce) { .ov-card, .ov-card > *, .ptile { animation-duration: .01s !important; animation-delay: 0s !important; } }
     .board-dim { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,.10) 40%, rgba(0,0,0,.30) 100%), rgba(4,6,18,.14); }
     .pcard .spark { position: absolute; color: var(--k); font-size: clamp(.7rem, 3cqh, 1rem); opacity: .9; animation: twinkle 1.6s ease-in-out infinite; pointer-events: none; }
     @keyframes twinkle { 0%,100% { transform: scale(.6) rotate(0); opacity: .3; } 50% { transform: scale(1.15) rotate(25deg); opacity: 1; } }

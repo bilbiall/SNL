@@ -62,6 +62,12 @@ const SNLAudio = (() => {
     sparkle() { const t = now(); [1320, 1760, 2093, 2637].forEach((f, i) => bell(f, t + i * 0.07, 0.4, 0.13)); },
     heart() { const t = now(); [523, 659, 784].forEach((f, i) => bell(f, t + i * 0.1, 0.6, 0.18)); },
     drum() { const t = now(); for (let i = 0; i < 6; i++) osc('triangle', 150, 90, t + i * 0.07, 0.08, 0.2); },
+    // a card being dealt: a quick air-whoosh, a soft thump when it lands, and a little sparkle
+    deal() { const t = now(); noise(t, 0.32, 0.16, 1400, 'bandpass'); osc('sine', 340, 880, t, 0.28, 0.05); osc('sine', 110, 55, t + 0.22, 0.16, 0.22); bell(1760, t + 0.3, 0.35, 0.06); },
+    // one word landing on a card
+    pip() { osc('sine', 880 + Math.random() * 220, 1200, now(), 0.045, 0.035); },
+    // buttons
+    press() { const t = now(); osc('triangle', 520, 330, t, 0.07, 0.12); },
     unlock() { ac(); },
   };
 

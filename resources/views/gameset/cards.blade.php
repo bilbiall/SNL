@@ -97,8 +97,8 @@
             <select name="answer" class="gs-in col-span-4 sm:col-span-2"><option value="true" {{ $c->answer === true ? 'selected' : '' }}>Answer: True</option><option value="false" {{ $c->answer === false ? 'selected' : '' }}>Answer: False</option></select>
             <input name="explain" value="{{ $c->explain }}" placeholder="Explanation shown after the reveal" class="gs-in col-span-8 sm:col-span-10" maxlength="220">
         </div>
-        <div class="only-pen col-span-6 sm:col-span-3" style="{{ in_array($c->kind, ['fact','bluff','spotlight'], true) ? '' : 'display:none;' }}"><select name="penalty" class="gs-in"><option value="1" {{ $c->penalty == 1 ? 'selected' : '' }}>Penalty: 1 unit</option><option value="2" {{ $c->penalty == 2 ? 'selected' : '' }}>Penalty: 2 units</option></select></div>
-        <div class="only-spot col-span-6 sm:col-span-3" style="{{ $c->kind === 'spotlight' ? '' : 'display:none;' }}"><input type="number" name="timer" value="{{ $c->timer ?? 15 }}" min="5" max="90" class="gs-in" title="Seconds on the clock"></div>
+        <div class="only-pen col-span-6 sm:col-span-3" style="{{ in_array($c->kind, ['fact','bluff','spotlight','quickfire'], true) ? '' : 'display:none;' }}"><select name="penalty" class="gs-in"><option value="1" {{ $c->penalty == 1 ? 'selected' : '' }}>Penalty: 1 unit</option><option value="2" {{ $c->penalty == 2 ? 'selected' : '' }}>Penalty: 2 units</option></select></div>
+        <div class="only-spot col-span-6 sm:col-span-3" style="{{ in_array($c->kind, ['spotlight','quickfire'], true) ? '' : 'display:none;' }}"><input type="number" name="timer" value="{{ $c->timer ?? 15 }}" min="5" max="90" class="gs-in" title="Seconds on the clock"></div>
     </form>
     <form id="del-{{ $c->id }}" method="POST" action="{{ route('gameset.cards.destroy', $c) }}">@csrf @method('DELETE')</form>
     @empty
@@ -111,8 +111,8 @@
     function syncKind(scope) {
         var k = scope.querySelector('.kind-sel').value;
         scope.querySelectorAll('.only-fact').forEach(function (e) { e.style.display = k === 'fact' ? '' : 'none'; });
-        scope.querySelectorAll('.only-pen').forEach(function (e) { e.style.display = (k === 'fact' || k === 'bluff' || k === 'spotlight') ? '' : 'none'; });
-        scope.querySelectorAll('.only-spot').forEach(function (e) { e.style.display = k === 'spotlight' ? '' : 'none'; });
+        scope.querySelectorAll('.only-pen').forEach(function (e) { e.style.display = (k === 'fact' || k === 'bluff' || k === 'spotlight' || k === 'quickfire') ? '' : 'none'; });
+        scope.querySelectorAll('.only-spot').forEach(function (e) { e.style.display = (k === 'spotlight' || k === 'quickfire') ? '' : 'none'; });
     }
     document.querySelectorAll('form').forEach(function (f) {
         var sel = f.querySelector('.kind-sel'); if (!sel) return;

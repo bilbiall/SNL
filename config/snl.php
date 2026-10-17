@@ -82,7 +82,21 @@ return [
         'heart'     => 'Love ladder (compliments & sweet moments)',
         'swap'      => 'Swap places (flavour line)',
         'neutral'   => 'Free square (flavour line — no action)',
+        'quickfire' => 'Quickfire (10-second challenge on a free square)',
+        'groupgame' => 'Group game (everyone plays, on a free square)',
+        'gift'      => 'Free gift (flavour line when a Shield drops in)',
+        'rollagain' => 'Roll again (flavour line)',
     ],
+
+    /*
+    | Free squares: calm by default, but some of them do something small and fun.
+    | `free_event_chance` = % of free-square landings that trigger one; `free_events` = which, and how often (weights).
+    | quickfire: a 10-second challenge · rollagain: another turn · gift: a free Shield · groupgame: everyone plays.
+    */
+    'free_event_chance' => 40,
+    'free_events' => ['quickfire' => 4, 'rollagain' => 2, 'gift' => 2, 'groupgame' => 3],
+    'event_icons' => ['quickfire' => 'clock', 'rollagain' => 'dice', 'gift' => 'sparkles', 'groupgame' => 'team'],
+    'event_colors' => ['quickfire' => '#f97316', 'groupgame' => '#22c55e', 'gift' => '#eab308', 'rollagain' => '#38bdf8'],
 
     /*
     | Powers. Players start with `start` of each; Power-up tiles add more (cap `max`).
