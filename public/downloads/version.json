@@ -1,13 +1,14 @@
 {
-  "versionName": "1.8.7",
-  "versionCode": 16,
-  "sizeBytes": 10823049,
+  "versionName": "1.8.8",
+  "versionCode": 17,
+  "sizeBytes": 27723326,
   "notes": [
     "Way more meme reactions, matched to each moment (GTA Wasted when someone leaves, suspense music while you decide)",
     "Every clip evened out to the same loudness; background music balanced underneath",
-    "New avatars: bald, dreadlocks, braids and glasses"
+    "New avatars: bald, dreadlocks, braids and glasses",
+    "Play online and Public games appear when you have internet"
   ],
-  "sha256": "bc5db35bbda1565a2febc52fc90a16c39a57e3f0ce205b54e543a5ae6938c9c0",
-  "builtAt": "2026-10-17T06:20:52.446Z",
+  "sha256": "2a74d12015958e1142b2877bb5141ea5b5fa89069acc4500b2a9a8c1a0f3b366",
+  "builtAt": "2026-10-17T06:26:11.201Z",
   "certSha256": "2a4dce20c1650504c343933159a6682a0362a0420e0e0ade01bba1347ee7d7f3"
 }

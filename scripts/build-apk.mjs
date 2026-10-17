@@ -20,6 +20,7 @@ const mobile = path.join(ROOT, 'mobile');
 const bt = `${TOOLS}/android-sdk/build-tools/34.0.0`;
 const props = process.env.SNL_KEYSTORE_PROPS || `${TOOLS}/keys/keystore.properties`;
 if (!fs.existsSync(props)) throw new Error(`Keystore properties not found: ${props}`);
+run('php artisan snl:export-app');                         // always bake the current site into mobile/www first
 if (!fs.existsSync(path.join(mobile, 'www', 'index.html'))) throw new Error('mobile/www/index.html is missing — put the web build in mobile/www first.');
 if (!fs.existsSync(path.join(mobile, 'node_modules'))) run('npm install --no-audit --no-fund', mobile);
 if (!fs.existsSync(path.join(mobile, 'android', 'local.properties'))) fs.writeFileSync(path.join(mobile, 'android', 'local.properties'), `sdk.dir=${TOOLS}/android-sdk\n`);
