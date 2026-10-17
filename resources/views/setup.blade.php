@@ -86,6 +86,21 @@
             <input type="hidden" name="board_id" value="{{ $boards->first()->id }}">
         @endif
 
+        {{-- Blocks (shields): how many each player starts with --}}
+        @php $maxShields = (int) config('snl.powers.shield.max', 5); @endphp
+        <div class="snl-card">
+            <span class="snl-label">Blocks — how many does each player start with?</span>
+            <div class="flex items-center justify-between gap-3">
+                <p class="snl-muted text-xs" style="flex:1;margin:0;"><x-icon name="shield" /> A block cancels one card aimed at you — no shot, no forfeit. Everyone starts with the same number; more can be won on Power-up squares and free gifts.</p>
+                <div class="flex items-center gap-2">
+                    <button type="button" class="btn btn-ghost btn-sm" id="shMinus" aria-label="Fewer blocks">−</button>
+                    <b id="shLabel" style="min-width:3.2rem;text-align:center;font-size:1rem;">1</b>
+                    <button type="button" class="btn btn-ghost btn-sm" id="shPlus" aria-label="More blocks">+</button>
+                </div>
+            </div>
+            <input type="hidden" name="start_shields" id="startShields" value="{{ (int) old('start_shields', config('snl.powers.shield.start', 1)) }}">
+        </div>
+
         {{-- Players --}}
         <div class="snl-card">
             @if($type === 'party')
@@ -141,6 +156,15 @@
     const form = document.getElementById('setupForm');
 
     // Mode blurb + 18+ confirmation only when the chosen mode needs it
+    // blocks (shields) each player starts with
+    (function () {
+        const max = {{ (int) config('snl.powers.shield.max', 5) }}, input = document.getElementById('startShields'), label = document.getElementById('shLabel');
+        const paint = () => { label.textContent = input.value; document.getElementById('shMinus').disabled = +input.value <= 0; document.getElementById('shPlus').disabled = +input.value >= max; };
+        document.getElementById('shMinus').onclick = () => { input.value = Math.max(0, +input.value - 1); paint(); };
+        document.getElementById('shPlus').onclick = () => { input.value = Math.min(max, +input.value + 1); paint(); };
+        paint();
+    })();
+
     function syncMode() {
         const r = form.querySelector('input[name=content_mode]:checked');
         document.getElementById('modeBlurb').textContent = r ? modes[r.value].blurb : '';
@@ -206,7 +230,7 @@
         if (modes[mode] && modes[mode].adult && !fd.get('adult')) { showErr('Please confirm that everyone playing is 18 or over for this mode.'); return; }
         const nm = fd.getAll('names[]'), co = fd.getAll('colors[]'), av = fd.getAll('avatars[]');
         try {
-            await SNLLocal.create({ boardId: +fd.get('board_id'), mode: mode, intensity: +fd.get('intensity'), entries: nm.map((n, i) => ({ name: n, color: co[i], avatar: av[i] })) });
+            await SNLLocal.create({ boardId: +fd.get('board_id'), mode: mode, intensity: +fd.get('intensity'), startShields: fd.get('start_shields'), entries: nm.map((n, i) => ({ name: n, color: co[i], avatar: av[i] })) });
             location.href = @json(route('play.local'));
         } catch (err) {
             if (navigator.onLine && !(err && err.name === 'GameError')) { form.submit(); return; }

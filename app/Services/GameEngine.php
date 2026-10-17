@@ -85,7 +85,7 @@ class GameEngine
     // ───────────────────────────── Room setup ─────────────────────────────
 
     /** One device, 2–12 named players, game starts immediately. */
-    public function createParty(Board $board, array $entries, string $mode, int $intensity): Room
+    public function createParty(Board $board, array $entries, string $mode, int $intensity, ?int $startShields = null): Room
     {
         $this->validateSetup($board, $mode, $intensity);
         $cfg = config('snl.players');
@@ -93,11 +93,12 @@ class GameEngine
             throw new GameException("Party games need {$cfg['min']}–{$cfg['max']} players.");
         }
 
-        return DB::transaction(function () use ($board, $entries, $mode, $intensity) {
+        return DB::transaction(function () use ($board, $entries, $mode, $intensity, $startShields) {
             $room = Room::create([
                 'token' => Room::newToken(), 'board_id' => $board->id, 'type' => 'party',
                 'content_mode' => $mode, 'intensity' => $intensity, 'status' => 'active',
                 'max_players' => config('snl.players.max'),
+                'deck_state' => ['start_shields' => $this->clampShields($startShields)],
             ]);
             $this->seedPlayers($room, $entries);
             $first = $room->players()->first();
@@ -110,16 +111,17 @@ class GameEngine
     }
 
     /** Online: creates a lobby with the host seated. @return array{0: Room, 1: Player} */
-    public function createOnline(Board $board, string $hostName, string $mode, int $intensity, int $max, ?string $hostAvatar = null): array
+    public function createOnline(Board $board, string $hostName, string $mode, int $intensity, int $max, ?string $hostAvatar = null, ?int $startShields = null): array
     {
         $this->validateSetup($board, $mode, $intensity);
         $cfg = config('snl.players');
 
-        return DB::transaction(function () use ($board, $hostName, $mode, $intensity, $max, $cfg, $hostAvatar) {
+        return DB::transaction(function () use ($board, $hostName, $mode, $intensity, $max, $cfg, $hostAvatar, $startShields) {
             $room = Room::create([
                 'token' => Room::newToken(), 'join_code' => Room::newJoinCode(), 'board_id' => $board->id, 'type' => 'online',
                 'content_mode' => $mode, 'intensity' => $intensity, 'status' => 'open',
                 'max_players' => max($cfg['min'], min($cfg['max'], $max)),
+                'deck_state' => ['start_shields' => $this->clampShields($startShields)],
             ]);
             $this->seedPlayers($room, [['name' => $hostName, 'avatar' => $hostAvatar]]);
             $host = $room->players()->first();
@@ -188,6 +190,7 @@ class GameEngine
                 'board_id' => $old->board_id, 'type' => $old->type, 'content_mode' => $old->content_mode,
                 'intensity' => $old->intensity, 'max_players' => $old->max_players,
                 'status' => $old->isParty() ? 'active' : 'open', 'rematch_of' => $old->id,
+                'deck_state' => ['start_shields' => $old->deck_state['start_shields'] ?? null],
             ]);
 
             $keep = $old->players()->where('status', '!=', 'left')->get();
@@ -1201,6 +1204,14 @@ class GameEngine
         }
     }
 
+    /** 0 … the shield cap; null = the default (1). */
+    private function clampShields(?int $n): int
+    {
+        $max = (int) config('snl.powers.shield.max', 3);
+
+        return $n === null ? (int) config('snl.powers.shield.start', 1) : max(0, min($max, $n));
+    }
+
     private function addPlayer(Room $room, array $e, ?int $order = null): Player
     {
         $count = Player::where('room_id', $room->id)->count();
@@ -1218,6 +1229,10 @@ class GameEngine
         $powers = [];
         foreach (config('snl.powers') as $key => $p) {
             $powers[$key] = $p['start'];
+        }
+        // the table's chosen number of blocks (shields) — default 1
+        if (isset($powers['shield']) && isset($room->deck_state['start_shields'])) {
+            $powers['shield'] = $this->clampShields((int) $room->deck_state['start_shields']);
         }
 
         return Player::create([

@@ -102,7 +102,7 @@ return [
     | Powers. Players start with `start` of each; Power-up tiles add more (cap `max`).
     */
     'powers' => [
-        'shield' => ['label' => 'Shield', 'icon' => 'shield', 'start' => 1, 'max' => 3,
+        'shield' => ['label' => 'Shield', 'icon' => 'shield', 'start' => 1, 'max' => 5,
                      'help' => 'Block one hit aimed at you.'],
         // Reroll is switched off for now (the engine and its popups ignore it). Put this line back to bring it back:
         // 'reroll' => ['label' => 'Reroll', 'icon' => 'reroll', 'start' => 1, 'max' => 3, 'help' => 'Throw your die again after seeing the number.'],

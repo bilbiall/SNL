@@ -33,6 +33,7 @@ class RoomController extends Controller
             'content_mode' => 'required|in:' . implode(',', array_keys($modes)),
             'intensity'    => 'required|integer|min:1|max:3',
             'adult'        => 'nullable|boolean',
+            'start_shields' => 'nullable|integer|min:0|max:' . config('snl.powers.shield.max', 5),
             'names'        => 'required_if:type,party|array|min:2|max:' . config('snl.players.max'),
             'names.*'      => 'nullable|string|max:24',
             'colors'       => 'nullable|array',
@@ -54,10 +55,11 @@ class RoomController extends Controller
                 foreach (array_values($data['names']) as $i => $name) {
                     $entries[] = ['name' => (string) $name, 'color' => $data['colors'][$i] ?? null, 'avatar' => $data['avatars'][$i] ?? null];
                 }
-                $room = $this->engine->createParty($board, $entries, $data['content_mode'], (int) $data['intensity']);
+                $room = $this->engine->createParty($board, $entries, $data['content_mode'], (int) $data['intensity'], isset($data['start_shields']) ? (int) $data['start_shields'] : null);
             } else {
                 [$room, $host] = $this->engine->createOnline(
-                    $board, (string) $data['host_name'], $data['content_mode'], (int) $data['intensity'], (int) ($data['max_players'] ?? 8), $data['avatar'] ?? null
+                    $board, (string) $data['host_name'], $data['content_mode'], (int) $data['intensity'], (int) ($data['max_players'] ?? 8), $data['avatar'] ?? null,
+                    isset($data['start_shields']) ? (int) $data['start_shields'] : null
                 );
                 $this->rememberMe($request, $room, $host);
             }

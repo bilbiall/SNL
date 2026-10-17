@@ -871,6 +871,8 @@
     while (taken(name)) name = substr(base, 0, 21) + ' ' + (++n);
     var colors = pack.config.colors, powers = {}, defs = obj(pack.config.powers);
     Object.keys(defs).forEach(function (k) { powers[k] = defs[k].start; });
+    // the table's chosen number of blocks (shields) — default 1
+    if (powers.shield !== undefined && game.room && game.room.start_shields != null) powers.shield = Math.max(0, Math.min(defs.shield.max, parseInt(game.room.start_shields, 10) || 0));
     var p = {
       id: game.nextPlayerId++, name: name, turn_order: order,
       color: e.color || colors[order % colors.length],
@@ -881,14 +883,14 @@
     return p;
   }
 
-  function newGame(pack, board, mode, intensity, maxPlayers) {
+  function newGame(pack, board, mode, intensity, maxPlayers, startShields) {
     return {
       v: 1, packVersion: pack.version || null, nextPlayerId: 1,
       room: {
         token: 'local', type: 'party', board_id: board.id, content_mode: mode, intensity: intensity,
         status: 'active', current_player_id: null, winner_player_id: null, host_player_id: null,
         round: 1, active_rule: null, event_seq: 0, rematch_token: null, join_code: null,
-        max_players: maxPlayers, tile_count: board.tile_count,
+        max_players: maxPlayers, tile_count: board.tile_count, start_shields: startShields,
       },
       players: [], pending: null, actions: [],
     };
@@ -900,7 +902,8 @@
     var board = validateSetup(pack, opts.boardId, mode, intensity);
     var entries = opts.entries || [], lim = pack.config.players;
     if (entries.length < lim.min || entries.length > lim.max) throw new GameError('Party games need ' + lim.min + '–' + lim.max + ' players.');
-    var g = newGame(pack, board, mode, intensity, lim.max);
+    var sh = opts.startShields == null || opts.startShields === '' ? null : Math.max(0, Math.min(((pack.config.powers || {}).shield || { max: 5 }).max, parseInt(opts.startShields, 10) || 0));
+    var g = newGame(pack, board, mode, intensity, lim.max, sh);
     entries.forEach(function (e, i) { addPlayer(pack, g, e, i); });
     var first = g.players[0];
     g.room.current_player_id = first.id;
@@ -913,7 +916,7 @@
   function rematch(pack, old) {
     if (old.room.status !== 'completed') throw new GameError('The game is still going.');
     var board = validateSetup(pack, old.room.board_id, old.room.content_mode, old.room.intensity);
-    var g = newGame(pack, board, old.room.content_mode, old.room.intensity, old.room.max_players);
+    var g = newGame(pack, board, old.room.content_mode, old.room.intensity, old.room.max_players, old.room.start_shields);
     old.players.filter(function (p) { return p.status !== 'left'; })
       .sort(function (a, b) { return a.turn_order - b.turn_order; })
       .forEach(function (p, i) { addPlayer(pack, g, { name: p.name, color: p.color, avatar: p.avatar }, i); });
