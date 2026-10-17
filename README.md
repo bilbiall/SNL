@@ -68,6 +68,23 @@ Intensity (**Chill / Normal / Spicy**) decides which cards can appear and how ha
 * **Share buttons** (native share sheet, WhatsApp, Telegram, X, Facebook, email, copy link — plain links, no trackers) on the landing page, game browser, how-to-play, fun-facts and the app page; the win screen and the room lobby have share buttons too.
 * **SEO:** every page gets a title, description, canonical URL, Open Graph + Twitter card (`public/img/og-image.png`, regenerate with `node scripts/gen-og-image.mjs`) and JSON-LD (app, FAQ, how-to). `/sitemap.xml` and `/robots.txt` are generated from `APP_URL`. Utility pages (setup, join, sign-in, GameSet, the table) are `noindex`. `/how-to-play` and `/fun-facts` (a family-friendly true-or-false quiz built from the game's own facts) are written to help people find the game honestly — they never glamorise drinking. Set `APP_URL` to the live https domain so canonical links and the sitemap are right.
 
+## Meme / reaction sounds
+
+Drop `.mp3` files into **`public/audio/reactions/`** (sub-folders are fine). The **file name decides when a sound plays** — any word from the list below in the name makes it a candidate for that moment (a word-start match, so "mischiev" catches "mischievous"). A file can fit several moments, and files that match nothing play at random moments. Exact duplicates (e.g. `clap.mp3` and `clap(1).mp3`) are used once.
+
+| Moment | Plays when… | Words in the file name |
+|---|---|---|
+| `pick` | someone is picked / the wheel chooses a victim | mischiev, evil, sneaky, laugh, ooh, aha, wait a minute, who are you |
+| `shot` | a You-do-it / Spicy-square drink card lands | scream, mayday, cheers, drink, shot, insane, goofy |
+| `fail` | a wrong answer or a failed challenge | fail, clap, sarcas, no gas, flute, wrong, boo, sad, trombone, bruh, oof |
+| `snake` / `ladder` | a snake slide / a ladder climb | scream, mayday, fall, crash — / — wow, amazing, yeah, good, whoa, yay |
+| `correct` | a right answer / a nailed challenge | yeah, good, amazing, wow, aha, nice, ding |
+| `win` | someone reaches the finish | yeah, amazing, wow, win, victory, champion, airhorn |
+| `bluff` | someone calls bluff | wait, who are, strange, sus, hmm, really, liar |
+| `swap`, `duel`, `everyone`, `power`, `block` | a swap / a duel / an everybody-card / a power-up or bonus turn / a Block used | see `config/snl.php` → `reaction_sounds.categories` |
+
+To pin a file to a moment regardless of its name, put it in a sub-folder with that moment's name (`reactions/snake/ahh.mp3`). The game never plays the same file twice within ten sounds, keeps a quiet gap of ~3 s between memes, doesn't play one every time (`reaction_sounds.chance`), dips the music underneath, and players can switch them off in the menu (Meme reactions). After adding files run `php artisan snl:export-app` + `npm run apk` to put them in the Android app; the website picks them up by itself.
+
 ## Boards
 
 The game ships with **Neon Night** (80 squares, 5 ladders, 5 snakes) — `database/seeders/data/snl-night.php` holds its artwork path, how the 6 rows of squares sit on the image, every square type and the ladder/snake links. `php artisan db:seed --class=BoardSeeder` creates it (once) and makes it the only active board.

@@ -128,6 +128,33 @@ return [
     'players' => ['min' => 2, 'max' => 12],
 
     /*
+    | Meme / reaction sounds (public/audio/reactions). The FILE NAME decides the moment — any word below in the name makes
+    | the sound a candidate for that moment (word-start match, so "mischiev" catches "mischievous"). A sub-folder named
+    | after a moment (reactions/snake/…) also works. Unmatched files play at random moments ("random").
+    | `chance` = how often that moment plays a sound at all; `cooldown_ms` = the quiet gap between any two meme sounds.
+    */
+    'reaction_sounds' => [
+        'cooldown_ms' => 3200,
+        'volume' => 0.85,
+        'chance' => ['pick' => 0.9, 'shot' => 0.6, 'fail' => 0.8, 'snake' => 0.95, 'ladder' => 0.85, 'correct' => 0.75, 'win' => 1.0, 'bluff' => 0.85, 'swap' => 0.75, 'duel' => 0.85, 'everyone' => 0.5, 'power' => 0.6, 'block' => 0.85],
+        'categories' => [
+            'pick'     => ['mischiev', 'evil', 'sneaky', 'sinister', 'gotcha', 'laugh', 'ooh', 'aha', 'uh oh', 'wait a minute', 'who are you', 'strange'],
+            'shot'     => ['scream', 'mayday', 'cheers', 'drink', 'shot', 'insane', 'laugh', 'goofy', 'ooh', 'burp', 'cough'],
+            'fail'     => ['fail', 'clap', 'sarcas', 'no gas', 'flute', 'wrong', 'boo', 'sad', 'trombone', 'awkward', 'goofy', 'cricket', 'nope', 'bruh', 'oof'],
+            'snake'    => ['scream', 'mayday', 'fail', 'no gas', 'cartoon', 'insane', 'flute', 'sad', 'fall', 'crash', 'bruh', 'oof', 'nooo'],
+            'ladder'   => ['wow', 'amazing', 'yeah', 'good', 'whoa', 'yay', 'nice', 'jet', 'fly', 'up', 'woo'],
+            'correct'  => ['yeah', 'good', 'amazing', 'wow', 'aha', 'nice', 'correct', 'right', 'ding', 'woo', 'yay'],
+            'win'      => ['yeah', 'amazing', 'wow', 'good', 'jeff', 'jet', 'win', 'victory', 'champion', 'woo', 'airhorn', 'fanfare'],
+            'bluff'    => ['wait', 'who are', 'strange', 'incomprehensible', 'call', 'jeff', 'ooh', 'sarcas', 'clap', 'sus', 'suspicious', 'hmm', 'really', 'liar'],
+            'swap'     => ['wait', 'who are', 'jeff', 'strange', 'jet', 'flute', 'switch', 'swap', 'wee'],
+            'duel'     => ['mayday', 'scream', 'jeff', 'jet', 'insane', 'cartoon', 'fight', 'battle', 'ready', 'duel', 'sword'],
+            'everyone' => ['ooh', 'aha', 'wow', 'jeff', 'flute', 'jet', 'cheer', 'party', 'everybody', 'crowd'],
+            'power'    => ['good', 'yeah', 'wow', 'amazing', 'jet', 'power', 'level up', 'boost', 'ding'],
+            'block'    => ['no gas', 'wait', 'jeff', 'good', 'clap', 'nope', 'denied', 'block', 'shield', 'not today'],
+        ],
+    ],
+
+    /*
     | How much each level asks of the table (percent chances, per landing):
     |   skip_hit  — Chill only: a You-do-it / Pick-a-friend / Everyone card is waved through ("you're off the hook"), so the game is lighter.
     |   free_shot — Spicy: even a free square can bite (a shot in Drinks mode, a forfeit in Family mode). Normal stays as written.

@@ -46,9 +46,9 @@ class OfflineAssets
         foreach (glob(public_path('avatars/*.svg')) as $f) {
             $add('avatars/' . basename($f));
         }
-        foreach (glob(public_path('audio/*.mp3')) as $f) {
-            if (basename($f) !== 'map-loop.mp3') { // belongs to the other game
-                $add('audio/' . basename($f));
+        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(public_path('audio'), \FilesystemIterator::SKIP_DOTS)) as $f) {
+            if (strtolower($f->getExtension()) === 'mp3' && $f->getFilename() !== 'map-loop.mp3') { // map-loop belongs to the other game
+                $add(str_replace('\\', '/', substr($f->getPathname(), strlen(public_path()) + 1)));
             }
         }
         foreach (['img/landing', 'img/boards'] as $dir) {

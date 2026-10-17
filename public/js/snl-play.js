@@ -17,6 +17,8 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   // ArcadeSound is a top-level `const` in arcade-sounds.js (not a window property).
   const snd = (n) => { try { SNLAudio.play(n); } catch (_) {} };
+  /** A meme sound for a moment (pick / shot / fail / snake / ladder / correct / win / bluff / swap / duel / everyone / power / block). */
+  const meme = (m) => { if (!m) return; try { SNLAudio.react(m); } catch (_) {} };
 
   // ───────────────────────── icons ─────────────────────────
   const ICONS = new Set(C.iconKeys);
@@ -322,7 +324,8 @@
       case 'factcheck': return [`${ic(a.correct ? 'check' : 'cross')} ${n(who)} ${a.correct ? 'got it right' : 'got it wrong'} — it's <b>${a.answer ? 'TRUE' : 'FALSE'}</b>`, a.correct ? '#34d399' : '#f87171'];
       case 'bluff_said': return [`${ic('jester')} ${n(who)} made a claim`, '#14b8a6'];
       case 'bluff_pass': return [`${ic('check')} Nobody doubted ${n(who)}`, '#34d399'];
-      case 'bluff_called': return [`${ic('search')} ${n(P(a.caller_id))} called bluff on ${n(who)}`, '#f87171'];
+      case 'bluff_called':
+        return [`${ic('search')} ${n(P(a.caller_id))} called bluff on ${n(who)}`, '#f87171'];
       case 'bluff_result': return a.result === 'void' ? null : [`${ic(a.result === 'proved' ? 'check' : 'search')} ${a.result === 'proved' ? 'Proven' : 'Bluff caught'}!`, a.result === 'proved' ? '#34d399' : '#f87171'];
       case 'spot_result': return [`${ic('mic')} ${n(who)} ${a.nailed ? 'nailed it' : 'ran out of time'}`, a.nailed ? '#34d399' : '#f87171'];
       case 'win': return [`${ic('trophy')} ${n(who)} reached the finish!`, '#fbbf24'];
@@ -372,6 +375,7 @@
         const snake = a.via === 'snake_head';
         toast(snake ? `${ic('snake')} Snake! ${esc(who.name)} slides to ${a.to}` : `${ic('ladder')} Ladder! ${esc(who.name)} climbs to ${a.to}`, 2200, snake ? '#dc2626' : '#16a34a');
         snd(snake ? 'snake' : 'ladder');
+        meme(snake ? 'snake' : 'ladder');
         await sleep(350);
         await glide(a.player_id, a.to);
         await sleep(250);
@@ -383,7 +387,7 @@
       case 'shield': {
         const t = tokens[a.player_id];
         t && t.classList.add('shieldfx');
-        snd('shieldUp');
+        snd('shieldUp'); meme('block');
         toast(`${ic('shield')} <b>${esc(who.name)}</b> blocked it!`, 2200, '#38bdf8');
         await sleep(1500);
         t && t.classList.remove('shieldfx');
@@ -394,7 +398,7 @@
 
       case 'swap': {
         toast(`${ic('swap')} <b>${esc(P(a.a_id).name)}</b> swapped places with <b>${esc(P(a.b_id).name)}</b>`, 2600, '#8b5cf6');
-        snd('whoosh');
+        snd('whoosh'); meme('swap');
         await Promise.all([glide(a.a_id, a.a_pos), glide(a.b_id, a.b_pos)]);
         await sleep(250);
         break;
@@ -405,7 +409,7 @@
         if (a.power) {
           const cfg = C.powersCfg[a.power];
           toast(`${ic('power')} <b>${name}</b> grabbed a ${ic(cfg.icon)} <b>${cfg.label}</b>${a.spin ? ' (spin)' : ''}`, 2400, '#eab308');
-          snd('badge');
+          snd('badge'); meme('power');
         } else {
           toast(`${ic('power')} ${name} found a power-up — but is already full!`, 2400, '#eab308');
         }
@@ -418,7 +422,7 @@
       case 'random_pick': await randomPickOverlay(a); break;
 
       case 'extra_turn':
-        snd('bonus');
+        snd('bonus'); meme('power');
         flavorSplash(who, a.text, 'dice', 'bonus turn');
         await sleep(3600);
         break;
@@ -450,6 +454,7 @@
         break;
 
       case 'bluff_called':
+        meme('bluff');
         toast(`${ic('search')} <b>${esc(P(a.caller_id).name)}</b> calls BLUFF on <b>${esc(who.name)}</b>!`, 3000, '#f87171');
         snd('mystery');
         await sleep(1200);
@@ -458,15 +463,15 @@
       case 'bluff_result': await bluffResultOverlay(a); break;
 
       case 'spot_result':
-        if (a.nailed) { toast(`${ic('mic')} <b>${esc(who.name)}</b> nailed it!`, 2400, '#34d399'); snd('quest'); }
-        else { toast(`${ic('hourglass')} Time's up for <b>${esc(who.name)}</b>`, 2400, '#f87171'); snd('buzz'); }
+        if (a.nailed) { toast(`${ic('mic')} <b>${esc(who.name)}</b> nailed it!`, 2400, '#34d399'); snd('quest'); meme('correct'); }
+        else { toast(`${ic('hourglass')} Time's up for <b>${esc(who.name)}</b>`, 2400, '#f87171'); snd('buzz'); meme('fail'); }
         await sleep(700);
         break;
 
       case 'rule': await ruleOverlay(a); break;
 
       case 'win': {
-        snd('win'); setTimeout(() => snd('quest'), 900);
+        snd('win'); setTimeout(() => snd('quest'), 900); meme('win');
         confetti();
         toast(`${ic('trophy')} <b>${esc(who.name)}</b> reached the finish!`, 3200, '#fbbf24');
         await sleep(1400);
@@ -541,6 +546,7 @@
       default: head = 'Card';
     }
     snd(a.kind === 'heart' ? 'heart' : (a.kind === 'everyone' || a.kind === 'groupgame') ? (C.mode.label === 'Drinks' ? 'cheers' : 'sparkle') : a.kind === 'fact' ? 'notify' : (a.kind === 'self' || a.kind === 'pick') ? (C.mode.label === 'Drinks' ? 'clink' : 'decisionPing') : 'mystery');
+    if (!a.random) meme(a.kind === 'pick' ? 'pick' : (a.kind === 'everyone' || a.kind === 'groupgame') ? 'everyone' : (a.kind === 'self' && C.mode.label === 'Drinks') || (a.kind === 'self' && a.icon === 'fire') ? 'shot' : null);
     return holdCard('ovCard', { color: a.kind === 'blank' || a.spin ? kindColor('spin') : kindColor(a.kind), head, icon: a.icon || 'cards', who, text: a.text, intensity: a.intensity || 0 });
   }
 
@@ -559,7 +565,7 @@
       await sleep(70 + Math.pow(i / steps, 3) * 380);
     }
     chips[target].classList.add('won');
-    snd('sparkle');
+    snd('sparkle'); meme('pick');
     await sleep(900);
     hide('ovCard');
   }
@@ -574,7 +580,7 @@
 
   /** True-or-false reveal: right or wrong, the real answer, and why. */
   function factResultOverlay(a) {
-    snd(a.correct ? 'quest' : 'buzz');
+    snd(a.correct ? 'quest' : 'buzz'); meme(a.correct ? 'correct' : 'fail');
     return holdCard('ovCard', {
       color: a.correct ? '#34d399' : '#f87171',
       head: a.correct ? 'Correct!' : 'Wrong!',
@@ -594,7 +600,7 @@
       return sleep(400);
     }
     const proved = a.result === 'proved';
-    snd(proved ? 'quest' : 'buzz');
+    snd(proved ? 'quest' : 'buzz'); meme(proved ? 'correct' : 'fail');
     return holdCard('ovCard', {
       color: proved ? '#34d399' : '#f87171',
       head: proved ? 'Proven!' : 'Busted!',
@@ -607,7 +613,7 @@
 
   async function duelOverlay(a) {
     const A = P(a.a_id), B = P(a.b_id), loser = P(a.loser_id);
-    snd('roll'); setTimeout(() => snd('clash'), 600);
+    snd('roll'); setTimeout(() => snd('clash'), 600); meme('duel');
     show('ovCard', cardShell({ color: kindColor('duel'), head: 'Duel!', icon: 'duel',
       who: `${chip(A)}<b style="align-self:center;font-size:1.3rem;">${a.a_roll}</b><span style="align-self:center;font-size:.7rem;">vs</span><b style="align-self:center;font-size:1.3rem;">${a.b_roll}</b>${chip(B)}`,
       text: `${loser.name} loses!` }));
@@ -1067,11 +1073,13 @@
       ${r.active_rule ? `<div class="htp">${ic('rule')}<span><b>Table rule now:</b> ${esc(r.active_rule)}</span></div>` : ''}
       <div class="ov-title" style="text-align:left;display:flex;align-items:center;justify-content:space-between;">Players${C.isParty && r.status === 'active' ? `<button class="obtn ok" id="addPlayerBtn" style="padding:.25rem .7rem;">${ic('team')} Add a player</button>` : ''}</div>${roster}
       ${C.isParty ? '<div class="ov-sub" style="text-align:left;">Someone had enough? Remove them — the game carries on.</div>' : ''}
+      <div class="htp">${ic('speaker')}<span>Meme reactions: <a href="#" id="memeTgl" style="color:#f9a8d4;font-weight:800;">${(typeof SNLAudio !== 'undefined' && SNLAudio.memes) ? 'On' : 'Off'}</a> <span style="color:#9ca3af;">— funny sounds on picks, snakes, ladders, wins…</span></span></div>
       <div class="htp" id="appRow" style="display:none;margin-top:.4rem;">${ic('info')}<span>App version <b id="appVer">…</b> · <a href="#" id="chkUpd" style="color:#f9a8d4;font-weight:800;">Check for updates</a><span id="updMsg" style="display:block;color:#9ca3af;"></span></span></div>
       <div class="ov-sub" style="text-align:left;margin-top:.5rem;">Any drink can be swapped for water. Never drive after drinking.</div>
       <div class="ov-btns" style="justify-content:flex-start;"><a class="obtn alt" href="${C.urls.home}">${ic('home')} Leave to home</a></div></div>`);
     $('menuClose').onclick = () => hide('ovMenu');
     const ap = $('addPlayerBtn'); if (ap) ap.onclick = openAddPlayer;
+    const mt = $('memeTgl'); if (mt) mt.onclick = (ev) => { ev.preventDefault(); const on = !SNLAudio.memes; SNLAudio.setMemes(on); mt.textContent = on ? 'On' : 'Off'; if (on) SNLAudio.react('win'); };
     if (window.SNLUpdate) {                      // inside the Android app: show the version and let people look for a newer one
       SNLUpdate.info().then((mine) => {
         if (!mine) return;

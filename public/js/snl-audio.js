@@ -113,6 +113,31 @@ const SNLAudio = (() => {
     } catch (_) { /* sound is never worth breaking the game */ }
   }
 
+  // ── meme / reaction sounds: picked by moment, different every time (never a repeat within the last ten plays) ──
+  let memeOn = true, lastMeme = 0; const recentMemes = [];
+  try { memeOn = localStorage.getItem('snl_memes') !== '0'; } catch (_) {}
+  function react(moment) {
+    if (!sfxOn || !memeOn) return false;
+    const C = window.SNL || {}, M = C.memeSounds, cfg = C.memeCfg || {};
+    if (!M) return false;
+    const now = Date.now();
+    if (now - lastMeme < (cfg.cooldown_ms || 3000)) return false;                      // a quiet gap between memes
+    const chance = (cfg.chance || {})[moment];
+    if (chance != null && Math.random() > chance) return false;                      // not every time
+    let pool = (M[moment] || []).slice();
+    if (!pool.length) pool = (M.random || []).slice();
+    if (!pool.length) return false;
+    let fresh = pool.filter((u) => recentMemes.indexOf(u) === -1);
+    if (!fresh.length) fresh = pool.filter((u) => u !== recentMemes[recentMemes.length - 1]);
+    if (!fresh.length) fresh = pool;
+    const url = fresh[Math.floor(Math.random() * fresh.length)];
+    recentMemes.push(url); if (recentMemes.length > 10) recentMemes.shift();
+    lastMeme = now;
+    dip(2200);
+    setTimeout(() => { try { const a = new Audio(url); a.volume = cfg.volume || 0.85; a.play().catch(() => {}); } catch (_) {} }, 220);   // lands just after the move's own sound
+    return url;   // which file was chosen (handy for tests)
+  }
+
   function startMusic() {
     const url = window.SNL && window.SNL.music;
     if (!url || bg) { if (bg && musicOn) bg.play().catch(() => {}); return; }
@@ -140,7 +165,9 @@ const SNLAudio = (() => {
   document.addEventListener('pointerdown', unlock, { once: true });
 
   return {
-    play, unlock,
+    play, unlock, react,
+    get memes() { return memeOn; },
+    setMemes(on) { memeOn = !!on; try { localStorage.setItem('snl_memes', on ? '1' : '0'); } catch (_) {} },
     get sfx() { return sfxOn; },
     get music() { return musicOn; },
     setSfx(on) { sfxOn = !!on; try { ArcadeSound.toggle(on); } catch (_) {} },
