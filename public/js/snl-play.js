@@ -77,7 +77,7 @@
     }
     return el;
   }
-  function hide(id) { $(id).classList.remove('show'); }
+  function hide(id) { $(id).classList.remove('show'); if (id === 'ovPrompt') { try { SNLAudio.stopThink(); } catch (_) {} } }
 
   const isRotated = () => innerWidth < 1024 && matchMedia('(orientation: portrait)').matches;
   /** Where player `id` waits before their first roll: a slot inside the GameSet start zone (spread in a grid, centred). */
@@ -373,7 +373,7 @@
 
       case 'reroll':
         toast(`${ic('reroll')} <b>${esc(who.name)}</b> used a Reroll: ${a.from_roll} → ${a.new_roll}`, 2200, '#6366f1');
-        snd('boostArm');
+        snd('boostArm'); meme('power');
         break;
 
       case 'move': {
@@ -427,7 +427,7 @@
       case 'random_pick': await randomPickOverlay(a); break;
 
       case 'extra_turn':
-        snd('bonus'); meme('power');
+        snd('bonus'); meme('again');
         flavorSplash(who, a.text, 'dice', 'bonus turn');
         await sleep(3600);
         break;
@@ -435,7 +435,7 @@
       case 'joined': {
         ensureTokens();
         snd('arrive');
-        toast(`${ic('team')} <b>${esc(who.name)}</b> joined the game`, 2800, '#34d399');
+        toast(`${ic('team')} <b>${esc(who.name)}</b> joined the game`, 2800, '#34d399'); meme('joined');
         await sleep(500);
         break;
       }
@@ -454,7 +454,7 @@
 
       case 'bluff_pass':
         toast(`${ic('check')} Nobody doubted <b>${esc(who.name)}</b> — safe!`, 2600, '#34d399');
-        snd('ladder');
+        snd('ladder'); meme('correct');
         await sleep(600);
         break;
 
@@ -473,7 +473,7 @@
         await sleep(700);
         break;
 
-      case 'rule': await ruleOverlay(a); break;
+      case 'rule': meme('rule'); await ruleOverlay(a); break;
 
       case 'win': {
         snd('win'); setTimeout(() => snd('quest'), 900); meme('win');
@@ -483,8 +483,8 @@
         break;
       }
 
-      case 'left': toast(`${ic('exit')} ${esc(who.name)} left the game`, 2400); await sleep(350); break;
-      case 'skip': toast(`${ic('clock')} ${esc(who.name)} ran out of time`, 2200); await sleep(250); break;
+      case 'left': toast(`${ic('exit')} ${esc(who.name)} left the game`, 2400); meme('wasted'); await sleep(350); break;
+      case 'skip': toast(`${ic('clock')} ${esc(who.name)} ran out of time`, 2200); meme('timeout'); await sleep(250); break;
       case 'react': floater(a.player_id, a.reaction); snd('reaction'); break;
       default: break;
     }
@@ -874,6 +874,7 @@
     const sig = JSON.stringify([p, actor.powers, C.meId]);
     if (sig === promptSig && $('ovPrompt').classList.contains('show')) return;
     promptSig = sig;
+    try { SNLAudio.think(); } catch (_) {}                        // a longer clip while they decide (stops when answered)
     const cfg = C.powersCfg;
     const left = !C.isParty && pendingLeft !== null ? `<div class="ov-sub" data-pend>${ic('clock')} <span data-secs>${Math.max(0, pendingLeft)}</span>s</div>` : '';
 
@@ -991,6 +992,7 @@
   async function answer(body) {
     if (answering) return;
     answering = true;
+    try { SNLAudio.stopThink(); } catch (_) {}
     $('ovPrompt').querySelectorAll('button').forEach((b) => (b.disabled = true));
     snd('press');
     const res = await post(C.urls.decide, body);

@@ -25,6 +25,14 @@ export const GENZ = [
   { id: 'g10', gender: 'm', label: 'Dyed Mohawk',    bg: ['#c4b5fd', '#4c1d95'], pat: 'rays',  hair: 'mohawk',   hc: '#22d3ee', acc: 'none',   ac: '#fff',    top: '#111827', tee: 'bomber', gfx: 'stripe', face: 'smirk', iris: '#a855f7', fx: ['stud', 'chain'] },
   { id: 'g11', gender: 'f', label: 'Cap & Braids',   bg: ['#fde68a', '#b45309'], pat: 'stars', hair: 'braids',   hc: '#1b1410', acc: 'cap',    ac: '#2563eb', top: '#f43f5e', tee: 'hoodie', gfx: 'star',   face: 'smile', iris: '#4a2512', fx: ['hoops'], lip: '#e11d48' },
   { id: 'g12', gender: 'f', label: 'Y2K Bob',        bg: ['#f5d0fe', '#7e22ce'], pat: 'stars', hair: 'bob',      hc: '#3b82f6', acc: 'y2k',    ac: '#22d3ee', top: '#f0abfc', tee: 'tee',    gfx: 'star',   face: 'smirk', iris: '#2563eb', fx: ['gem'], lip: '#d946ef', blush: true },
+  { id: 'g13', gender: 'm', label: 'Bald & Bright',  bg: ['#fde68a', '#d97706'], pat: 'rays',  hair: 'bald',   hc: '#15101a', acc: 'round',  ac: '#1b1830', top: '#0ea5e9', tee: 'tee',    gfx: 'bolt',   face: 'grin',  iris: '#3f2a14', fx: [] },
+  { id: 'g14', gender: 'm', label: 'Locs & Specs',    bg: ['#a7f3d0', '#047857'], pat: 'dots',  hair: 'locs',   hc: '#2a160c', acc: 'round',  ac: '#facc15', top: '#f97316', tee: 'hoodie', gfx: 'star',   face: 'smile', iris: '#3f2a14', fx: ['stud'] },
+  { id: 'g15', gender: 'f', label: 'Box Braids',      bg: ['#fbcfe8', '#be185d'], pat: 'stars', hair: 'braids', hc: '#1b1410', acc: 'none',   ac: '#fff',    top: '#8b5cf6', tee: 'tee',    gfx: 'heart',  face: 'grin',  iris: '#4a2512', fx: ['hoops'], lip: '#e11d48' },
+  { id: 'g16', gender: 'm', label: 'Clean Dome',      bg: ['#c4b5fd', '#5b21b6'], pat: 'zig',   hair: 'bald',   hc: '#15101a', acc: 'y2k',    ac: '#22d3ee', top: '#111827', tee: 'bomber', gfx: 'stripe', face: 'smirk', iris: '#3f2a14', fx: ['chain'] },
+  { id: 'g17', gender: 'f', label: 'Locs & Glasses',  bg: ['#fed7aa', '#c2410c'], pat: 'rays',  hair: 'locs',   hc: '#3b1d0f', acc: 'round',  ac: '#ec4899', top: '#14b8a6', tee: 'tee',    gfx: 'bolt',   face: 'smile', iris: '#4a2512', fx: ['hoops'], lip: '#be123c' },
+  { id: 'g18', gender: 'm', label: 'Braids & Frames', bg: ['#bae6fd', '#0369a1'], pat: 'dots',  hair: 'braids', hc: '#15101a', acc: 'round',  ac: '#ef4444', top: '#facc15', tee: 'hoodie', gfx: 'star',   face: 'grin',  iris: '#3f2a14', fx: ['stud'] },
+  { id: 'g19', gender: 'f', label: 'Bald Beauty',     bg: ['#fda4af', '#9f1239'], pat: 'stars', hair: 'bald',   hc: '#15101a', acc: 'phones', ac: '#facc15', top: '#f43f5e', tee: 'hoodie', gfx: 'heart',  face: 'grin',  iris: '#4a2512', fx: ['hoops', 'gem'], lip: '#e11d48', blush: true },
+  { id: 'g20', gender: 'm', label: 'Dread Beanie',    bg: ['#fde047', '#4d7c0f'], pat: 'zig',   hair: 'locs',   hc: '#1b1410', acc: 'beanie', ac: '#10b981', top: '#0f172a', tee: 'bomber', gfx: 'bolt',   face: 'smirk', iris: '#3f2a14', fx: ['stud'] },
 ];
 
 const HF = 'url(#hg)'; // hair gradient

@@ -27,6 +27,14 @@ class ReactionSounds
         return Cache::remember('snl_reaction_sounds_' . $stamp, 600, fn () => self::build($dir));
     }
 
+    /** Per-clip playback gain + length (written by `node scripts/measure-reactions.mjs`), keyed by file name. */
+    public static function levels(): array
+    {
+        $f = public_path('audio/reaction-levels.json');
+
+        return is_file($f) ? (json_decode(file_get_contents($f), true) ?: []) : [];
+    }
+
     /** @return array<int, string> every mp3 under the folder */
     private static function files(string $dir): array
     {
@@ -48,7 +56,18 @@ class ReactionSounds
         $out['random'] = [];
         $seen = [];
 
-        foreach (self::files($dir) as $path) {
+        // hand-picked clips: exact file name (no extension) => the moments it belongs to; these skip the keyword guessing
+        $assigned = [];
+        foreach ((array) config('snl.reaction_sounds.assign', []) as $moment => $names) {
+            foreach ($names as $n) {
+                $assigned[strtolower($n)][] = $moment;
+                $out[$moment] ??= [];
+            }
+        }
+        $paths = self::files($dir);
+        usort($paths, fn ($a, $b) => strlen($a) <=> strlen($b) ?: strcmp($a, $b)); // so "clap.mp3" is kept and "clap(1).mp3" is the duplicate
+
+        foreach ($paths as $path) {
             $hash = md5_file($path);
             if (isset($seen[$hash])) {
                 continue; // an exact duplicate
@@ -60,7 +79,10 @@ class ReactionSounds
             $sub = strtolower(basename(dirname($path)));
             $slug = ' ' . preg_replace('/[^a-z0-9]+/', ' ', strtolower(pathinfo($path, PATHINFO_FILENAME))) . ' ';
             $matched = [];
-            if (isset($cats[$sub])) { // a folder named after the moment wins
+            $own = strtolower(pathinfo($path, PATHINFO_FILENAME));
+            if (isset($assigned[$own])) {
+                $matched = $assigned[$own];
+            } elseif (isset($cats[$sub])) { // a folder named after the moment wins
                 $matched[] = $sub;
             } else {
                 foreach ($cats as $cat => $words) {

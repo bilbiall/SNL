@@ -1,13 +1,13 @@
 {
-  "versionName": "1.8.6",
-  "versionCode": 15,
-  "sizeBytes": 10823062,
+  "versionName": "1.8.7",
+  "versionCode": 16,
+  "sizeBytes": 10823049,
   "notes": [
-    "More meme reactions during play — on dice rolls, game start, close to the finish, quiet squares and more",
-    "Online play and Public games always show on the home screen and switch on when you have internet",
-    "Update card closes once the update starts"
+    "Way more meme reactions, matched to each moment (GTA Wasted when someone leaves, suspense music while you decide)",
+    "Every clip evened out to the same loudness; background music balanced underneath",
+    "New avatars: bald, dreadlocks, braids and glasses"
   ],
-  "sha256": "5d207c92ee1c70a3758282c9d632286c266e60f29869dae3c3a002707a95f61a",
-  "builtAt": "2026-10-17T05:13:42.019Z",
+  "sha256": "bc5db35bbda1565a2febc52fc90a16c39a57e3f0ce205b54e543a5ae6938c9c0",
+  "builtAt": "2026-10-17T06:20:52.446Z",
   "certSha256": "2a4dce20c1650504c343933159a6682a0362a0420e0e0ade01bba1347ee7d7f3"
 }

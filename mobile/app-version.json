@@ -1,9 +1,9 @@
 {
-  "versionName": "1.8.6",
-  "versionCode": 15,
+  "versionName": "1.8.7",
+  "versionCode": 16,
   "notes": [
-    "More meme reactions during play — on dice rolls, game start, close to the finish, quiet squares and more",
-    "Online play and Public games always show on the home screen and switch on when you have internet",
-    "Update card closes once the update starts"
+    "Way more meme reactions, matched to each moment (GTA Wasted when someone leaves, suspense music while you decide)",
+    "Every clip evened out to the same loudness; background music balanced underneath",
+    "New avatars: bald, dreadlocks, braids and glasses"
   ]
 }

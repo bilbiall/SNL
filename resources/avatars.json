@@ -252,6 +252,46 @@
           "id": "g12",
           "gender": "f",
           "label": "Y2K Bob"
+        },
+        {
+          "id": "g13",
+          "gender": "m",
+          "label": "Bald & Bright"
+        },
+        {
+          "id": "g14",
+          "gender": "m",
+          "label": "Locs & Specs"
+        },
+        {
+          "id": "g15",
+          "gender": "f",
+          "label": "Box Braids"
+        },
+        {
+          "id": "g16",
+          "gender": "m",
+          "label": "Clean Dome"
+        },
+        {
+          "id": "g17",
+          "gender": "f",
+          "label": "Locs & Glasses"
+        },
+        {
+          "id": "g18",
+          "gender": "m",
+          "label": "Braids & Frames"
+        },
+        {
+          "id": "g19",
+          "gender": "f",
+          "label": "Bald Beauty"
+        },
+        {
+          "id": "g20",
+          "gender": "m",
+          "label": "Dread Beanie"
         }
       ]
     },

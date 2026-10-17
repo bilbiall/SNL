@@ -85,7 +85,7 @@ const SNLAudio = (() => {
   }
 
   // ── background music: one continuous loop that dips briefly under every effect, then swells back ──
-  const MUSIC_VOL = 0.50, DUCK_VOL = 0.08;
+  let MUSIC_VOL = 0.40, DUCK_VOL = 0.06;       // MUSIC_VOL is re-set from the measured level of playback.mp3 (reaction-levels.json)
   let duckUntil = 0, holdDuck = false, fader = null;
   // effects that are too small or too frequent to dip the music for
   const NO_DUCK = { tick: 1, pip: 1, press: 1, toggle: 1, move: 1, reaction: 1 };
@@ -93,7 +93,7 @@ const SNLAudio = (() => {
 
   function fadeLoop() {
     if (!bg) { fader = null; return; }
-    const target = (holdDuck || performance.now() < duckUntil) ? DUCK_VOL : MUSIC_VOL;
+    const target = (holdDuck || thinkA || performance.now() < duckUntil) ? DUCK_VOL : MUSIC_VOL;
     const v = bg.volume;
     const next = target < v ? Math.max(target, v - 0.06) : Math.min(target, v + 0.012);   // dips fast, swells back slowly
     bg.volume = Math.max(0, Math.min(1, next));
@@ -113,35 +113,111 @@ const SNLAudio = (() => {
     } catch (_) { /* sound is never worth breaking the game */ }
   }
 
-  // ── meme / reaction sounds: picked by moment, different every time (never a repeat within the last ten plays) ──
-  let memeOn = true, lastMeme = 0; const recentMemes = [];
+  // ── meme / reaction sounds ──
+  // Chosen by moment from hand-picked pools (config snl.reaction_sounds.assign), never a repeat while there is anything fresher,
+  // each clip evened out to the same loudness (public/audio/reaction-levels.json) and the music dips underneath it.
+  let memeOn = true, lastMeme = 0, memeUntil = 0, curMeme = null, thinkA = null, thinkGain = null, limiter = null;
+  const recentMemes = [], lastUsed = {};
+  const HISTORY = 30;
+  const PRIORITY = { win: 1, wasted: 1, start: 1 };                                  // these cut in even over another clip / the cooldown
+  const LONG_OK = { win: 1, wasted: 1, timeout: 1, start: 1 };                       // moments that may use a longer clip
   try { memeOn = localStorage.getItem('snl_memes') !== '0'; } catch (_) {}
+
+  function levelOf(url) {
+    const L = (window.SNL || {}).memeLevels, f = L && L.files;
+    if (!f) return null;
+    let k = url.split('?')[0].split('/').pop();
+    try { k = decodeURIComponent(k); } catch (_) {}
+    return f[k] || null;
+  }
+  /** Plays one clip at an even loudness (WebAudio gain can lift quiet clips above 1.0; falls back to plain volume). */
+  function wire(a, gain) {
+    const c = ac();
+    if (c && c.createMediaElementSource) {
+      try {
+        if (!limiter) { limiter = c.createDynamicsCompressor(); limiter.threshold.value = -8; limiter.knee.value = 6; limiter.ratio.value = 14; limiter.attack.value = 0.003; limiter.release.value = 0.12; limiter.connect(c.destination); }
+        const g = c.createGain(); g.gain.value = gain;
+        c.createMediaElementSource(a).connect(g); g.connect(limiter);
+        a.volume = 1;
+        return g;
+      } catch (_) { /* fall through */ }
+    }
+    a.volume = Math.max(0, Math.min(1, gain));
+    return null;
+  }
+  function choose(pool, maxLen) {
+    let p = pool.filter((u) => { const l = levelOf(u); return !maxLen || !l || l.d <= maxLen; });
+    if (!p.length) p = pool;
+    let fresh = p.filter((u) => recentMemes.indexOf(u) === -1);
+    if (!fresh.length) { p = p.slice().sort((x, y) => (lastUsed[x] || 0) - (lastUsed[y] || 0)); fresh = p.slice(0, Math.max(1, Math.ceil(p.length / 3))); }   // all heard lately → one of the longest-unheard
+    return fresh[Math.floor(Math.random() * fresh.length)];
+  }
+  function remember(url) {
+    recentMemes.push(url); if (recentMemes.length > HISTORY) recentMemes.shift();
+    lastUsed[url] = Date.now();
+  }
+
   function react(moment) {
     if (!sfxOn || !memeOn) return false;
     const C = window.SNL || {}, M = C.memeSounds, cfg = C.memeCfg || {};
     if (!M) return false;
-    const now = Date.now();
-    if (now - lastMeme < (cfg.cooldown_ms || 3000)) return false;                      // a quiet gap between memes
+    const now = Date.now(), prio = !!PRIORITY[moment];
+    if (!prio && now - lastMeme < (cfg.cooldown_ms || 2000)) return false;           // a quiet gap between memes
+    if (!prio && now < memeUntil) return false;                                      // let a clip finish before the next one starts
     const chance = (cfg.chance || {})[moment];
     if (chance != null && Math.random() > chance) return false;                      // not every time
     let pool = (M[moment] || []).slice();
     if (!pool.length) pool = (M.random || []).slice();
     if (!pool.length) return false;
-    let fresh = pool.filter((u) => recentMemes.indexOf(u) === -1);
-    if (!fresh.length) fresh = pool.filter((u) => u !== recentMemes[recentMemes.length - 1]);
-    if (!fresh.length) fresh = pool;
-    const url = fresh[Math.floor(Math.random() * fresh.length)];
-    recentMemes.push(url); if (recentMemes.length > 10) recentMemes.shift();
+    const url = choose(pool, LONG_OK[moment] ? 14 : 7);
+    if (thinkA) stopThink(true);
+    if (curMeme) { try { curMeme.pause(); } catch (_) {} curMeme = null; }
+    remember(url);
     lastMeme = now;
-    dip(2200);
-    setTimeout(() => { try { const a = new Audio(url); a.volume = cfg.volume || 0.85; a.play().catch(() => {}); } catch (_) {} }, 220);   // lands just after the move's own sound
+    const info = levelOf(url) || { g: 1, d: 3 };
+    memeUntil = now + Math.min(info.d, 14) * 1000 * 0.85;
+    dip(Math.min(info.d, 14) * 1000 + 500);
+    setTimeout(() => {
+      try { const a = new Audio(url); a.preload = 'auto'; wire(a, Math.max(0.05, info.g * (cfg.volume || 0.9))); curMeme = a; a.play().catch(() => {}); } catch (_) {}
+    }, 220);                                                                         // lands just after the move's own sound
     return url;   // which file was chosen (handy for tests)
+  }
+
+  /** A longer clip while someone is deciding (shield? reroll? bluff?) — stopped the moment they answer. */
+  function think() {
+    if (!sfxOn || !memeOn || thinkA) return false;
+    const C = window.SNL || {}, M = C.memeSounds, cfg = C.memeCfg || {};
+    const pool = (M && M.think) || [];
+    if (!pool.length) return false;
+    const chance = (cfg.chance || {}).think;
+    if (chance != null && Math.random() > chance) return false;
+    const url = choose(pool, 0);
+    remember(url);
+    const info = levelOf(url) || { g: 1, d: 10 };
+    try {
+      const a = new Audio(url); a.preload = 'auto';
+      thinkGain = wire(a, Math.max(0.05, info.g * (cfg.think_volume || 0.55)));
+      thinkA = a; kick();
+      a.addEventListener('ended', () => { if (thinkA === a) stopThink(true); });
+      a.play().catch(() => { if (thinkA === a) stopThink(true); });
+    } catch (_) { thinkA = null; return false; }
+    return url;
+  }
+  function stopThink(now) {
+    const a = thinkA; if (!a) return;
+    thinkA = null; dip(300);
+    const done = () => { try { a.pause(); } catch (_) {} };
+    if (now) { done(); return; }
+    const g = thinkGain; thinkGain = null;
+    if (g) { try { g.gain.setTargetAtTime(0, g.context.currentTime, 0.08); } catch (_) {} setTimeout(done, 450); }
+    else { let v = a.volume; const t = setInterval(() => { v -= 0.12; if (v <= 0) { clearInterval(t); done(); } else a.volume = v; }, 40); }
   }
 
   function startMusic() {
     const url = window.SNL && window.SNL.music;
     if (!url || bg) { if (bg && musicOn) bg.play().catch(() => {}); return; }
     try {
+      const L = window.SNL && window.SNL.memeLevels; if (L && L.meta && L.meta.music) { MUSIC_VOL = Math.min(0.8, L.meta.music); DUCK_VOL = +(MUSIC_VOL * 0.15).toFixed(3); }
       bg = new Audio(url); bg.loop = true; bg.preload = 'auto'; bg.volume = MUSIC_VOL;
       if (musicOn) bg.play().catch(() => {});
     } catch (_) { bg = null; }
@@ -165,7 +241,7 @@ const SNLAudio = (() => {
   document.addEventListener('pointerdown', unlock, { once: true });
 
   return {
-    play, unlock, react,
+    play, unlock, react, think, stopThink,
     get memes() { return memeOn; },
     setMemes(on) { memeOn = !!on; try { localStorage.setItem('snl_memes', on ? '1' : '0'); } catch (_) {} },
     get sfx() { return sfxOn; },

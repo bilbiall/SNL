@@ -21,6 +21,7 @@
         "axios": "^1.11.0",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^2.0.0",
+        "mpg123-decoder": "^1.0.3",
         "opentype.js": "^2.0.0",
         "postcss": "^8.4.31",
         "sharp": "^0.35.5",
