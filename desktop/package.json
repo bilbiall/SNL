@@ -1,6 +1,6 @@
 {
   "name": "snakes-and-liquor-desktop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Snakes & Liquor — the party board game, as a Windows app that plays with no internet.",
   "author": "Snakes & Liquor",
@@ -17,11 +17,34 @@
     "appId": "com.snakesandliquor.desktop",
     "productName": "Snakes & Liquor",
     "copyright": "Snakes & Liquor",
-    "directories": { "output": "dist", "buildResources": "build" },
-    "files": ["main.js", "preload.js", "app-version.json", "package.json", "assets/**", "www/**"],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "app-version.json",
+      "package.json",
+      "assets/**",
+      "www/**"
+    ],
     "asar": true,
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }, { "target": "portable", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "build/icon.png"
     },
     "nsis": {
@@ -33,6 +56,8 @@
       "shortcutName": "Snakes & Liquor",
       "artifactName": "Snakes-and-Liquor-Setup-${version}.${ext}"
     },
-    "portable": { "artifactName": "Snakes-and-Liquor-Portable-${version}.${ext}" }
+    "portable": {
+      "artifactName": "Snakes-and-Liquor-Portable-${version}.${ext}"
+    }
   }
 }

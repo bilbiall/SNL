@@ -1,9 +1,9 @@
 {
-  "versionName": "1.8.4",
-  "versionCode": 13,
+  "versionName": "1.8.5",
+  "versionCode": 14,
   "notes": [
-    "Phone view: every player now shows as a neat squared card with name, tile number and meter",
-    "Background music a little louder",
+    "Play online and Public games now appear in the app whenever you have internet",
+    "Phone view: squared player cards, louder music",
     "Updates download inside the app"
   ]
 }

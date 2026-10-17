@@ -23,6 +23,19 @@
   window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; notify(); });
   window.addEventListener('appinstalled', function () { deferred = null; notify(); });
 
+  // inside the Android / Windows app the live site (online play) opens in the same window — give a way back to the app's own home
+  (function () {
+    var app = window.Capacitor || window.SNLDesktop, local = location.hostname === 'localhost' || location.protocol === 'app:';
+    if (!app || local) return;
+    document.addEventListener('DOMContentLoaded', function () {
+      var a = document.createElement('a');
+      a.href = window.SNLDesktop ? 'app://snl/index.html' : 'https://localhost/index.html';
+      a.textContent = '‹ App home';
+      a.style.cssText = 'position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2400;padding:.3rem .7rem;border-radius:.6rem;background:rgba(8,7,16,.8);border:1px solid rgba(255,255,255,.2);color:#e5e7eb;font:800 .7rem Figtree,system-ui,sans-serif;text-decoration:none;backdrop-filter:blur(6px);';
+      document.body.appendChild(a);
+    });
+  })();
+
   function note(text) {
     try {
       var el = document.createElement('div');

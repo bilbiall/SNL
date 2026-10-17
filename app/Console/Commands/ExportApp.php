@@ -71,8 +71,13 @@ class ExportApp extends Command
     /** Rewrites server URLs into the static app's own files and removes the parts that need a server (online play, admin). */
     private function localise(string $html): string
     {
-        // anchors that lead to online rooms / admin don't belong in the offline app
-        $html = preg_replace('#<a [^>]*href="[^"]*(?:type=online|/login|/join|/app|/download|/rooms|/how-to-play|/fun-facts)[^"]*"[^>]*>.*?</a>#s', '', $html);
+        // online play / public games stay, but point at the live site and only show when the device is online
+        $site = rtrim(config('snl.public_url'), '/');
+        $html = preg_replace_callback('#<a ([^>]*)href="https://localhost((?:/new\?type=online|/rooms)[^"]*)"([^>]*)>#', fn ($m) => '<a data-online style="display:none" ' . $m[1] . 'href="' . $site . html_entity_decode($m[2]) . '"' . $m[3] . '>', $html);
+        // anchors that lead to admin / downloads / content pages don't belong in the offline app
+        $html = preg_replace('#<a (?![^>]*data-online)[^>]*href="[^"]*(?:type=online|/login|/join|/app|/download|/rooms|/how-to-play|/fun-facts)[^"]*"[^>]*>.*?</a>#s', '', $html);
+        $reveal = '<script>(function(){var l=[].slice.call(document.querySelectorAll("a[data-online]"));if(!l.length||!navigator.onLine)return;var c=new AbortController(),t=setTimeout(function(){c.abort()},4000);fetch(' . json_encode($site . '/favicon.ico') . ',{mode:"no-cors",cache:"no-store",signal:c.signal}).then(function(){clearTimeout(t);l.forEach(function(a){a.style.display=""});}).catch(function(){});})();</script>';
+        $html = str_replace('</body>', $reveal . '</body>', $html);
         $html = preg_replace('#<section class="getapp".*?</section>#s', '', $html);
         $html = preg_replace('#<section class="about".*?</section>#s', '', $html);
         $html = preg_replace('#<div class="share-row".*?</div>#s', '', $html);

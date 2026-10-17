@@ -24,11 +24,13 @@ function createWindow() {
   });
   Menu.setApplicationMenu(null);
   win.loadURL(HOME);
+  win.on('app-command', (e, cmd) => { if (cmd === 'browser-backward' && win.webContents.canGoBack()) win.webContents.goBack(); });
   // anything that isn't the game itself opens in the normal browser
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/.test(url)) shell.openExternal(url); return { action: 'deny' }; });
-  win.webContents.on('will-navigate', (e, url) => { if (!url.startsWith('app://snl/')) { e.preventDefault(); if (/^https?:/.test(url)) shell.openExternal(url); } });
+  win.webContents.on('will-navigate', (e, url) => { if (!url.startsWith('app://snl/') && !url.startsWith('https://snl.moski.org/')) { e.preventDefault(); if (/^https?:/.test(url)) shell.openExternal(url); } });
   win.webContents.on('before-input-event', (e, input) => {
     if (input.type !== 'keyDown') return;
+    if (input.alt && input.key === 'ArrowLeft' && win.webContents.canGoBack()) win.webContents.goBack();
     if (input.key === 'F11') win.setFullScreen(!win.isFullScreen());
     if (input.key === 'Escape' && win.isFullScreen()) win.setFullScreen(false);
   });

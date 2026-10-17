@@ -290,7 +290,7 @@
     if (busy) return;
     busy = true;
     DIE.disabled = true;
-    hide('ovPrompt'); // whatever it was asking has been answered — the replay below shows what happened
+    if (queue.length) { hide('ovPrompt'); promptSig = null; } // something happened, so whatever it was asking has been answered — the replay below shows it
     try {
       while (queue.length) {
         try { await play(queue.shift()); } catch (e) { console.error(e); }
@@ -861,12 +861,17 @@
     spotTick = setInterval(paint, 250);
   }
 
+  let promptSig = null;
   function renderPrompt() {
     const p = S.pending;
-    if (!p || S.room.status !== 'active') { hide('ovPrompt'); $('watch').classList.remove('show'); return; }
-    if (!canAct(p)) { hide('ovPrompt'); renderWatch(p); return; }
+    if (!p || S.room.status !== 'active') { hide('ovPrompt'); promptSig = null; $('watch').classList.remove('show'); return; }
+    if (!canAct(p)) { hide('ovPrompt'); promptSig = null; renderWatch(p); return; }
     $('watch').classList.remove('show');
     const actor = P(p.actor_id);
+    // a poll brings the same question again — leave the card exactly as it is (re-dealing it makes it move and unclickable)
+    const sig = JSON.stringify([p, actor.powers, C.meId]);
+    if (sig === promptSig && $('ovPrompt').classList.contains('show')) return;
+    promptSig = sig;
     const cfg = C.powersCfg;
     const left = !C.isParty && pendingLeft !== null ? `<div class="ov-sub" data-pend>${ic('clock')} <span data-secs>${Math.max(0, pendingLeft)}</span>s</div>` : '';
 

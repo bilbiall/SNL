@@ -2,6 +2,7 @@
 //   1. php artisan snl:export-app desktop/www   (the offline static game)
 //   2. electron-builder  -> desktop/dist/*.exe
 //   3. copies the installer to public/downloads/ and writes desktop-version.json
+import crypto from "node:crypto";
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -34,6 +35,7 @@ const out = path.join(root, 'public', 'downloads');
 fs.mkdirSync(out, { recursive: true });
 for (const f of fs.readdirSync(out)) if (/^Snakes-and-Liquor-(Setup|Portable)-.*\.exe$/.test(f)) fs.rmSync(path.join(out, f));
 for (const f of [setup, portable]) if (fs.existsSync(path.join(desk, 'dist', f))) fs.copyFileSync(path.join(desk, 'dist', f), path.join(out, f));
-fs.writeFileSync(path.join(out, 'desktop-version.json'), JSON.stringify({ versionName: ver.versionName, versionCode: ver.versionCode, notes: ver.notes || [], builtAt: new Date().toISOString(), file: setup, portable }) + '\n');
+const sum = (f) => { const b = fs.readFileSync(path.join(out, f)); return { sizeBytes: b.length, sha256: crypto.createHash('sha256').update(b).digest('hex') }; };
+fs.writeFileSync(path.join(out, 'desktop-version.json'), JSON.stringify({ versionName: ver.versionName, versionCode: ver.versionCode, notes: ver.notes || [], builtAt: new Date().toISOString(), file: setup, portable, ...sum(setup) }) + '\n');
 
 console.log(`\nDone. Upload public/downloads/${setup} (and the portable .exe + desktop-version.json) to the server's public/downloads/.`);

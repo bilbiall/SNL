@@ -1,13 +1,13 @@
 {
-  "versionName": "1.8.4",
-  "versionCode": 13,
-  "sizeBytes": 10823035,
+  "versionName": "1.8.5",
+  "versionCode": 14,
+  "sizeBytes": 10823051,
   "notes": [
-    "Phone view: every player now shows as a neat squared card with name, tile number and meter",
-    "Background music a little louder",
+    "Play online and Public games now appear in the app whenever you have internet",
+    "Phone view: squared player cards, louder music",
     "Updates download inside the app"
   ],
-  "sha256": "4daba37d6bc513b1fc6deeb52d8149193c77d1cc0187ac62afc1d23cee5072da",
-  "builtAt": "2026-10-17T04:16:17.887Z",
+  "sha256": "ca052d38a218806efe71a866e1cdbcee76f56faef9c293762196517e9b52a067",
+  "builtAt": "2026-10-17T04:41:05.279Z",
   "certSha256": "2a4dce20c1650504c343933159a6682a0362a0420e0e0ade01bba1347ee7d7f3"
 }

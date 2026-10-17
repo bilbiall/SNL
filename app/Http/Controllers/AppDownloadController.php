@@ -48,10 +48,8 @@ class AppDownloadController extends Controller
         $info = $this->windowsInfo();
         abort_unless($info, 404, 'The Windows app is not available yet.');
 
-        return response()->download(public_path('downloads/' . $info['file']), 'Snakes-and-Liquor-Setup.exe', [
-            'Content-Type' => 'application/vnd.microsoft.portable-executable',
-            'Cache-Control' => 'no-cache',
-        ]);
+        // let the web server stream the big file itself (PHP can cut a long download short)
+        return redirect(url('downloads/' . $info['file']));
     }
 
     public function android()
@@ -59,9 +57,6 @@ class AppDownloadController extends Controller
         $file = public_path('downloads/snakes-and-liquor.apk');
         abort_unless(is_file($file), 404, 'The Android app is not available yet.');
 
-        return response()->download($file, 'Snakes-and-Liquor.apk', [
-            'Content-Type' => 'application/vnd.android.package-archive',
-            'Cache-Control' => 'no-cache',
-        ]);
+        return redirect(url('downloads/snakes-and-liquor.apk') . '?v=' . filemtime($file));
     }
 }
