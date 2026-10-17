@@ -146,6 +146,25 @@
         .tag { font-size: .78rem; margin-top: .6rem; }
         .getapp { padding: .7rem .8rem; } .getapp img { width: 2.6rem; height: 2.6rem; } .ga-b { padding: .42rem .7rem; font-size: .74rem; }
     }
+    /* phones: declutter — dim the busy photo, one share button, a one-line app card, footer in the flow */
+    @media (max-width: 560px) {
+        .lp { justify-content: flex-start; padding-top: 4.6rem; padding-bottom: 1.2rem; }
+        .bg i { filter: brightness(.55) saturate(.9); }
+        .wash { background: radial-gradient(ellipse 80% 55% at 50% 40%, rgba(7,6,15,.55), rgba(7,6,15,.9) 80%), linear-gradient(180deg, rgba(7,6,15,.8), rgba(7,6,15,.5) 40%, rgba(7,6,15,.95)); }
+        .mini { transform: scale(.88); margin: .9rem 0 .8rem; }
+        .share-row { margin-top: .8rem; gap: .35rem; }
+        .share-row .share-l, .share-row .sb:not(.nat):not(.cp) { display: none; }
+        .share-row .sb { padding: .3rem .75rem; font-size: .7rem; }
+        .getapp { grid-template-columns: auto 1fr auto; max-width: 300px; margin-top: .9rem; padding: .5rem .65rem; border-radius: 1rem; gap: .5rem; }
+        .getapp img { width: 2.2rem; height: 2.2rem; border-radius: .6rem; }
+        .ga-tx span, .ga-tip, .ga-btns > .ga-b:not(.ga-main):not(#gaInstall) { display: none !important; }
+        .ga-tx b { font-size: .82rem; }
+        .ga-btns { grid-column: auto; flex-wrap: nowrap; }
+        .ga-main small { display: none; }
+        .ga-b { padding: .4rem .7rem; font-size: .72rem; }
+        .lp-foot { position: static; margin-top: 1rem; font-size: .66rem; line-height: 1.6; padding: 0 1rem; }
+        .lp-foot .lf-x { display: none; }
+    }
     .faq-link { font: inherit; background: none; border: 0; padding: 0; color: #94a3b8; cursor: pointer; text-decoration: underline; font-size: inherit; }
     @media (prefers-reduced-motion: reduce) { .lp *, .lp *::before, .lp *::after { animation: none !important; opacity: 1 !important; transform: none !important; } .bg i:nth-child(2) { display: none; } .face:first-child { opacity: 1 !important; } }
 </style>
@@ -215,7 +234,7 @@
         <p class="ga-tip" id="gaTip"></p>
     </section>
 
-    <div class="lp-foot"><a href="{{ route('app.page') }}">Android app</a> · 18+ for Drinks mode · Drink responsibly · Icons <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a> · <a href="{{ route('login') }}">Admin</a> · <button type="button" class="faq-link" id="faqLink">FAQ</button></div>
+    <div class="lp-foot"><span class="lf-x"><a href="{{ route('app.page') }}">Android app</a> · </span>18+ for Drinks mode · Drink responsibly · Icons <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a> · <a href="{{ route('login') }}">Admin</a> · <button type="button" class="faq-link" id="faqLink">FAQ</button></div>
 </div>
 
 <section class="about" id="aboutSec" aria-label="About Snakes & Liquor" hidden>
