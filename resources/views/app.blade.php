@@ -56,6 +56,13 @@
             <p>Android shows this warning because the app isn't from Google Play. It's the same app as this website. You can switch “Install unknown apps” back off afterwards.</p>
         </div>
 
+        @if(!empty($win))
+        <div class="ap-card">
+            <h2>Windows PC app</h2>
+            <p style="margin-top:0;"><a href="{{ route('app.windows') }}" download style="color:#f9a8d4;font-weight:900;">Download for Windows</a> — Version {{ $win['versionName'] }} · {{ number_format($win['sizeBytes'] / 1048576, 0) }} MB. Run the installer; it plays with no internet. Windows may say “protected your PC” because the app isn't signed: click <b>More info → Run anyway</b>.</p>
+        </div>
+        @endif
+
         <div class="ap-card">
             <h2>On a PC or iPhone?</h2>
             <p style="margin-top:0;">The .apk is for Android phones and tablets. On a computer, install the game from the <b>install icon in Chrome or Edge's address bar</b> — it opens in its own window and works offline. On iPhone, tap <b>Share → Add to Home Screen</b>.</p>

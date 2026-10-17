@@ -32,6 +32,7 @@ Route::get('/robots.txt', [ContentController::class, 'robots'])->name('robots');
 // The Android app: a download page and the file itself.
 Route::get('/app', [AppDownloadController::class, 'page'])->name('app.page');
 Route::get('/download/android', [AppDownloadController::class, 'android'])->name('app.android');
+Route::get('/download/windows', [AppDownloadController::class, 'windows'])->name('app.windows');
 
 // Offline: the pack, the file list and the in-browser party table (must come before play/{room}).
 Route::get('/offline/pack.json', [OfflineController::class, 'pack'])->name('offline.pack');

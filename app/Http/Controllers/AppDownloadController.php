@@ -25,9 +25,33 @@ class AppDownloadController extends Controller
         ];
     }
 
+    /** The Windows installer, if one has been uploaded to public/downloads. */
+    private function windowsInfo(): ?array
+    {
+        $meta = public_path('downloads/desktop-version.json');
+        $v = is_file($meta) ? (json_decode(file_get_contents($meta), true) ?: []) : [];
+        $file = $v['file'] ?? null;
+        if (!$file || !preg_match('/^[A-Za-z0-9._-]+\.exe$/', $file) || !is_file(public_path('downloads/' . $file))) {
+            return null;
+        }
+
+        return ['versionName' => $v['versionName'] ?? '1.0.0', 'file' => $file, 'sizeBytes' => filesize(public_path('downloads/' . $file))];
+    }
+
     public function page()
     {
-        return view('app', ['apk' => $this->info()]);
+        return view('app', ['apk' => $this->info(), 'win' => $this->windowsInfo()]);
+    }
+
+    public function windows()
+    {
+        $info = $this->windowsInfo();
+        abort_unless($info, 404, 'The Windows app is not available yet.');
+
+        return response()->download(public_path('downloads/' . $info['file']), 'Snakes-and-Liquor-Setup.exe', [
+            'Content-Type' => 'application/vnd.microsoft.portable-executable',
+            'Cache-Control' => 'no-cache',
+        ]);
     }
 
     public function android()

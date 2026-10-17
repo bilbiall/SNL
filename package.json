@@ -7,7 +7,9 @@
         "dev": "vite",
         "icons": "node scripts/build-icons.mjs",
         "avatars": "node scripts/build-avatars.mjs",
-        "apk": "node scripts/build-apk.mjs"
+        "apk": "node scripts/build-apk.mjs",
+        "desktop": "node scripts/build-desktop.mjs",
+        "desktop:dev": "php artisan snl:export-app desktop/www && npm --prefix desktop start"
     },
     "devDependencies": {
         "@dicebear/collection": "^9.4.2",

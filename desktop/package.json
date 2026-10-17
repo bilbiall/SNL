@@ -1,0 +1,38 @@
+{
+  "name": "snakes-and-liquor-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Snakes & Liquor — the party board game, as a Windows app that plays with no internet.",
+  "author": "Snakes & Liquor",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "electron": "44.8.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.snakesandliquor.desktop",
+    "productName": "Snakes & Liquor",
+    "copyright": "Snakes & Liquor",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["main.js", "preload.js", "app-version.json", "package.json", "assets/**", "www/**"],
+    "asar": true,
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }, { "target": "portable", "arch": ["x64"] }],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Snakes & Liquor",
+      "artifactName": "Snakes-and-Liquor-Setup-${version}.${ext}"
+    },
+    "portable": { "artifactName": "Snakes-and-Liquor-Portable-${version}.${ext}" }
+  }
+}
