@@ -29,7 +29,7 @@
 
 @section('body')
 <div class="ap">
-    <a href="{{ route('home') }}" class="ap-logo"><img src="{{ asset('img/logo-96.png') }}" alt="" width="28" height="28" style="border-radius:.5rem;"> Snakes &amp; Liquor</a>
+    <x-brand />
 
     <img class="ap-icon" src="{{ asset('icons/icon-512.png') }}" alt="Snakes &amp; Liquor app icon">
     <h1>Get the Android app</h1>

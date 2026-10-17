@@ -5,7 +5,7 @@
 @section('body')
 <div class="snl-narrow">
     <header class="flex items-center justify-between py-3 mb-2">
-        <a href="{{ route('home') }}" class="logo text-lg"><x-icon name="snake" /> Snakes <b>&amp;</b> Liquor <x-icon name="cheers" /></a>
+        <x-brand />
     </header>
 
     <h1 class="snl-h text-2xl mb-1"><x-icon name="globe" /> Join a room</h1>

@@ -170,7 +170,7 @@ else {
     const dd = shapeDiff(stripped(sample.pending[t]), (() => { const o = JSON.parse(JSON.stringify(seenShapes[t])); return o; })());
     // seenShapes holds shapes (leaves 'v'); compare shapes against PHP shape by converting PHP state too
     const phpShape = shape(stripped(sample.pending[t])); const jsShape = JSON.parse(JSON.stringify(seenShapes[t])); delete jsShape.actions;
-    if (t === 'shield') { if (phpShape.pending && phpShape.pending.card) delete phpShape.pending.card.intensity; if (jsShape.pending && jsShape.pending.card) delete jsShape.pending.card.intensity; }
+    if (t === 'shield') { for (const sh of [phpShape, jsShape]) if (sh.pending && sh.pending.card) { delete sh.pending.card.intensity; delete sh.pending.card.units; } }
     const dd2 = shapeDiff(phpShape, jsShape);
     check('pending ' + t + ' state shape == PHP', !dd2, dd2 || '');
   }

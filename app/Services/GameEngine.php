@@ -683,7 +683,7 @@ class GameEngine
     private function penalize(Player $source, Player $target, int $units, ?int $tile): void
     {
         $icon = config("snl.mode_icons.{$this->room->content_mode}.self") ?? 'self';
-        $this->hit($source, [$target], ['kind' => 'self', 'icon' => $icon, 'text' => $this->penaltyText($units), 'spin' => false], $tile);
+        $this->hit($source, [$target], ['kind' => 'self', 'icon' => $icon, 'text' => $this->penaltyText($units), 'spin' => false, 'units' => $units], $tile);
     }
 
     /** A hit on a single player — pauses for their Shield if they hold one. */
@@ -704,6 +704,9 @@ class GameEngine
     {
         foreach ($targets as $t) {
             $t->bump('hits');
+            if (!in_array($card['kind'], ['heart', 'groupgame'], true)) {
+                $t->bump('buzz', max(1, (int) ($card['units'] ?? 1))); // the Buzz Meter: shots count by their size
+            }
         }
         if (in_array($card['kind'], ['pick', 'duel'], true) && !(count($targets) === 1 && $targets[0]->id === $source->id)) {
             $source->bump('picks');
@@ -1125,7 +1128,7 @@ class GameEngine
             'id' => $p->id, 'name' => $p->name, 'color' => $p->color, 'avatar' => $p->avatar,
             'position' => $p->position, 'status' => $p->status, 'turn_order' => $p->turn_order,
             'powers' => ['shield' => $p->power('shield'), 'reroll' => $p->power('reroll')],
-            'is_host' => $p->id === $room->host_player_id, 'missed' => $p->missed_turns,
+            'is_host' => $p->id === $room->host_player_id, 'missed' => $p->missed_turns, 'buzz' => $p->stat('buzz'),
         ])->values()->all();
 
         return [

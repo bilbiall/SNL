@@ -35,7 +35,7 @@ console.log('extras ok — card kinds:', JSON.stringify(seen), '| quickfire prom
 // ── no back-to-back repeats: a shuffle bag works through a deck before anything comes round again ──
 {
   const g = E.create(pack, { boardId: pack.boards[0].id, mode: 'drinks', intensity: 3, entries: [{ name: 'A' }, { name: 'B' }] });
-  const seen = []; let repeatsInRow = 0, free = 0, events = [];
+  const seen = []; let repeatsInRow = 0, free = 0, events = [], streakFree = true;
   for (let n = 0; n < 2500 && g.room.status === 'active'; n++) {
     E.roll(pack, g); answer(g);
     g.actions.filter((a) => a.seq > (g._s2 || 0)).forEach((a) => {
@@ -43,11 +43,27 @@ console.log('extras ok — card kinds:', JSON.stringify(seen), '| quickfire prom
       if (a.type === 'extra_turn') events.push('roll'); if (a.type === 'card' && a.kind === 'groupgame') events.push('group');
     });
     g._s2 = g.room.event_seq;
+    const ev = (g.deck_state && g.deck_state.events) || []; if (ev.length === 3 && ev[0] === ev[1] && ev[1] === ev[2]) streakFree = false;
     if (g.room.status !== 'active') { Object.assign(g, E.rematch(pack, g)); }
   }
   assert(repeatsInRow === 0, 'the same free-square text never appears twice in a row (' + repeatsInRow + ')');
-  let streak = 0, maxStreak = 0; for (let i = 1; i < events.length; i++) { streak = events[i] === events[i - 1] ? streak + 1 : 0; maxStreak = Math.max(maxStreak, streak); }
-  assert(maxStreak <= 2, 'free-square events are not repeated in long streaks (max ' + maxStreak + ')');
+  assert(streakFree, 'the same free-square event never happens three times running');
   const distinct = new Set(seen).size;
   console.log('shuffle bag ok — free-square lines shown:', seen.length, 'distinct:', distinct);
+}
+
+// ── Buzz Meter: every hit a player takes fills it; kind moments and group games don't ──
+{
+  let any = 0, gained = 0;
+  for (let n = 0; n < 60; n++) {
+    const g = E.create(pack, { boardId: pack.boards[0].id, mode: 'drinks', intensity: 2, entries: [{ name: 'A' }, { name: 'B' }, { name: 'C' }] });
+    for (let i = 0; i < 40 && g.room.status === 'active'; i++) { E.roll(pack, g); answer(g); }
+    const st = E.state(pack, g);
+    st.players.forEach((p) => { assert(Number.isInteger(p.buzz) && p.buzz >= 0, 'buzz is a non-negative whole number'); if (p.buzz > 0) gained++; });
+    const hits = g.players.reduce((s, p) => s + ((p.stats && p.stats.hits) || 0), 0), buzz = st.players.reduce((s, p) => s + p.buzz, 0);
+    assert(buzz >= 0 && (hits === 0 || buzz > 0), 'taking hits fills the meter');
+    any++;
+  }
+  assert(gained > 0, 'somebody gets buzzed');
+  console.log('buzz meter ok —', any, 'games, players with a buzz:', gained);
 }

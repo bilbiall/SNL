@@ -5,7 +5,7 @@
 @section('body')
 <div class="snl-narrow">
     <header class="flex items-center justify-between py-3 mb-2">
-        <a href="{{ route('home') }}" class="logo text-lg"><x-icon name="snake" /> Snakes <b>&amp;</b> Liquor <x-icon name="cheers" /></a>
+        <x-brand />
         <a href="{{ route('setup', ['type' => $type === 'party' ? 'online' : 'party']) }}" class="btn btn-ghost btn-sm">
             <x-icon :name="$type === 'party' ? 'globe' : 'phone'" /> {{ $type === 'party' ? 'Online instead' : 'Party mode instead' }}
         </a>

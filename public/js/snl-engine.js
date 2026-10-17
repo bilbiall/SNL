@@ -294,7 +294,7 @@
   P.penalize = function (source, target, units, tile) {
     var room = this.g.room, mi = this.cfg.mode_icons || {};
     var icon = (mi[room.content_mode] && mi[room.content_mode].self) || 'self';
-    this.hit(source, [target], { kind: 'self', icon: icon, text: this.penaltyText(units), spin: false }, tile);
+    this.hit(source, [target], { kind: 'self', icon: icon, text: this.penaltyText(units), spin: false, units: units }, tile);
   };
 
   /** A hit on a single player — pauses for their Shield if they hold one. */
@@ -308,7 +308,10 @@
 
   P.commitHit = function (source, targets, card, tile) {
     var self = this;
-    targets.forEach(function (t) { self.bump(t, 'hits'); });
+    targets.forEach(function (t) {
+      self.bump(t, 'hits');
+      if (card.kind !== 'heart' && card.kind !== 'groupgame') self.bump(t, 'buzz', Math.max(1, parseInt(card.units || 1, 10) || 1));   // the Buzz Meter
+    });
     if ((card.kind === 'pick' || card.kind === 'duel') && !(targets.length === 1 && targets[0].id === source.id)) this.bump(source, 'picks');
     this.log({
       type: 'card', kind: card.kind, text: card.text, icon: card.icon, spin: card.spin || false,
@@ -811,7 +814,7 @@
       return {
         id: p.id, name: p.name, color: p.color, avatar: p.avatar, position: p.position, status: p.status, turn_order: p.turn_order,
         powers: { shield: self.power(p, 'shield'), reroll: self.power(p, 'reroll') },
-        is_host: p.id === room.host_player_id, missed: p.missed_turns,
+        is_host: p.id === room.host_player_id, missed: p.missed_turns, buzz: (p.stats && p.stats.buzz) || 0,
       };
     });
     return {

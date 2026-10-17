@@ -126,7 +126,7 @@ class RoomController extends Controller
             'mode'      => $mode,
             'tileKinds' => $this->tileKindsOnBoard($room->board),
             'reactions' => config('snl.reactions'),
-            'music' => file_exists(public_path('audio/game-loop.mp3')) ? asset('audio/game-loop.mp3') : null,
+            'music' => file_exists(public_path('audio/playback.mp3')) ? asset('audio/playback.mp3') : null,
             'timing'    => config('snl.timing'),
         ]);
     }

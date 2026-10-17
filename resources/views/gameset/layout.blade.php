@@ -22,7 +22,7 @@
 @section('body')
 <div class="gs-nav">
     <div style="max-width:1150px;margin:0 auto;padding:.7rem 1rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
-        <a href="{{ route('home') }}" class="logo" style="margin-right:.6rem;font-size:1rem;color:#fff;text-decoration:none;">S<b>&amp;</b>L <span style="font-size:.7rem;color:#9ca3af;">GameSet</span></a>
+        <span style="display:inline-flex;align-items:center;gap:.5rem;margin-right:.6rem;"><x-brand size="sm" /><span style="font-size:.7rem;color:#9ca3af;font-weight:800;">GameSet</span></span>
         <a href="{{ route('gameset.boards.index') }}" class="gs-tab {{ request()->routeIs('gameset.boards.*') ? 'on' : '' }}">Boards</a>
         <a href="{{ route('gameset.cards.index') }}" class="gs-tab {{ request()->routeIs('gameset.cards.*') ? 'on' : '' }}">Cards</a>
         <a href="{{ route('gameset.words.index') }}" class="gs-tab {{ request()->routeIs('gameset.words.*') ? 'on' : '' }}">Words</a>

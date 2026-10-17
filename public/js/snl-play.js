@@ -152,6 +152,20 @@
     layoutTokens();
   }
   const replaceAll = () => players().forEach((p) => tokens[p.id] && place(tokens[p.id], shown[p.id]));
+  /** Small screens: when the board leaves a free strip on the right, show the recent moves there, above the die, never over the board. */
+  function layoutSide() {
+    const hb = document.querySelector('.hud-br'), nav = $('topnav');
+    const side = (ST.clientWidth - BOARD.offsetWidth) / 2;                 // free width each side of the board
+    const bottom = (hb ? hb.offsetHeight : 150) + 16;                         // the die dock
+    const top = (nav ? nav.offsetHeight : 40) + 8;
+    const room = ST.clientHeight - bottom - top;
+    const desktop = ST.clientWidth >= 1000 && ST.clientHeight >= 600;         // the full sidebar already has the feed
+    const ok = !desktop && side >= 104 && room >= 64;
+    ST.classList.toggle('feed-mini', ok);
+    if (ok) { ST.style.setProperty('--sidew', Math.min(Math.floor(side) - 14, 230) + 'px'); ST.style.setProperty('--feedbot', bottom + 'px'); }
+  }
+  addEventListener('resize', () => { layoutSide(); });
+  addEventListener('orientationchange', () => setTimeout(layoutSide, 300));
   addEventListener('resize', replaceAll);
   addEventListener('orientationchange', () => setTimeout(replaceAll, 250));
 
@@ -702,19 +716,40 @@
     const rc = $('ruleChip'); if (rc) rc.onclick = () => toast(`${ic('rule')} ${esc(r.active_rule)}`, 5000, kindColor('rule'));
   }
 
+  /** The Buzz Meter: its name and the level label for a score, per mode. */
+  const buzzCfg = () => (C.buzz && (C.buzz[S.room.content_mode] || C.buzz.drinks)) || { name: 'Buzz Meter', levels: [[0, 'Sober']] };
+  const buzzLevel = (n) => { const lv = buzzCfg().levels; let out = lv[0][1]; lv.forEach(([from, label]) => { if (n >= from) out = label; }); return out; };
+
+  /** Left leaderboard: ordered by the Buzz Meter (not by square), each row still tracks tile progress. Rows glide to their new place. */
   function renderPlayers() {
-    const r = S.room;
-    $('players').innerHTML = S.players.map((p) => {
+    const r = S.room, box = $('players'), max = (C.buzz && C.buzz.max) || 12, cfg = buzzCfg();
+    const before = {};
+    box.querySelectorAll('.pl[data-id]').forEach((el) => { before[el.dataset.id] = { x: el.offsetLeft, y: el.offsetTop }; });
+    const order = S.players.slice().sort((x, y) => ((x.status === 'left') - (y.status === 'left')) || ((y.buzz || 0) - (x.buzz || 0)) || (x.turn_order - y.turn_order));
+    const topBuzz = order[0] && order[0].status !== 'left' ? (order[0].buzz || 0) : 0;
+    const leaders = order.filter((p) => p.status !== 'left' && topBuzz > 0 && (p.buzz || 0) === topBuzz).length;
+    box.innerHTML = `<div class="pl-head">${ic('fire')} ${esc(cfg.name)}</div>` + order.map((p) => {
       const cur = r.status === 'active' && p.id === r.current_player_id;
       const out = p.status === 'left';
       const won = p.status === 'won';
-      const pw = Object.entries(C.powersCfg).filter(([k]) => p.powers[k]).map(([k, cfg]) => `<span>${ic(cfg.icon)}${p.powers[k]}</span>`).join('');
+      const pw = Object.entries(C.powersCfg).filter(([k]) => p.powers[k]).map(([k, c]) => `<span>${ic(c.icon)}${p.powers[k]}</span>`).join('');
       const pct = won ? 100 : Math.round((p.position / r.tile_count) * 100);
-      return `<div class="pl ${cur ? 'cur' : ''} ${out ? 'out' : ''}" style="--c:${p.color}">
-        <div class="ring" style="--p:${pct}"><div class="av">${won ? ic('crown') : avatar(p)}</div></div>
-        <div class="info"><span class="nm">${esc(p.name)}${p.id === C.meId ? ' (you)' : ''}</span><span class="pos">${won ? 'Finished' : 'Square ' + p.position + ' of ' + r.tile_count}</span><i class="bar"><b style="width:${pct}%"></b></i></div>
-        <span class="pw">${pw}</span></div>`;
+      const bz = p.buzz || 0, bpct = Math.min(100, Math.round((bz / max) * 100));
+      const lead = leaders === 1 && bz === topBuzz && !out;
+      const fill = `style="width:${bpct}%;background-size:${bpct ? (10000 / bpct).toFixed(0) : 100}% 100%"`;
+      return `<div class="pl ${cur ? 'cur' : ''} ${out ? 'out' : ''} ${lead ? 'lead' : ''}" data-id="${p.id}" style="--c:${p.color}">
+        <div class="ring" style="--p:${pct}"><div class="av">${won ? ic('crown') : avatar(p)}</div>${lead ? `<span class="lead-flame">${ic('fire')}</span>` : ''}</div>
+        <div class="info"><span class="nm">${esc(p.name)}${p.id === C.meId ? ' (you)' : ''}</span><span class="pos">${won ? 'Finished' : 'Square ' + p.position + ' of ' + r.tile_count}</span><i class="bar"><b style="width:${pct}%"></b></i>
+          <span class="bz"><span class="bz-l">${ic('cheers')} ${esc(buzzLevel(bz))}</span><i class="bz-bar"><b ${fill}></b></i><span class="bz-n">${bz}</span></span></div>
+        <span class="pw">${pw}</span><i class="bz-mini"><b ${fill}></b></i></div>`;
     }).join('');
+    // glide each row from where it used to be (layout coordinates, so it works inside the rotated phone stage too)
+    box.querySelectorAll('.pl[data-id]').forEach((el) => {
+      const was = before[el.dataset.id];
+      if (!was || !el.animate) return;
+      const dx = was.x - el.offsetLeft, dy = was.y - el.offsetTop;
+      if (dx || dy) el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.22,1,.36,1)' });
+    });
   }
 
   function renderTurn() {
@@ -1179,5 +1214,7 @@
   // ───────────────────────── go ─────────────────────────
   ensureTokens();
   render();
+  layoutSide();
+  setTimeout(layoutSide, 400);
   if (!C.isParty) setTimeout(poll, 1400);
 })();

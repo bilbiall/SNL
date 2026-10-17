@@ -26,6 +26,9 @@
     .title .w { display: inline-flex; }
     .title .w span { display: inline-block; background: linear-gradient(180deg, #fff 30%, #cbd5e1); -webkit-background-clip: text; background-clip: text; color: transparent; animation: dropIn .75s cubic-bezier(.3,1.5,.5,1) both; animation-delay: calc(var(--i) * 60ms); }
     .title .amp { display: inline-block; background: linear-gradient(135deg, #f59e0b, #ec4899); -webkit-background-clip: text; background-clip: text; color: transparent; animation: dropIn .75s cubic-bezier(.3,1.5,.5,1) .55s both, wobble 4.2s ease-in-out 1.5s infinite; }
+    /* Bungee: a chunky neon-sign display face for the title */
+    .title { font-family: 'Bungee', 'Figtree', system-ui, sans-serif; font-weight: 400; font-size: clamp(2rem, 8.4vw, 5.2rem); letter-spacing: .01em; line-height: 1.04; gap: .05em .3em; text-shadow: none; filter: drop-shadow(0 0 18px rgba(236,72,153,.35)) drop-shadow(0 6px 22px rgba(0,0,0,.6)); }
+    .title .w span, .title .amp { filter: drop-shadow(0 .05em 0 rgba(0,0,0,.5)); }
     .title::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.55) 50%, transparent 60%); mix-blend-mode: overlay; transform: translateX(-120%); animation: shine 6s ease-in-out 2.2s infinite; pointer-events: none; }
     @keyframes dropIn { from { opacity: 0; transform: translateY(-70px) rotate(-10deg) scale(.6); } to { opacity: 1; transform: none; } }
     @keyframes wobble { 0%,100% { transform: rotate(-6deg) scale(1); } 50% { transform: rotate(6deg) scale(1.1); } }
@@ -93,6 +96,7 @@
     .ga-main { background: linear-gradient(135deg, #10b981, #059669); border-color: transparent; box-shadow: 0 8px 22px rgba(16,185,129,.4); }
     #gaInstall { background: linear-gradient(135deg, #8b5cf6, #6366f1); border-color: transparent; }
     .ga-tip { grid-column: 1 / -1; margin: 0; font-size: .72rem; color: #94a3b8; font-weight: 600; line-height: 1.4; }
+    .lp-top { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; justify-content: flex-start; padding: .9rem 1.1rem; background: linear-gradient(180deg, rgba(7,6,15,.75), transparent); animation: fadeUp .7s ease .3s both; }
     .lp-foot { position: absolute; bottom: 1rem; left: 0; right: 0; font-size: .74rem; color: #94a3b8; animation: fadeUp .8s ease 2s both; }
     .lp-foot a { color: #94a3b8; }
 
@@ -107,6 +111,7 @@
     <div class="sweep" aria-hidden="true"></div>
     <div class="wash" aria-hidden="true"></div>
     <div class="pieces" id="lpPieces" aria-hidden="true"></div>
+    <header class="lp-top"><x-brand /></header>
     <div class="twinkles" aria-hidden="true">
         <svg class="tw" viewBox="0 0 24 24" style="left:8%;top:14%;--s:12px;--d:0s" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z"/></svg>
         <svg class="tw" viewBox="0 0 24 24" style="left:22%;top:7%;--s:9px;--d:1.3s" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z"/></svg>

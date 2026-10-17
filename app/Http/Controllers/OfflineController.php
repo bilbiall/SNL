@@ -34,7 +34,7 @@ class OfflineController extends Controller
         return view('play', [
             'local' => true, 'room' => null, 'board' => $board, 'positions' => [], 'state' => null, 'meId' => null,
             'mode' => null, 'tileKinds' => [], 'reactions' => config('snl.reactions'),
-            'music' => file_exists(public_path('audio/game-loop.mp3')) ? asset('audio/game-loop.mp3') : null,
+            'music' => file_exists(public_path('audio/playback.mp3')) ? asset('audio/playback.mp3') : null,
             'timing' => config('snl.timing'),
         ]);
     }

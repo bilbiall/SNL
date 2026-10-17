@@ -11,6 +11,7 @@
     <style>:root { --bw: {{ $board->board_width ?: 1264 }}; --bh: {{ $board->board_height ?: 848 }}; }</style>
     @include('partials.pieces-css')
     @include('partials.play-css')
+    @include('partials.brand-css')
 </head>
 <body>
 <div class="stage" id="stage">
@@ -30,7 +31,7 @@
     {{-- HUD. On phones the two .side wrappers vanish (display:contents) and each piece floats in a corner of the stage.
          On a wide screen they become two matching sidebars: info + players on the left, controls + moves on the right. --}}
     <header class="topnav" id="topnav">
-        <a class="brand" href="{{ route('home') }}" aria-label="Snakes &amp; Liquor home"><img src="{{ asset('img/logo-96.png') }}" alt=""><span><b>Snakes</b> &amp; <b>Liquor</b></span></a>
+        <x-brand size="nav" />
         <div class="nav-mid" id="navMid"></div>
         <div class="nav-btns">
             @if($music)<button class="icon-btn" id="musicBtn" type="button" aria-label="Music"><x-icon name="music" /></button>@endif
@@ -115,6 +116,7 @@ window.SNL = {
     state: null,
     mode: null,
     levels: @json(config('snl.intensities')),
+    buzz: @json(config('snl.buzz')),
     kinds: null,
     kindColors: @json(collect(config('snl.tile_kinds'))->map(fn ($k) => $k['color'])->merge(config('snl.event_colors'))),
     powersCfg: @json(config('snl.powers')),
@@ -163,6 +165,7 @@ window.SNL = {
     state: @json($state),
     mode: @json($mode),
     levels: @json(config('snl.intensities')),
+    buzz: @json(config('snl.buzz')),
     kinds: @json($tileKinds),
     kindColors: @json(collect(config('snl.tile_kinds'))->map(fn ($k) => $k['color'])->merge(config('snl.event_colors'))),
     powersCfg: @json(config('snl.powers')),

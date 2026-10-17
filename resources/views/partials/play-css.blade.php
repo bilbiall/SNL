@@ -350,6 +350,29 @@
     .ov-title { color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.5); background: linear-gradient(135deg, color-mix(in srgb, var(--k) 85%, #000), color-mix(in srgb, var(--k) 45%, #000)); padding: .28rem .7rem; border-radius: .6rem; display: inline-block; letter-spacing: .12em; }
     .ov-icon { animation: iconPop .8s .2s cubic-bezier(.34,1.56,.64,1) both, iconPulse 1.8s 1.1s ease-in-out infinite !important; background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.22), transparent 55%), color-mix(in srgb, var(--k) 22%, #14121f); box-shadow: 0 0 20px color-mix(in srgb, var(--k) 55%, transparent); }
     @media (prefers-reduced-motion: reduce) { .ov-card, .ov-card > *, .ptile { animation-duration: .01s !important; animation-delay: 0s !important; } }
+    /* ── Buzz Meter rows (left leaderboard) ── */
+    .pl { position: relative; }
+    .pl-head { display: none; align-items: center; gap: .4rem; font-size: .68rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: #fbbf24; padding: .1rem .4rem .35rem; }
+    .pl .bz { display: none; align-items: center; gap: .4rem; margin-top: 2px; }
+    .pl .bz-l { display: inline-flex; align-items: center; gap: .25rem; font-size: .66rem; font-weight: 900; color: #fbbf24; white-space: nowrap; min-width: 4.4rem; }
+    .pl .bz-bar { flex: 1; height: 7px; border-radius: 4px; background: rgba(255,255,255,.12); overflow: hidden; min-width: 40px; box-shadow: inset 0 1px 2px rgba(0,0,0,.4); }
+    .pl .bz-bar b, .pl .bz-mini b { display: block; height: 100%; border-radius: 4px; background-image: linear-gradient(90deg, #34d399, #fbbf24 45%, #fb923c 70%, #ef4444); background-repeat: no-repeat; transition: width .7s cubic-bezier(.22,1,.36,1); }
+    .pl .bz-n { font-size: .68rem; font-weight: 900; color: #e5e7eb; min-width: 1.1em; text-align: right; }
+    .pl .bz-mini { position: absolute; left: 10px; right: 10px; bottom: -1px; height: 3px; border-radius: 2px; background: rgba(255,255,255,.1); overflow: hidden; display: block; }
+    .pl .lead-flame { position: absolute; top: -.35rem; right: -.25rem; font-size: .85rem; color: #fb923c; filter: drop-shadow(0 0 5px #ef4444); animation: flameFlick 1s ease-in-out infinite alternate; z-index: 2; }
+    @keyframes flameFlick { from { transform: scale(.9) rotate(-6deg); } to { transform: scale(1.15) rotate(6deg); } }
+    .pl.lead { border-color: rgba(251,146,60,.7); }
+    @media (min-width: 720px) and (min-height: 380px) { .pl .bz { display: flex; } .pl .bz-mini { display: none; } .pl .pw { margin-left: auto; } }
+    @container (min-width: 1000px) and (min-height: 600px) { .side-l .pl-head { display: flex; } .side-l .pl .bz { display: flex; } .side-l .pl .bz-mini { display: none; } }
+    /* small screens with a free strip beside the board: recent moves sit above the die, fully visible, off the board */
+    @container (max-width: 999px), (max-height: 599px) {
+        .stage.feed-mini .feed { display: flex; flex-direction: column; position: absolute; right: 8px; top: calc(var(--nav) + 8px); bottom: var(--feedbot, 160px); width: var(--sidew, 150px); z-index: 28; padding: .4rem .45rem; border-radius: .9rem; box-sizing: border-box; overflow: hidden; pointer-events: none;
+            background: linear-gradient(160deg, rgba(24,21,42,.7), rgba(8,7,16,.6)); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(8px); }
+        .stage.feed-mini .feed-h { display: block; flex-shrink: 0; font-size: .52rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: #9ca3af; margin-bottom: .3rem; }
+        .stage.feed-mini .feed-list { display: flex; flex: 1; min-height: 0; flex-direction: column; justify-content: flex-end; gap: 3px; overflow: hidden; }
+        .stage.feed-mini .fi { font-size: clamp(.5rem, 2cqh, .66rem); padding: .22rem .4rem; border-radius: .5rem; line-height: 1.25; }
+        .stage.feed-mini .fi:nth-last-child(n+6) { display: none; }
+    }
     .board-dim { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,.10) 40%, rgba(0,0,0,.30) 100%), rgba(4,6,18,.14); }
     .pcard .spark { position: absolute; color: var(--k); font-size: clamp(.7rem, 3cqh, 1rem); opacity: .9; animation: twinkle 1.6s ease-in-out infinite; pointer-events: none; }
     @keyframes twinkle { 0%,100% { transform: scale(.6) rotate(0); opacity: .3; } 50% { transform: scale(1.15) rotate(25deg); opacity: 1; } }

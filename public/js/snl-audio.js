@@ -3,7 +3,7 @@
    • short recorded clips live in /public/audio (open, close, arrive, badge, bonus, quest-complete, notification)
    • everything else is synthesised with WebAudio, so there is nothing more to download
    • the old ArcadeSound module still supplies roll / move / ladder / snake / mystery / win / toggle…
-   • background music: drop a loop at /public/audio/game-loop.mp3 — it plays on its own volume + button.
+   • background music: /public/audio/playback.mp3 (one continuous loop) — it plays on its own volume + button.
    ═══════════════════════════════════════════════════════════════ */
 const SNLAudio = (() => {
   let ctx = null;
@@ -84,9 +84,29 @@ const SNLAudio = (() => {
     return true;
   }
 
+  // ── background music: one continuous loop that dips briefly under every effect, then swells back ──
+  const MUSIC_VOL = 0.30, DUCK_VOL = 0.05;
+  let duckUntil = 0, holdDuck = false, fader = null;
+  // effects that are too small or too frequent to dip the music for
+  const NO_DUCK = { tick: 1, pip: 1, press: 1, toggle: 1, move: 1, reaction: 1 };
+  const LONG = { win: 2600, deal: 1500, quest: 1800, cheers: 1500, bonus: 1600, badge: 1500 };
+
+  function fadeLoop() {
+    if (!bg) { fader = null; return; }
+    const target = (holdDuck || performance.now() < duckUntil) ? DUCK_VOL : MUSIC_VOL;
+    const v = bg.volume;
+    const next = target < v ? Math.max(target, v - 0.06) : Math.min(target, v + 0.012);   // dips fast, swells back slowly
+    bg.volume = Math.max(0, Math.min(1, next));
+    if (Math.abs(next - target) < 0.002) { bg.volume = target; fader = null; return; }
+    fader = requestAnimationFrame(fadeLoop);
+  }
+  function kick() { if (bg && !fader) fader = requestAnimationFrame(fadeLoop); }
+  function dip(ms) { duckUntil = Math.max(duckUntil, performance.now() + ms); kick(); }
+
   function play(name) {
     if (!sfxOn) return;
     try {
+      if (!NO_DUCK[name]) dip(LONG[name] || 1000);
       if (CLIP[name]) { clip(name); return; }
       if (SYN[name]) { SYN[name](); return; }
       if (LEGACY.includes(name) && typeof ArcadeSound !== 'undefined') ArcadeSound.play(name);
@@ -96,8 +116,21 @@ const SNLAudio = (() => {
   function startMusic() {
     const url = window.SNL && window.SNL.music;
     if (!url || bg) { if (bg && musicOn) bg.play().catch(() => {}); return; }
-    try { bg = new Audio(url); bg.loop = true; bg.volume = 0.22; if (musicOn) bg.play().catch(() => {}); } catch (_) { bg = null; }
+    try {
+      bg = new Audio(url); bg.loop = true; bg.preload = 'auto'; bg.volume = MUSIC_VOL;
+      if (musicOn) bg.play().catch(() => {});
+    } catch (_) { bg = null; }
   }
+  // polite: pause when the game is in the background, resume when it's back
+  document.addEventListener('visibilitychange', () => {
+    if (!bg || !musicOn) return;
+    if (document.hidden) bg.pause(); else bg.play().catch(() => {});
+  });
+  // closing the tab / app, or leaving the page, stops the music immediately (and a page restored from the back-forward cache resumes it)
+  window.addEventListener('pagehide', () => { if (bg) bg.pause(); });
+  window.addEventListener('pageshow', () => { if (bg && musicOn && !document.hidden) bg.play().catch(() => {}); });
+  document.addEventListener('pause', () => { if (bg) bg.pause(); });      // Cordova/Capacitor: app sent to the background
+  document.addEventListener('resume', () => { if (bg && musicOn) bg.play().catch(() => {}); });
 
   /** Browsers only allow sound after a tap — call this from the first one. */
   function unlock() {
@@ -116,7 +149,7 @@ const SNLAudio = (() => {
       if (!bg) { if (musicOn && started) startMusic(); return; }
       if (musicOn) bg.play().catch(() => {}); else bg.pause();
     },
-    /** Soften the music while a card is on screen. */
-    duck(on) { if (bg) bg.volume = on ? 0.09 : 0.22; },
+    /** Hold the music low while a card is on screen (true), release it when it's gone (false). */
+    duck(on) { holdDuck = !!on; if (!on) dip(250); kick(); },
   };
 })();

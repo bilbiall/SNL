@@ -127,6 +127,16 @@ return [
 
     'players' => ['min' => 2, 'max' => 12],
 
+    /*
+    | The Buzz Meter: every hit a player takes (a sip, a shot, a forfeit) fills it — shots count by their size.
+    | `max` is the number that fills the bar; `levels` are [from, label]. The leaderboard on the left is ordered by it.
+    */
+    'buzz' => [
+        'max' => 12,
+        'drinks' => ['name' => 'Buzz Meter', 'levels' => [[0, 'Sober'], [2, 'Tipsy'], [4, 'Buzzed'], [7, 'Wobbly'], [10, 'Legend']]],
+        'family' => ['name' => 'Silly Meter', 'levels' => [[0, 'Calm'], [2, 'Giggly'], [4, 'Silly'], [7, 'Goofy'], [10, 'Legend']]],
+    ],
+
     'timing' => [
         'turn_seconds'      => 40,  // online: idle turn auto-passes after this
         'pending_seconds'   => 25,  // online: an unanswered prompt resolves itself after this
