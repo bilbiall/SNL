@@ -1,14 +1,13 @@
 {
-  "versionName": "1.8.2",
-  "versionCode": 11,
-  "sizeBytes": 10821465,
+  "versionName": "1.8.3",
+  "versionCode": 12,
+  "sizeBytes": 10823019,
   "notes": [
-    "Calmer waiting room: blurred board, a small loader while players join, and a card you can actually click",
-    "Public games list refreshes quietly in the background",
-    "Slimmer buttons on phones and a tidier home screen",
-    "Slower, softer loading animation"
+    "Updates now download inside the app — no browser, no re-downloading",
+    "Tidier home screen on phones and a smaller update card",
+    "Calmer waiting room with a loader while players join"
   ],
-  "sha256": "cbba43ff9b00053310f08c8c2f0ee4f659a9c497899f031223f5987e53635c7c",
-  "builtAt": "2026-10-17T03:50:09.517Z",
+  "sha256": "24747764c9284753a412dca6a19d6cb7e1f2f76a083db3837554802967b15b10",
+  "builtAt": "2026-10-17T04:11:31.222Z",
   "certSha256": "2a4dce20c1650504c343933159a6682a0362a0420e0e0ade01bba1347ee7d7f3"
 }

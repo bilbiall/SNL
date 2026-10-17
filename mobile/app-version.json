@@ -1,10 +1,9 @@
 {
-  "versionName": "1.8.2",
-  "versionCode": 11,
+  "versionName": "1.8.3",
+  "versionCode": 12,
   "notes": [
-    "Calmer waiting room: blurred board, a small loader while players join, and a card you can actually click",
-    "Public games list refreshes quietly in the background",
-    "Slimmer buttons on phones and a tidier home screen",
-    "Slower, softer loading animation"
+    "Updates now download inside the app — no browser, no re-downloading",
+    "Tidier home screen on phones and a smaller update card",
+    "Calmer waiting room with a loader while players join"
   ]
 }
