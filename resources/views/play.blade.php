@@ -32,10 +32,12 @@
     {{-- HUD. On phones the two .side wrappers vanish (display:contents) and each piece floats in a corner of the stage.
          On a wide screen they become two matching sidebars: info + players on the left, controls + moves on the right. --}}
     <header class="topnav" id="topnav">
+        <button class="icon-btn" id="backBtn" type="button" aria-label="Back"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
         <x-brand size="nav" />
         <div class="nav-mid" id="navMid"></div>
         <div class="nav-btns">
             @if($music)<button class="icon-btn" id="musicBtn" type="button" aria-label="Music"><x-icon name="music" /></button>@endif
+            <button class="icon-btn" id="pauseBtn" type="button" aria-label="Pause" style="display:none;"><svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2"/></svg></button>
             <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound"><x-icon name="speaker" /></button>
             <button class="icon-btn" id="menuBtn" type="button" aria-label="Menu"><x-icon name="menu" /></button>
         </div>

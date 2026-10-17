@@ -1,8 +1,9 @@
 {
-  "versionName": "1.0.3",
-  "versionCode": 4,
+  "versionName": "1.0.4",
+  "versionCode": 5,
   "notes": [
-    "Way more meme reactions and balanced sound levels",
-    "New avatars: bald, dreadlocks, braids and glasses"
+    "Back and Pause buttons",
+    "Music starts reliably; reactions pop over the player who moved",
+    "Buzz meter always shown"
   ]
 }

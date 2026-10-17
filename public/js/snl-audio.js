@@ -213,19 +213,21 @@ const SNLAudio = (() => {
     else { let v = a.volume; const t = setInterval(() => { v -= 0.12; if (v <= 0) { clearInterval(t); done(); } else a.volume = v; }, 40); }
   }
 
+  let paused = false;
   function startMusic() {
     const url = window.SNL && window.SNL.music;
     if (!url || bg) { if (bg && musicOn) bg.play().catch(() => {}); return; }
     try {
       const L = window.SNL && window.SNL.memeLevels; if (L && L.meta && L.meta.music) { MUSIC_VOL = Math.min(0.8, L.meta.music); DUCK_VOL = +(MUSIC_VOL * 0.15).toFixed(3); }
       bg = new Audio(url); bg.loop = true; bg.preload = 'auto'; bg.volume = MUSIC_VOL;
+      bg.addEventListener('playing', () => disarm());
       if (musicOn) bg.play().catch(() => {});
     } catch (_) { bg = null; }
   }
   // polite: pause when the game is in the background, resume when it's back
   document.addEventListener('visibilitychange', () => {
     if (!bg || !musicOn) return;
-    if (document.hidden) bg.pause(); else bg.play().catch(() => {});
+    if (document.hidden) bg.pause(); else if (!paused) bg.play().catch(() => {});
   });
   // closing the tab / app, or leaving the page, stops the music immediately (and a page restored from the back-forward cache resumes it)
   window.addEventListener('pagehide', () => { if (bg) bg.pause(); });
@@ -238,10 +240,21 @@ const SNLAudio = (() => {
     ac();
     if (!started) { started = true; startMusic(); }
   }
-  document.addEventListener('pointerdown', unlock, { once: true });
+  // a tap / key press starts the music; keep listening until it is genuinely playing (first gesture can be swallowed by a WebView / the loader)
+  const GEST = ['pointerdown', 'touchend', 'click', 'keydown'];
+  function onGesture() { ac(); started = true; if (!paused) startMusic(); if (!musicOn) disarm(); }
+  function disarm() { GEST.forEach((ev) => document.removeEventListener(ev, onGesture, true)); }
+  GEST.forEach((ev) => document.addEventListener(ev, onGesture, true));
+  /** Pause / resume all game audio (the pause button). */
+  function setPaused(on) {
+    paused = !!on;
+    if (paused) { try { if (bg) bg.pause(); if (thinkA) thinkA.pause(); if (curMeme) curMeme.pause(); } catch (_) {} }
+    else { try { if (bg && musicOn) bg.play().catch(() => {}); if (thinkA) thinkA.play().catch(() => {}); } catch (_) {} }
+  }
 
   return {
-    play, unlock, react, think, stopThink,
+    play, unlock, react, think, stopThink, setPaused,
+    get paused() { return paused; },
     get memes() { return memeOn; },
     setMemes(on) { memeOn = !!on; try { localStorage.setItem('snl_memes', on ? '1' : '0'); } catch (_) {} },
     get sfx() { return sfxOn; },

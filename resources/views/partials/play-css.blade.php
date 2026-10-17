@@ -376,6 +376,7 @@
     }
     /* ── phones: the left strip shows every player as a small squared card — name, tile number, meter ── */
     .pl .sq { display: none; }
+    .pl.rx { animation: rxPulse 1.3s ease-out; } @keyframes rxPulse { 0% { box-shadow: 0 0 0 0 var(--c); transform: scale(1); } 25% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 55%, transparent), 0 0 22px var(--c); transform: scale(1.05); } 100% { box-shadow: 0 0 0 0 transparent; transform: scale(1); } }
     @container (max-width: 999px), (max-height: 599px) {
         .stage.list-mini .hud-left { width: var(--lw, 150px); max-height: calc(100cqh - var(--nav) - 90px); overflow: hidden; gap: 4px; }
         .stage.list-mini .pl { width: 100%; box-sizing: border-box; gap: 6px; padding: 3px 6px 3px 3px; border-radius: 7px; background: linear-gradient(160deg, rgba(24,21,42,.86), rgba(8,7,16,.78)); border: 1px solid rgba(255,255,255,.14); border-left: 3px solid var(--c); box-shadow: 0 3px 8px rgba(0,0,0,.35); }
@@ -391,6 +392,7 @@
         .stage.list-mini .pl .bz-n { font-size: .56rem; min-width: .9em; }
         .stage.list-mini .pl .pw { display: flex; font-size: .52rem; }
         .stage.list-mini .pl .rk { width: 1rem; height: 1rem; border-radius: 4px; font-size: .55rem; }
+        .stage.list-mini .pl-head { display: flex; padding: 0 .2rem .15rem; font-size: .5rem; }
         .stage.list-mini .pl .lead-flame { top: -.3rem; right: -.2rem; font-size: .7rem; }
     }
     /* ═════ answer cards (two or more buttons): balanced, compact, everything visible at a glance — no scrolling ═════ */

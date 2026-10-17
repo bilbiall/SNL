@@ -1,14 +1,14 @@
 {
-  "versionName": "1.8.8",
-  "versionCode": 17,
-  "sizeBytes": 27723326,
+  "versionName": "1.8.9",
+  "versionCode": 18,
+  "sizeBytes": 27724860,
   "notes": [
-    "Way more meme reactions, matched to each moment (GTA Wasted when someone leaves, suspense music while you decide)",
-    "Every clip evened out to the same loudness; background music balanced underneath",
-    "New avatars: bald, dreadlocks, braids and glasses",
-    "Play online and Public games appear when you have internet"
+    "Back and Pause buttons; the phone back key opens the pause screen instead of dropping you out",
+    "Music now starts reliably on the first tap",
+    "Reactions pop over the player who just moved, with a pulse on their leaderboard card",
+    "Buzz meter always shown on phones"
   ],
-  "sha256": "2a74d12015958e1142b2877bb5141ea5b5fa89069acc4500b2a9a8c1a0f3b366",
-  "builtAt": "2026-10-17T06:26:11.201Z",
+  "sha256": "646a045bfd4321785dc9bc9dcad6edafe946caa524caddf3e85b009d2f839be8",
+  "builtAt": "2026-10-17T07:09:59.067Z",
   "certSha256": "2a4dce20c1650504c343933159a6682a0362a0420e0e0ade01bba1347ee7d7f3"
 }

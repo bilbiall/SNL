@@ -18,7 +18,19 @@
   // ArcadeSound is a top-level `const` in arcade-sounds.js (not a window property).
   const snd = (n) => { try { SNLAudio.play(n); } catch (_) {} };
   /** A meme sound for a moment (pick / shot / fail / snake / ladder / correct / win / bluff / swap / duel / everyone / power / block). */
-  const meme = (m) => { if (!m) return; try { SNLAudio.react(m); } catch (_) {} };
+  // a reaction belongs to whoever just did the thing: the sound plays, and a little icon pops over THEIR token while their leaderboard card pulses
+  let actorId = null;
+  const REACT_ICON = { snake: 'skull', fail: 'cross', one: 'skull', ladder: 'sparkles', six: 'star', correct: 'check', win: 'crown', wasted: 'skull', shot: 'cheers', pick: 'jester', bluff: 'search', swap: 'swap', duel: 'duel', power: 'bolt', block: 'shield', start: 'flag', close: 'fire', neutral: 'hourglass', heart: 'heart', timeout: 'hourglass', again: 'dice', joined: 'team', rule: 'rule', everyone: 'party' };
+  const meme = (m) => {
+    if (!m) return;
+    let played = false;
+    try { played = SNLAudio.react(m); } catch (_) {}
+    if (played && actorId != null && REACT_ICON[m]) {
+      try { if (tokens[actorId]) floater(actorId, REACT_ICON[m]); } catch (_) {}
+      const row = document.querySelector('.pl[data-id="' + actorId + '"]');
+      if (row) { row.classList.add('rx'); setTimeout(() => row.classList.remove('rx'), 1400); }
+    }
+  };
 
   // ───────────────────────── icons ─────────────────────────
   const ICONS = new Set(C.iconKeys);
@@ -165,8 +177,8 @@
     const ok = !desktop && side >= 104 && room >= 64;
     ST.classList.toggle('feed-mini', ok);
     const lw = Math.floor(side) - 12;                                      // the left strip: players + their meters
-    ST.classList.toggle('list-mini', !desktop && lw >= 96);
-    if (!desktop && lw >= 96) ST.style.setProperty('--lw', Math.min(lw, 210) + 'px');
+    ST.classList.toggle('list-mini', !desktop);
+    if (!desktop) ST.style.setProperty('--lw', Math.max(84, Math.min(lw, 210)) + 'px');
     if (ok) { ST.style.setProperty('--sidew', Math.min(Math.floor(side) - 14, 230) + 'px'); ST.style.setProperty('--feedbot', bottom + 'px'); }
   }
   addEventListener('resize', () => { layoutSide(); });
@@ -352,6 +364,7 @@
 
   async function play(a) {
     const who = a.player_id !== undefined ? P(a.player_id) : null;
+    actorId = a.player_id !== undefined ? a.player_id : (a.actor_id !== undefined ? a.actor_id : (a.a_id !== undefined ? a.a_id : null));
     feedAdd(a);
     switch (a.type) {
       case 'start': toast(`${ic('flag')} Game on!`, 2200, '#f59e0b'); snd('notify'); meme('start'); await sleep(450); break;
@@ -1171,6 +1184,34 @@
       if (res) hide('ovConfirm'); else $('apYes').disabled = false;
     };
   }
+
+  /** Pause (party games): everything stops, the table is covered, and Resume carries on exactly where it was. */
+  function openPause() {
+    if ($('ovConfirm').classList.contains('show') && $('ovConfirm').dataset.pause) return;
+    try { SNLAudio.setPaused(true); } catch (_) {}
+    const el = show('ovConfirm', `<div class="ov-card">
+      <div class="ov-icon"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4.2" height="14" rx="1.2"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2"/></svg></div>
+      <div class="ov-text">Game paused</div>
+      <div class="ov-sub">${C.isParty ? 'Your game is saved on this device — you can also pick it up later from the home screen.' : 'Take a breather.'}</div>
+      <div class="ov-btns"><button class="obtn" id="psGo">${ic('play')} Resume</button><button class="obtn alt" id="psMenu">Menu</button><a class="obtn alt" href="${C.urls.home}">${ic('home')} Home</a></div></div>`);
+    el.dataset.pause = '1';
+    const done = () => { delete el.dataset.pause; hide('ovConfirm'); try { SNLAudio.setPaused(false); } catch (_) {} };
+    $('psGo').onclick = done;
+    $('psMenu').onclick = () => { done(); openMenu(); };
+  }
+  /** The back button / Android back key: party → pause screen, online → "leave this game?". */
+  function goBack() {
+    if (document.querySelector('.ov.show')) { const open = ['ovConfirm', 'ovMenu', 'ovPrompt', 'ovCard', 'ovLobby'].find((id) => $(id) && $(id).classList.contains('show')); if (open === 'ovMenu') { hide('ovMenu'); return; } if (open === 'ovConfirm') { if ($('ovConfirm').dataset.pause) { delete $('ovConfirm').dataset.pause; hide('ovConfirm'); try { SNLAudio.setPaused(false); } catch (_) {} } else hide('ovConfirm'); return; } }
+    if (C.isParty) openPause(); else confirmLeave(C.meId);
+  }
+  (function wireBack() {
+    const b = $('backBtn'), pb = $('pauseBtn');
+    if (b) b.onclick = goBack;
+    if (pb) { if (C.isParty) pb.style.display = ''; pb.onclick = openPause; }
+    // the phone's own back key must not drop people out of a game by accident: take the first press ourselves
+    try { history.pushState({ snl: 1 }, ''); } catch (_) {}
+    addEventListener('popstate', () => { try { history.pushState({ snl: 1 }, ''); } catch (_) {} goBack(); });
+  })();
 
   function confirmLeave(id) {
     const p = P(id);
