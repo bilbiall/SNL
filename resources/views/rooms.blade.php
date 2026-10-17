@@ -18,6 +18,9 @@
     @keyframes livePulse { 0%, 100% { opacity: .5; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
     .rm-list { display: grid; gap: .7rem; }
     .rm-card { display: grid; grid-template-columns: auto 1fr auto; gap: .8rem; align-items: center; padding: .8rem .9rem; border-radius: 1.1rem; background: linear-gradient(160deg, rgba(38,32,64,.7), rgba(16,14,28,.6)); border: 1px solid rgba(255,255,255,.13); backdrop-filter: blur(8px); animation: rmIn .45s cubic-bezier(.34,1.4,.64,1) both; }
+    .rm-card { animation: none; }
+    .rm-card:not(.fresh):not([style*="animation-delay"]) { animation: none; }
+    .rm-card.fresh, .rm-card[style*="animation-delay"] { animation: rmIn .45s cubic-bezier(.34,1.4,.64,1) both; }
     @keyframes rmIn { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
     .rm-card.live { opacity: .85; }
     .rm-av { display: flex; } .rm-av img { width: 2rem; height: 2rem; border-radius: 50%; border: 2px solid #1b1830; margin-left: -.55rem; background: #14121f; } .rm-av img:first-child { margin-left: 0; }
@@ -61,22 +64,39 @@
     var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); };
     var icon = function (n) { return '<svg class="ic" aria-hidden="true"><use href="' + @json(asset('icons.svg')) + '#i-' + n + '"/></svg>'; };
     function ago(m) { return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : Math.floor(m / 60) + ' h ago'; }
+    var cards = {}, animated = false;
+    function cardHtml(r) {
+        var avs = (r.avatars || []).map(function (a) { return '<img src="' + base + '/' + esc(a) + '.svg" alt="">'; }).join('');
+        var action = r.open && !r.full ? '<a class="rm-j" href="' + joinUrl + '?code=' + encodeURIComponent(r.code) + '">Join</a>'
+            : '<span class="rm-j off">' + (r.open ? 'Full' : 'In progress') + '</span>';
+        return '<div class="rm-av">' + avs + '</div>'
+            + '<div><div class="rm-n">' + esc(r.name) + '</div><div class="rm-m">'
+            + '<span class="chip2 ' + (r.open ? 'wait' : 'play') + '">' + (r.open ? 'Waiting for players' : 'Round ' + r.round) + '</span>'
+            + '<span class="chip2">' + icon('team') + ' ' + r.players + '/' + r.max + '</span>'
+            + '<span class="chip2 ' + (r.mode.adult ? 'adult' : '') + '">' + icon(r.mode.icon) + ' ' + esc(r.mode.label) + (r.mode.adult ? ' · 18+' : '') + '</span>'
+            + '<span class="chip2">' + icon(r.intensity.icon) + ' ' + esc(r.intensity.label) + '</span>'
+            + (r.host ? '<span class="chip2">Host: ' + esc(r.host) + '</span>' : '') + '</div></div>'
+            + action;
+    }
+    // Background refresh: each room is its own keyed card — only cards that changed are touched, new ones fade in, nothing else moves.
     function render() {
         empty.style.display = rooms.length ? 'none' : '';
-        list.innerHTML = rooms.map(function (r, i) {
-            var avs = (r.avatars || []).map(function (a) { return '<img src="' + base + '/' + esc(a) + '.svg" alt="">'; }).join('');
-            var action = r.open && !r.full ? '<a class="rm-j" href="' + joinUrl + '?code=' + encodeURIComponent(r.code) + '">Join</a>'
-                : '<span class="rm-j off">' + (r.open ? 'Full' : 'In progress') + '</span>';
-            return '<div class="rm-card ' + (r.open ? '' : 'live') + '" style="animation-delay:' + (i * 50) + 'ms">'
-                + '<div class="rm-av">' + avs + '</div>'
-                + '<div><div class="rm-n">' + esc(r.name) + '</div><div class="rm-m">'
-                + '<span class="chip2 ' + (r.open ? 'wait' : 'play') + '">' + (r.open ? 'Waiting for players' : 'Round ' + r.round) + '</span>'
-                + '<span class="chip2">' + icon('team') + ' ' + r.players + '/' + r.max + '</span>'
-                + '<span class="chip2 ' + (r.mode.adult ? 'adult' : '') + '">' + icon(r.mode.icon) + ' ' + esc(r.mode.label) + (r.mode.adult ? ' · 18+' : '') + '</span>'
-                + '<span class="chip2">' + icon(r.intensity.icon) + ' ' + esc(r.intensity.label) + '</span>'
-                + (r.host ? '<span class="chip2">Host: ' + esc(r.host) + '</span>' : '') + '<span class="chip2">' + ago(r.minutes) + '</span></div></div>'
-                + action + '</div>';
-        }).join('');
+        var seen = {};
+        rooms.forEach(function (r, i) {
+            seen[r.code] = 1;
+            var html = cardHtml(r), c = cards[r.code];
+            if (!c) {
+                c = document.createElement('div'); c.dataset.html = '';
+                if (animated) c.className = 'rm-card'; else { c.className = 'rm-card'; c.style.animationDelay = (i * 50) + 'ms'; }
+                if (animated) c.classList.add('fresh');
+                cards[r.code] = c;
+            }
+            c.classList.toggle('live', !r.open);
+            if (c.dataset.html !== html) { c.innerHTML = html; c.dataset.html = html; }
+            if (list.children[i] !== c) list.insertBefore(c, list.children[i] || null);
+        });
+        Object.keys(cards).forEach(function (k) { if (!seen[k]) { cards[k].remove(); delete cards[k]; } });
+        animated = true;
     }
     render();
     setInterval(function () {

@@ -136,7 +136,17 @@
     .lp-foot { position: absolute; bottom: 1rem; left: 0; right: 0; font-size: .74rem; color: #94a3b8; animation: fadeUp .8s ease 2s both; }
     .lp-foot a { color: #94a3b8; }
 
-    @media (max-width: 560px) { .go { width: 100%; justify-content: center; } .cta { width: 100%; max-width: 360px; } .mini { flex-direction: column-reverse; align-items: center; } }
+    @media (max-width: 560px) {
+        .mini { flex-direction: column-reverse; align-items: center; margin: 1.4rem 0 1.2rem; }
+        .cta { width: 100%; max-width: 300px; display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; }
+        .go { padding: .65rem .7rem; border-radius: .9rem; font-size: .82rem; gap: .4rem; justify-content: center; box-shadow: 0 6px 16px rgba(0,0,0,.35); }
+        .go .ic { font-size: 1.05rem; }
+        .go.d { grid-column: 1 / -1; padding: .5rem .7rem; font-size: .76rem; }
+        .go.c { font-size: .8rem; padding: .6rem .9rem; margin-bottom: .8rem; }
+        .tag { font-size: .78rem; margin-top: .6rem; }
+        .getapp { padding: .7rem .8rem; } .getapp img { width: 2.6rem; height: 2.6rem; } .ga-b { padding: .42rem .7rem; font-size: .74rem; }
+    }
+    .faq-link { font: inherit; background: none; border: 0; padding: 0; color: #94a3b8; cursor: pointer; text-decoration: underline; font-size: inherit; }
     @media (prefers-reduced-motion: reduce) { .lp *, .lp *::before, .lp *::after { animation: none !important; opacity: 1 !important; transform: none !important; } .bg i:nth-child(2) { display: none; } .face:first-child { opacity: 1 !important; } }
 </style>
 @endpush
@@ -172,7 +182,7 @@
 
     <div class="mini" aria-hidden="true">
         <div class="track">
-            @php $tiles = [['#94a3b8','start'],['#f59e0b','self'],['#ec4899','pick'],['#fb7185','heart'],['#22d3ee','fact'],['#a78bfa','swap'],['#ef4444','duel'],['#facc15','power'],['#34d399','trophy']]; @endphp
+            @php $tiles = [['#94a3b8','start'],['#ec4899','pick'],['#22d3ee','fact'],['#ef4444','duel'],['#34d399','trophy']]; @endphp
             @foreach($tiles as $i => [$c, $icon])<div class="tile" style="--c:{{ $c }};--i:{{ $i }}"><x-icon :name="$icon" /></div>@endforeach
             <div class="tok"><div style="overflow:hidden;"><img id="tokAv" src="{{ asset('avatars/' . $pool[0] . '.svg') }}" alt="" style="width:100%;height:100%;display:block;"></div></div>
         </div>
@@ -199,15 +209,16 @@
         <div class="ga-btns">
             @if($apk)<a class="ga-b ga-main" id="gaApk" href="{{ route('app.android') }}" download><x-icon name="phone" /> Download for Android <small>v{{ $apk['versionName'] }} · {{ number_format($apk['sizeBytes'] / 1048576, 1) }} MB</small></a>
             <a class="ga-b" href="{{ route('app.page') }}">How to install</a>@endif
+            @if(is_file(public_path('downloads/desktop-version.json')))<a class="ga-b" href="{{ route('app.windows') }}" download><x-icon name="play" /> Download for Windows</a>@endif
             <button type="button" class="ga-b" id="gaInstall" style="display:none;"><x-icon name="play" /> Install from browser</button>
         </div>
         <p class="ga-tip" id="gaTip"></p>
     </section>
 
-    <div class="lp-foot"><a href="{{ route('app.page') }}">Android app</a> · 18+ for Drinks mode · Drink responsibly · Icons <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a> · <a href="{{ route('login') }}">Admin</a></div>
+    <div class="lp-foot"><a href="{{ route('app.page') }}">Android app</a> · 18+ for Drinks mode · Drink responsibly · Icons <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a> · <a href="{{ route('login') }}">Admin</a> · <button type="button" class="faq-link" id="faqLink">FAQ</button></div>
 </div>
 
-<section class="about" aria-label="About Snakes & Liquor">
+<section class="about" id="aboutSec" aria-label="About Snakes & Liquor" hidden>
     <h2>A party game that is never the same twice</h2>
     <p>Snakes &amp; Liquor turns the classic snakes-and-ladders race into a night of laughs: facts to judge, bluffs to call, ten-second challenges and group games, with fresh cards every game. Play <a href="{{ route('setup', ['type' => 'party']) }}">on one phone</a>, join a <a href="{{ route('rooms.index') }}">public game</a>, or read <a href="{{ route('how-to-play') }}">how to play</a> and try the <a href="{{ route('fun-facts') }}">fun facts quiz</a>.</p>
     @foreach($faq as $f)
@@ -215,6 +226,9 @@
     @endforeach
 </section>
 
+<script>
+document.getElementById('faqLink').onclick = function () { var a = document.getElementById('aboutSec'); a.hidden = !a.hidden; if (!a.hidden) a.scrollIntoView({ behavior: 'smooth' }); };
+</script>
 <script>
 // "Continue your game" — a party game saved on this device — and the get-the-app card.
 (function () {
@@ -228,7 +242,7 @@
     } catch (e) {}
     var card = document.getElementById('getApp'), btn = document.getElementById('gaInstall'), tip = document.getElementById('gaTip'), apk = document.getElementById('gaApk');
     var ua = navigator.userAgent || '', ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1), android = /Android/i.test(ua);
-    var inApp = (window.SNLPwa && SNLPwa.isStandalone()) || !!window.Capacitor;
+    var inApp = (window.SNLPwa && SNLPwa.isStandalone()) || !!window.Capacitor || !!window.SNLDesktop;
     if (inApp) return; // already the app
     card.style.display = 'grid';
     function sync() {

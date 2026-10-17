@@ -33,7 +33,7 @@
     } catch (e) {}
   }
 
-  if (window.Capacitor || (location.hostname === 'localhost' && !location.port && location.protocol === 'https:')) return; // the Android app already carries every file inside it
+  if (window.Capacitor || window.SNLDesktop || (location.hostname === 'localhost' && !location.port && location.protocol === 'https:')) return; // the Android app already carries every file inside it
   if (!('serviceWorker' in navigator)) return;
   var secure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
   if (!secure) return;

@@ -2,12 +2,12 @@
     $__looks = \App\Support\Avatars::looks();
     shuffle($__looks);
     $__pool = array_map(fn ($l) => $l['id'] . '-' . random_int(1, 7), array_slice($__looks, 0, 14));
-    $__tiles = [['#f59e0b', 'self'], ['#ec4899', 'pick'], ['#22d3ee', 'fact'], ['#facc15', 'power'], ['#34d399', 'trophy']];
+    $__tiles = [['#ec4899', 'pick'], ['#22d3ee', 'fact'], ['#facc15', 'power'], ['#34d399', 'trophy']];
 @endphp
 {{-- Loader: the landing-page hopping token, shrunk — it changes avatar on every landing. Shown while a page / the app / the game loads. --}}
 <div id="snlLoader" data-wait="{{ $wait ?? 0 }}" role="status" aria-label="Loading">
     <style>
-        #snlLoader { position: fixed; inset: 0; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.1rem; background: radial-gradient(ellipse at 50% 35%, #2a1550, #0b0a16 70%); transition: opacity .35s ease; }
+        #snlLoader { position: fixed; inset: 0; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.1rem; background: rgba(11,10,22,.55); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); transition: opacity .35s ease; }
         #snlLoader.out { opacity: 0; pointer-events: none; }
         #snlLoader .ld-logo { width: 4.2rem; height: 4.2rem; border-radius: 1.1rem; box-shadow: 0 8px 30px rgba(236,72,153,.5); }
         #snlLoader .ld-track { --t: 30px; position: relative; display: flex; gap: 6px; padding-top: calc(var(--t) * 1.5); }
@@ -29,7 +29,7 @@
     (function () {
         var el = document.getElementById('snlLoader'), tok = document.getElementById('ldTok'), img = document.getElementById('ldAv');
         var tiles = [].slice.call(el.querySelectorAll('.ld-tile')), base = @json(asset('avatars')), pool = @json($__pool), ai = 0;
-        var HOP = 440, GAP = 80, N = tiles.length - 1, CYCLE = N * (HOP + GAP) + 520, t0 = performance.now(), running = true, landed = -1, pitch = 0, size = 0;
+        var HOP = 760, GAP = 150, N = tiles.length - 1, CYCLE = N * (HOP + GAP) + 520, t0 = performance.now(), running = true, landed = -1, pitch = 0, size = 0;
         var ease = function (t) { return t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; };
         var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
         pool.forEach(function (k) { var p = new Image(); p.src = base + '/' + k + '.svg'; });
@@ -51,7 +51,7 @@
         if (!reduce) requestAnimationFrame(frame);
 
         var needsReady = el.dataset.wait === '1', loaded = false, readyFlag = false, shownAt = performance.now();
-        var minShow = (window.Capacitor || (location.hostname === 'localhost' && !location.port)) ? 900 : 450;
+        var minShow = (window.Capacitor || window.SNLDesktop || (location.hostname === 'localhost' && !location.port)) ? 900 : 450;
         function hide() {
             var wait = Math.max(0, minShow - (performance.now() - shownAt));
             setTimeout(function () { el.classList.add('out'); setTimeout(function () { el.style.display = 'none'; running = false; }, 380); }, wait);

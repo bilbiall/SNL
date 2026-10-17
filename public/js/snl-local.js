@@ -16,7 +16,7 @@ const SNLLocal = (() => {
   let packPromise = null;
 
   // inside the Android app the pack is a plain file next to the pages
-  const packUrl = () => (window.SNL && window.SNL.packUrl) || ((window.Capacitor || (location.hostname === 'localhost' && !location.port)) ? '/pack.json' : '/offline/pack.json');
+  const packUrl = () => (window.SNL && window.SNL.packUrl) || ((window.Capacitor || window.SNLDesktop || (location.hostname === 'localhost' && !location.port)) ? '/pack.json' : '/offline/pack.json');
 
   /** The game pack (rules config, boards, decks, words). Cache first via the service worker; a copy in localStorage is the safety net. */
   function loadPack() {

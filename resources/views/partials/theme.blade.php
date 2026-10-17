@@ -54,4 +54,11 @@
     .snl-foot a { color: #9ca3af; }
     .logo { font-weight: 900; letter-spacing: -.02em; }
     .logo b { background: linear-gradient(135deg, #f59e0b, #ec4899); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    /* phones: slimmer buttons and fields everywhere */
+    @media (max-width: 640px) {
+        .btn { font-size: .8rem; padding: .55rem .95rem; border-radius: .8rem; gap: .35rem; }
+        .btn-sm { font-size: .72rem; padding: .38rem .7rem; }
+        .snl-input { padding: .55rem .7rem; font-size: .88rem; border-radius: .7rem; }
+        .snl-label { font-size: .62rem; margin-bottom: .25rem; }
+    }
 </style>

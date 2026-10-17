@@ -989,18 +989,52 @@
   }
 
   // ── lobby (online, before the host starts) ──
+  let lobbySig = null, waitRaf = 0;
+  /** The hopping-token loader, shrunk into the lobby card — it cycles through the avatars of whoever has joined. */
+  function startWaitLoader() {
+    cancelAnimationFrame(waitRaf);
+    const track = $('waitTrack'), tok = $('waitTok'), img = $('waitAv');
+    if (!track || !tok || !img) return;
+    const tiles = [...track.querySelectorAll('.w-tile')], av = (S.players || []).filter((p) => p.status === 'active').map((p) => p.avatar).filter((k) => AV.test(k || ''));
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches || tiles.length < 3) return;
+    const HOP = 760, GAP = 150, N = tiles.length - 1, CYCLE = N * (HOP + GAP) + 560, t0 = performance.now();
+    let landed = -1, ai = 0, pitch = 0, size = 0;
+    const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+    const frame = (now) => {
+      if (!document.body.contains(tok)) return;                       // the card was re-drawn or closed
+      if (!pitch) { pitch = tiles[1].offsetLeft - tiles[0].offsetLeft; size = tiles[0].offsetWidth; }
+      const t = (now - t0) % CYCLE, h = Math.floor(t / (HOP + GAP)), local = t - h * (HOP + GAP);
+      let x = 0, y = 0, sx = 1, sy = 1, sc = 1;
+      if (h < N) {
+        if (local < HOP) { const u = local / HOP; x = (h + ease(u)) * pitch; y = -Math.sin(Math.PI * u) * size * 1.05; const st = Math.sin(Math.PI * u) * 0.12; sy = 1 + st; sx = 1 - st * 0.6; }
+        else { const s = (local - HOP) / GAP; x = (h + 1) * pitch; const sq = Math.sin((1 - s) * Math.PI / 2) * 0.2; sy = 1 - sq; sx = 1 + sq * 0.8; if (landed < h) { landed = h; if (av.length) { ai = (ai + 1) % av.length; img.src = `${C.avatarBase}/${av[ai]}.svg`; } } }
+      } else { x = N * pitch; const f = Math.min(1, (t - N * (HOP + GAP)) / 260); sc = f >= 1 ? 1 : 1 - ease(f); if (f >= 1) x = 0; if (t >= CYCLE - 20) landed = -1; }
+      tok.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) scale(${(sx * sc).toFixed(3)},${(sy * sc).toFixed(3)})`;
+      waitRaf = requestAnimationFrame(frame);
+    };
+    waitRaf = requestAnimationFrame(frame);
+  }
+
   function renderLobby() {
     const r = S.room;
-    if (r.status !== 'open') { hide('ovLobby'); return; }
+    if (r.status !== 'open') { hide('ovLobby'); lobbySig = null; cancelAnimationFrame(waitRaf); return; }
     const active = S.players.filter((p) => p.status === 'active');
     const iHost = r.host_player_id === C.meId;
-    show('ovLobby', `<div class="ov-card wide" style="--k:#f59e0b">
+    // Only redraw when something actually changed — a card that keeps re-drawing (and re-animating) can't be clicked.
+    const sig = JSON.stringify([r.join_code, r.name, r.is_public, r.max_players, r.host_player_id, C.meId, active.map((p) => [p.id, p.name, p.avatar])]);
+    if (sig === lobbySig && $('ovLobby').classList.contains('show')) return;
+    const first = lobbySig === null;
+    lobbySig = sig;
+    const tiles = [['#f59e0b', 'self'], ['#ec4899', 'pick'], ['#22d3ee', 'fact'], ['#facc15', 'power'], ['#34d399', 'trophy']].map(([c, i]) => `<div class="w-tile" style="--c:${c}">${ic(i)}</div>`).join('');
+    show('ovLobby', `<div class="ov-card wide ${first ? '' : 'still'}" style="--k:#f59e0b">
       <div class="ov-icon">${ic('tavern')}</div>
       <div class="ov-title">${r.name ? esc(r.name) + (r.is_public ? ' · public' : '') : 'Room code'}</div>
       <div class="code-big">${esc(r.join_code)}</div>
       <div class="ov-sub">Friends open <b>${esc(location.host)}</b> → <b>Join</b>, or tap Share.</div>
       <div class="tgt-row">${active.map(chip).join('')}</div>
-      <div class="ov-sub">${active.length} / ${r.max_players} players ${iHost ? '' : '· waiting for the host to start'}</div>
+      <div class="wait"><div class="w-track" id="waitTrack">${tiles}<div class="w-tok" id="waitTok"><div><img id="waitAv" src="${C.avatarBase}/${(active[0] && AV.test(active[0].avatar || '')) ? active[0].avatar : 'f1-3'}.svg" alt=""></div></div></div>
+        <div class="w-txt">${active.length < 2 ? 'Waiting for players to join' : (iHost ? 'Ready when you are' : 'Waiting for the host to start')}…</div></div>
+      <div class="ov-sub">${active.length} / ${r.max_players} players</div>
       <div class="ov-btns">
         <button class="obtn vio" id="lobbyShare">${ic('share')} Share invite</button>
         ${iHost ? `<button class="obtn" id="lobbyStart" ${active.length < 2 ? 'disabled' : ''}>${ic('play')} Start game</button>` : ''}
@@ -1010,6 +1044,7 @@
     $('lobbyLeave').onclick = () => confirmLeave(C.meId);
     const st = $('lobbyStart');
     if (st) st.onclick = async () => { st.disabled = true; snd('toggle'); await post(C.urls.start); };
+    startWaitLoader();
   }
 
   // ── finished ──
@@ -1092,7 +1127,7 @@
           const msg = $('updMsg'); msg.textContent = 'Checking…';
           SNLUpdate.check().then((res) => {
             if (!res.remote) msg.textContent = 'Could not reach the site — connect to the internet and try again.';
-            else if (res.newer) msg.innerHTML = `New version <b>${esc(res.remote.versionName || '')}</b> is ready — <a href="${esc(res.me.site)}/download/android" style="color:#6ee7b7;font-weight:900;">download &amp; install it</a> (install over this one; your game is kept).`;
+            else if (res.newer) msg.innerHTML = `New version <b>${esc(res.remote.versionName || '')}</b> is ready — <a href="${esc(res.me.site)}${window.SNLDesktop ? '/download/windows' : '/download/android'}" style="color:#6ee7b7;font-weight:900;">download &amp; install it</a> (install over this one; your game is kept).`;
             else msg.textContent = 'You have the latest version.';
           });
         };

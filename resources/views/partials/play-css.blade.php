@@ -220,6 +220,7 @@
     .obtn.alt { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.18); color: #e5e7eb; }
     .obtn.vio { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
     .obtn:disabled { opacity: .4; }
+    @media (max-width: 640px) { .ov-card .obtn { font-size: .74rem; padding: .42rem .85rem; border-radius: .7rem; } .ov-card .ov-btns { gap: .4rem; } }
     .obtn:active { transform: scale(.96); }
     .tgt-row { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: center; margin: .25rem 0 .4rem; }
     .tgt { display: flex; align-items: center; gap: .4rem; padding: .22rem .65rem .22rem .22rem; border-radius: 999px; background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.16); font-weight: 800; font-size: clamp(.66rem, 2.6cqh, .84rem); cursor: pointer; color: #fff; }
@@ -391,6 +392,18 @@
     #players.no-meter .pl .rk { display: inline-grid; }
     #players.no-meter .pl .lead-flame { color: #fbbf24; filter: drop-shadow(0 0 5px #f59e0b); }
     #players.no-meter .pl.lead { border-color: rgba(251,191,36,.7); }
+    /* waiting room: the board blurs away behind a calm card (animates in once, then holds still so it can be clicked) */
+    #ovLobby { background: rgba(8,6,20,.55); -webkit-backdrop-filter: blur(14px) saturate(1.1); backdrop-filter: blur(14px) saturate(1.1); }
+    .ov-card.still, .ov-card.still > *, .ov-card.still::after { animation: none !important; }
+    .ov-card.still .ov-icon { animation: none !important; }
+    .wait { display: flex; flex-direction: column; align-items: center; gap: .35rem; margin: .1rem 0 .3rem; }
+    .w-track { --t: 24px; position: relative; display: flex; gap: 5px; padding-top: calc(var(--t) * 1.4); }
+    .w-tile { width: var(--t); height: var(--t); border-radius: 24%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: rgba(10,8,20,.85); background: linear-gradient(160deg, color-mix(in srgb, var(--c) 100%, #fff 18%), var(--c)); box-shadow: inset 0 -3px 0 rgba(0,0,0,.25), 0 5px 10px rgba(0,0,0,.5); }
+    .w-tok { position: absolute; left: 0; top: 0; width: var(--t); height: var(--t); will-change: transform; }
+    .w-tok > div { width: 100%; height: 100%; border-radius: 50%; border: 2px solid #fff; overflow: hidden; background: #14121f; box-shadow: 0 5px 10px rgba(0,0,0,.55); }
+    .w-tok img { width: 100%; height: 100%; display: block; }
+    .w-txt { font-size: .66rem; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; color: #cbd5e1; animation: wPulse 1.5s ease-in-out infinite; }
+    @keyframes wPulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
     .board-dim { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,.10) 40%, rgba(0,0,0,.30) 100%), rgba(4,6,18,.14); }
     .pcard .spark { position: absolute; color: var(--k); font-size: clamp(.7rem, 3cqh, 1rem); opacity: .9; animation: twinkle 1.6s ease-in-out infinite; pointer-events: none; }
     @keyframes twinkle { 0%,100% { transform: scale(.6) rotate(0); opacity: .3; } 50% { transform: scale(1.15) rotate(25deg); opacity: 1; } }
