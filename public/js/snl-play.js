@@ -1224,5 +1224,6 @@
   render();
   layoutSide();
   setTimeout(layoutSide, 400);
+  if (window.SNLLoader) SNLLoader.ready();      // the table is drawn — let the loader go
   if (!C.isParty) setTimeout(poll, 1400);
 })();

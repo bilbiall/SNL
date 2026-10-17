@@ -41,6 +41,10 @@ class ExportApp extends Command
             file_put_contents("$out/$file", $this->localise($html));
         }
 
+        // which version this app is, and where to look for a newer one
+        $ver = json_decode(file_get_contents(base_path('mobile/app-version.json')), true) ?: [];
+        file_put_contents("$out/app-info.json", json_encode(['versionName' => $ver['versionName'] ?? '1.0.0', 'versionCode' => (int) ($ver['versionCode'] ?? 1), 'site' => rtrim(config('snl.public_url'), '/')]));
+
         // the game pack (rules, boards, decks, words) — read by the in-app engine
         $pack = OfflinePack::build();
         file_put_contents("$out/pack.json", json_encode($pack, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));

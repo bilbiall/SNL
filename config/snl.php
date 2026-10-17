@@ -127,6 +127,9 @@ return [
 
     'players' => ['min' => 2, 'max' => 12],
 
+    // The live site (used by the Android app to look for a newer APK). Set SNL_PUBLIC_URL in .env if it changes.
+    'public_url' => env('SNL_PUBLIC_URL', 'https://snl.moski.org'),
+
     // Public room names are shown to strangers — these can't appear in them (whole words, case-insensitive).
     'blocked_words' => ['fuck', 'shit', 'cunt', 'bitch', 'nigger', 'nigga', 'faggot', 'whore', 'slut', 'rape', 'nazi', 'porn', 'dick', 'cock', 'pussy'],
 

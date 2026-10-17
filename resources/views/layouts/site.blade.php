@@ -14,7 +14,9 @@
     @stack('head')
 </head>
 <body>
+    @include('partials.loader')
     @yield('body')
     <script src="{{ \App\Support\OfflineAssets::js('pwa.js') }}"></script>
+    <script src="{{ \App\Support\OfflineAssets::js('app-update.js') }}"></script>
 </body>
 </html>

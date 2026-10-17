@@ -246,11 +246,13 @@
         const mode = fd.get('content_mode');
         if (modes[mode] && modes[mode].adult && !fd.get('adult')) { showErr('Please confirm that everyone playing is 18 or over for this mode.'); return; }
         const nm = fd.getAll('names[]'), co = fd.getAll('colors[]'), av = fd.getAll('avatars[]');
+        if (window.SNLLoader) SNLLoader.show();
         try {
             await SNLLocal.create({ boardId: +fd.get('board_id'), mode: mode, intensity: +fd.get('intensity'), startShields: fd.get('start_shields'), entries: nm.map((n, i) => ({ name: n, color: co[i], avatar: av[i] })) });
             location.href = @json(route('play.local'));
         } catch (err) {
             if (navigator.onLine && !(err && err.name === 'GameError')) { form.submit(); return; }
+            if (window.SNLLoader) SNLLoader.hide();
             showErr((err && err.message) || 'Could not start the game.');
         }
     });

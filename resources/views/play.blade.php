@@ -14,6 +14,7 @@
     @include('partials.brand-css')
 </head>
 <body>
+@include('partials.loader', ['wait' => 1])
 <div class="stage" id="stage">
 
     {{-- Atmosphere: the board's own art, blurred, behind everything; game pieces pop in and drift in front of it. --}}

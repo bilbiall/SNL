@@ -49,3 +49,13 @@ No downloads outside the App Store. The landing page tells people to use **Share
 ## Store policy note
 
 Google Play and the Microsoft Store treat alcohol-related apps strictly. Keep the 18+ confirmation for Drinks mode, the responsible-drinking notice, and an honest content rating before submitting.
+
+## Updating the installed Android app
+
+The app's files live **inside the .apk**, so `git pull` on the website does not change an installed app (reloading does nothing either). To ship an update:
+
+1. Bump `mobile/app-version.json` (`versionCode` must go up), then `php artisan snl:export-app` and `npm run apk`.
+2. Commit + push (the new `public/downloads/snakes-and-liquor.apk` and `version.json` go with it) and `git pull` on the server.
+3. People open the app online → a green **"New version … is ready — Update"** bar appears (it reads `/downloads/version.json` from the site set in `SNL_PUBLIC_URL`, default `https://snl.moski.org`). Tapping it downloads the new APK; installing it **over the old one** (no uninstall) updates the app and keeps their saved game. Always sign with the same keystore.
+
+People using the website or the installed web app (PWA) get updates automatically — the service worker refreshes the files the next time they're online.

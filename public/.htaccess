@@ -4,6 +4,10 @@
     AddType application/vnd.android.package-archive .apk
 </IfModule>
 <IfModule mod_headers.c>
+    <Files "version.json">
+        Header set Access-Control-Allow-Origin "*"
+        Header set Cache-Control "no-cache"
+    </Files>
     <Files "sw.js">
         Header set Cache-Control "no-cache, max-age=0"
         Header set Service-Worker-Allowed "/"
