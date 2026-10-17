@@ -297,9 +297,12 @@
     this.hit(source, [target], { kind: 'self', icon: icon, text: this.penaltyText(units), spin: false, units: units }, tile);
   };
 
+  P.conditionalCard = function (card) { return !!card && card.kind === 'self' && /if/i.test(String(card.text || '')); };
+
   /** A hit on a single player — pauses for their Shield if they hold one. */
   P.hit = function (source, targets, card, tile) {
-    if (targets.length === 1 && this.power(targets[0], 'shield') > 0) {
+    // a Shield holder gets the Block / Take choice; a conditional card ("… if you have ever …") also lets anyone say it doesn't apply
+    if (targets.length === 1 && (this.power(targets[0], 'shield') > 0 || P.conditionalCard(card))) {
       this.setPending({ type: 'shield', actor_id: targets[0].id, source_id: source.id, card: card, tile: tile });
       return;
     }
@@ -610,11 +613,13 @@
         return;
 
       case 'shield':
-        if (choice !== 'use' && choice !== 'skip') throw new GameError('Choose use or skip.');
+        if ((choice !== 'use' && choice !== 'skip' && choice !== 'pass') || (choice === 'pass' && !P.conditionalCard(pending.card))) throw new GameError('Choose use or skip.');
         target = this.player(pending.actor_id);
         source = this.player(pending.source_id) || turnOwner;
         this.clearPending();
-        if (choice === 'use' && this.power(target, 'shield') > 0) {
+        if (choice === 'pass') {
+          this.log({ type: 'pass', player_id: target.id, text: pending.card.text, icon: pending.card.icon || 'self' });
+        } else if (choice === 'use' && this.power(target, 'shield') > 0) {
           this.addPower(target, 'shield', -1);
           this.bump(target, 'dodges');
           this.log({ type: 'shield', player_id: target.id, source_id: source.id, text: pending.card.text, icon: pending.card.icon });
@@ -824,7 +829,7 @@
         case 'reroll':
           view = { type: 'reroll', actor_id: pending.actor_id, roll: pending.roll, preview_tile: pending.preview_tile, preview_kind: pending.preview_kind }; break;
         case 'shield':
-          view = { type: 'shield', actor_id: pending.actor_id, source_id: pending.source_id, card: pending.card }; break;
+          view = { type: 'shield', actor_id: pending.actor_id, source_id: pending.source_id, card: pending.card, conditional: P.conditionalCard(pending.card) }; break;
         case 'pick':
           view = { type: 'pick', actor_id: pending.actor_id, sub: pending.sub, card: pending.card, eligible: pending.eligible }; break;
         case 'tf': case 'bluff_say': case 'spot':

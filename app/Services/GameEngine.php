@@ -741,9 +741,15 @@ class GameEngine
     }
 
     /** A hit on a single player — pauses for their Shield if they hold one. */
+    public static function conditionalCard(array $card): bool
+    {
+        return ($card['kind'] ?? '') === 'self' && (bool) preg_match('/if/i', (string) ($card['text'] ?? ''));
+    }
+
     private function hit(Player $source, array $targets, array $card, ?int $tile): void
     {
-        if (count($targets) === 1 && $targets[0]->power('shield') > 0) {
+        // a Shield holder gets the Block / Take choice; a conditional card ("… if you have ever …") also lets anyone say it doesn't apply
+        if (count($targets) === 1 && ($targets[0]->power('shield') > 0 || self::conditionalCard($card))) {
             $this->setPending([
                 'type' => 'shield', 'actor_id' => $targets[0]->id, 'source_id' => $source->id,
                 'card' => $card, 'tile' => $tile,
@@ -809,13 +815,15 @@ class GameEngine
                 return;
 
             case 'shield':
-                if (!in_array($choice, ['use', 'skip'], true)) {
+                if (!in_array($choice, ['use', 'skip', 'pass'], true) || ($choice === 'pass' && !self::conditionalCard($pending['card']))) {
                     throw new GameException('Choose use or skip.');
                 }
                 $target = $this->players[$pending['actor_id']];
                 $source = $this->players[$pending['source_id']] ?? $turnOwner;
                 $this->clearPending();
-                if ($choice === 'use' && $target->power('shield') > 0) {
+                if ($choice === 'pass') {
+                    $room->log(['type' => 'pass', 'player_id' => $target->id, 'text' => $pending['card']['text'], 'icon' => $pending['card']['icon'] ?? 'self']);
+                } elseif ($choice === 'use' && $target->power('shield') > 0) {
                     $target->addPower('shield', -1);
                     $target->bump('dodges');
                     $room->log([
@@ -1159,7 +1167,7 @@ class GameEngine
             $pendingView = match ($pending['type']) {
                 'reroll' => ['type' => 'reroll', 'actor_id' => $pending['actor_id'], 'roll' => $pending['roll'],
                     'preview_tile' => $pending['preview_tile'], 'preview_kind' => $pending['preview_kind']],
-                'shield' => ['type' => 'shield', 'actor_id' => $pending['actor_id'], 'source_id' => $pending['source_id'], 'card' => $pending['card']],
+                'shield' => ['type' => 'shield', 'actor_id' => $pending['actor_id'], 'source_id' => $pending['source_id'], 'card' => $pending['card'], 'conditional' => self::conditionalCard($pending['card'])],
                 'pick'   => ['type' => 'pick', 'actor_id' => $pending['actor_id'], 'sub' => $pending['sub'], 'card' => $pending['card'], 'eligible' => $pending['eligible']],
                 'tf', 'bluff_say', 'spot' => ['type' => $pending['type'], 'actor_id' => $pending['actor_id'], 'card' => $pending['card']],
                 'bluff_call' => ['type' => 'bluff_call', 'actor_id' => $pending['actor_id'], 'actors' => $pending['actors'], 'eligible' => $pending['eligible'], 'card' => $pending['card']],

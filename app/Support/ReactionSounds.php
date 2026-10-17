@@ -24,7 +24,10 @@ class ReactionSounds
         }
         $stamp = md5(implode('|', array_map(fn ($f) => $f . filemtime($f), self::files($dir))));
 
-        return Cache::remember('snl_reaction_sounds_' . $stamp, 600, fn () => self::build($dir));
+        // the cache holds site-relative paths only; the host is added per request (the app export forces https://localhost, a dev server uses 127.0.0.1 …)
+        $rel = Cache::remember('snl_reaction_sounds_rel_' . $stamp, 600, fn () => self::build($dir));
+
+        return array_map(fn ($urls) => array_map(fn ($p) => asset($p), $urls), $rel);
     }
 
     /** Per-clip playback gain + length (written by `node scripts/measure-reactions.mjs`), keyed by file name. */
@@ -74,7 +77,7 @@ class ReactionSounds
             }
             $seen[$hash] = true;
             $rel = str_replace('\\', '/', substr($path, strlen(public_path()) + 1));
-            $url = asset(implode('/', array_map('rawurlencode', explode('/', $rel))));
+            $url = implode('/', array_map('rawurlencode', explode('/', $rel)));
 
             $sub = strtolower(basename(dirname($path)));
             $slug = ' ' . preg_replace('/[^a-z0-9]+/', ' ', strtolower(pathinfo($path, PATHINFO_FILENAME))) . ' ';

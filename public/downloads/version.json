@@ -1,14 +1,13 @@
 {
-  "versionName": "1.8.9",
-  "versionCode": 18,
-  "sizeBytes": 27724860,
+  "versionName": "1.8.10",
+  "versionCode": 19,
+  "sizeBytes": 27725025,
   "notes": [
-    "Back and Pause buttons; the phone back key opens the pause screen instead of dropping you out",
-    "Music now starts reliably on the first tap",
-    "Reactions pop over the player who just moved, with a pulse on their leaderboard card",
-    "Buzz meter always shown on phones"
+    "Reaction sounds now play in offline / local games too (they were pointing at the wrong address in the app)",
+    "Conditional cards (\"…if you have ever…\") get a Pass button",
+    "Back and Pause buttons, buzz meter always shown, reactions pop over the player who moved"
   ],
-  "sha256": "646a045bfd4321785dc9bc9dcad6edafe946caa524caddf3e85b009d2f839be8",
-  "builtAt": "2026-10-17T07:09:59.067Z",
+  "sha256": "d30d4454a790e90378ac211fe7723efcbd8b18a56115351e0e330a0ca1837511",
+  "builtAt": "2026-10-17T07:21:48.462Z",
   "certSha256": "2a4dce20c1650504c343933159a6682a0362a0420e0e0ade01bba1347ee7d7f3"
 }

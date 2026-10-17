@@ -346,6 +346,7 @@
       case 'win': return [`${ic('trophy')} ${n(who)} reached the finish!`, '#fbbf24'];
       case 'left': return [`${ic('exit')} ${n(who)} left`, '#6b7280'];
       case 'skip': return [`${ic('clock')} ${n(who)} ran out of time`, '#6b7280'];
+      case 'pass': return [`${ic('check')} ${n(who)} passed — it doesn't apply`, '#34d399'];
       default: return null; // reactions etc. don't belong in the log
     }
   }
@@ -498,6 +499,7 @@
 
       case 'left': toast(`${ic('exit')} ${esc(who.name)} left the game`, 2400); meme('wasted'); await sleep(350); break;
       case 'skip': toast(`${ic('clock')} ${esc(who.name)} ran out of time`, 2200); meme('timeout'); await sleep(250); break;
+      case 'pass': toast(`${ic('check')} <b>${esc(who.name)}</b> passed — it doesn't apply`, 2400, '#34d399'); snd('arrive'); meme('neutral'); await sleep(350); break;
       case 'react': floater(a.player_id, a.reaction); snd('reaction'); break;
       default: break;
     }
@@ -909,8 +911,8 @@
       const own = p.source_id === p.actor_id; // a card the player landed on themselves
       show('ovPrompt', promptCard({
         color: '#38bdf8', head: own ? 'Your card' : (C.isParty ? `Pass the phone to ${esc(actor.name)}` : 'Incoming!'), icon: 'shield', who: chip(actor), text: p.card.text,
-        sub: (own ? 'Spend a Shield to dodge it?' : `${esc(src.name)} landed this on you. Block it?`) + left,
-        buttons: `<button class="obtn vio" data-act="use">${ic(cfg.shield.icon)} Block it (${n} left)</button><button class="obtn alt" data-act="skip">Take it</button>`,
+        sub: (n > 0 ? (own ? 'Spend a Shield to dodge it?' : `${esc(src.name)} landed this on you. Block it?`) : (p.conditional ? 'Does this one apply to you? Be honest — or pass.' : '')) + left,
+        buttons: (n > 0 ? `<button class="obtn vio" data-act="use">${ic(cfg.shield.icon)} Block it (${n} left)</button>` : '') + `<button class="obtn alt" data-act="skip">Take it</button>` + (p.conditional ? `<button class="obtn ok" data-act="pass">Pass — doesn't apply</button>` : ''),
       }));
       $('ovPrompt').querySelectorAll('[data-act]').forEach((b) => (b.onclick = () => answer({ choice: b.dataset.act })));
       return;
