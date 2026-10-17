@@ -164,6 +164,9 @@
     const desktop = ST.clientWidth >= 1000 && ST.clientHeight >= 600;         // the full sidebar already has the feed
     const ok = !desktop && side >= 104 && room >= 64;
     ST.classList.toggle('feed-mini', ok);
+    const lw = Math.floor(side) - 12;                                      // the left strip: players + their meters
+    ST.classList.toggle('list-mini', !desktop && lw >= 96);
+    if (!desktop && lw >= 96) ST.style.setProperty('--lw', Math.min(lw, 210) + 'px');
     if (ok) { ST.style.setProperty('--sidew', Math.min(Math.floor(side) - 14, 230) + 'px'); ST.style.setProperty('--feedbot', bottom + 'px'); }
   }
   addEventListener('resize', () => { layoutSide(); });
@@ -750,7 +753,7 @@
       const fill = `style="width:${bpct}%;background-size:${bpct ? (10000 / bpct).toFixed(0) : 100}% 100%"`;
       return `<div class="pl ${cur ? 'cur' : ''} ${out ? 'out' : ''} ${lead ? 'lead' : ''}" data-id="${p.id}" style="--c:${p.color}">
         <div class="ring" style="--p:${pct}"><div class="av">${won ? ic('crown') : avatar(p)}</div>${lead ? `<span class="lead-flame">${ic(meter ? 'fire' : 'crown')}</span>` : ''}</div>
-        <div class="info"><span class="nm">${esc(p.name)}${p.id === C.meId ? ' (you)' : ''}</span><span class="pos">${won ? 'Finished' : 'Square ' + p.position + ' of ' + r.tile_count}</span><i class="bar"><b style="width:${pct}%"></b></i>
+        <div class="info"><span class="nm">${esc(p.name)}${p.id === C.meId ? ' (you)' : ''}</span><span class="sq">${won ? ic('crown') : '#' + p.position}</span><span class="pos">${won ? 'Finished' : 'Square ' + p.position + ' of ' + r.tile_count}</span><i class="bar"><b style="width:${pct}%"></b></i>
           ${meter ? `<span class="bz"><span class="bz-l">${ic('cheers')} ${esc(buzzLevel(bz))}</span><i class="bz-bar"><b ${fill}></b></i><span class="bz-n">${bz}</span></span>` : ''}</div>
         <span class="pw">${pw}</span>${meter ? `<i class="bz-mini"><b ${fill}></b></i>` : `<span class="rk">${idx + 1}</span>`}</div>`;
     }).join('');

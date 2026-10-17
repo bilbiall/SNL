@@ -1,9 +1,9 @@
 {
-  "versionName": "1.8.3",
-  "versionCode": 12,
+  "versionName": "1.8.4",
+  "versionCode": 13,
   "notes": [
-    "Updates now download inside the app — no browser, no re-downloading",
-    "Tidier home screen on phones and a smaller update card",
-    "Calmer waiting room with a loader while players join"
+    "Phone view: every player now shows as a neat squared card with name, tile number and meter",
+    "Background music a little louder",
+    "Updates download inside the app"
   ]
 }

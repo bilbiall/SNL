@@ -1,13 +1,13 @@
 {
-  "versionName": "1.8.3",
-  "versionCode": 12,
-  "sizeBytes": 10823019,
+  "versionName": "1.8.4",
+  "versionCode": 13,
+  "sizeBytes": 10823035,
   "notes": [
-    "Updates now download inside the app — no browser, no re-downloading",
-    "Tidier home screen on phones and a smaller update card",
-    "Calmer waiting room with a loader while players join"
+    "Phone view: every player now shows as a neat squared card with name, tile number and meter",
+    "Background music a little louder",
+    "Updates download inside the app"
   ],
-  "sha256": "24747764c9284753a412dca6a19d6cb7e1f2f76a083db3837554802967b15b10",
-  "builtAt": "2026-10-17T04:11:31.222Z",
+  "sha256": "4daba37d6bc513b1fc6deeb52d8149193c77d1cc0187ac62afc1d23cee5072da",
+  "builtAt": "2026-10-17T04:16:17.887Z",
   "certSha256": "2a4dce20c1650504c343933159a6682a0362a0420e0e0ade01bba1347ee7d7f3"
 }

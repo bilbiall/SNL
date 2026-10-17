@@ -85,7 +85,7 @@ const SNLAudio = (() => {
   }
 
   // ── background music: one continuous loop that dips briefly under every effect, then swells back ──
-  const MUSIC_VOL = 0.30, DUCK_VOL = 0.05;
+  const MUSIC_VOL = 0.50, DUCK_VOL = 0.08;
   let duckUntil = 0, holdDuck = false, fader = null;
   // effects that are too small or too frequent to dip the music for
   const NO_DUCK = { tick: 1, pip: 1, press: 1, toggle: 1, move: 1, reaction: 1 };
