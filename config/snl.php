@@ -134,9 +134,9 @@ return [
     | `chance` = how often that moment plays a sound at all; `cooldown_ms` = the quiet gap between any two meme sounds.
     */
     'reaction_sounds' => [
-        'cooldown_ms' => 3200,
+        'cooldown_ms' => 2000,
         'volume' => 0.85,
-        'chance' => ['pick' => 0.9, 'shot' => 0.6, 'fail' => 0.8, 'snake' => 0.95, 'ladder' => 0.85, 'correct' => 0.75, 'win' => 1.0, 'bluff' => 0.85, 'swap' => 0.75, 'duel' => 0.85, 'everyone' => 0.5, 'power' => 0.6, 'block' => 0.85],
+        'chance' => ['pick' => 1.0, 'shot' => 0.85, 'fail' => 0.95, 'snake' => 1.0, 'ladder' => 1.0, 'correct' => 0.9, 'win' => 1.0, 'bluff' => 1.0, 'swap' => 0.9, 'duel' => 1.0, 'everyone' => 0.7, 'power' => 0.8, 'block' => 1.0, 'start' => 1.0, 'six' => 0.7, 'one' => 0.6, 'neutral' => 0.45, 'heart' => 0.8, 'close' => 0.9],
         'categories' => [
             'pick'     => ['mischiev', 'evil', 'sneaky', 'sinister', 'gotcha', 'laugh', 'ooh', 'aha', 'uh oh', 'wait a minute', 'who are you', 'strange'],
             'shot'     => ['scream', 'mayday', 'cheers', 'drink', 'shot', 'insane', 'laugh', 'goofy', 'ooh', 'burp', 'cough'],
@@ -150,6 +150,12 @@ return [
             'duel'     => ['mayday', 'scream', 'jeff', 'jet', 'insane', 'cartoon', 'fight', 'battle', 'ready', 'duel', 'sword'],
             'everyone' => ['ooh', 'aha', 'wow', 'jeff', 'flute', 'jet', 'cheer', 'party', 'everybody', 'crowd'],
             'power'    => ['good', 'yeah', 'wow', 'amazing', 'jet', 'power', 'level up', 'boost', 'ding'],
+            'start'    => ['party', 'start', 'ready', 'airhorn', 'yeah', 'cheer', 'lets go', 'woo', 'fanfare'],
+            'six'      => ['yeah', 'wow', 'woo', 'good', 'amazing', 'jet', 'nice', 'sheesh', 'six'],
+            'one'      => ['fail', 'sad', 'oof', 'bruh', 'trombone', 'flute', 'no gas', 'nope', 'cricket', 'awkward'],
+            'neutral'  => ['cricket', 'awkward', 'hmm', 'wait', 'flute', 'sus', 'really', 'strange'],
+            'heart'    => ['ooh', 'aww', 'love', 'kiss', 'pinkie', 'aha', 'wow', 'cute'],
+            'close'    => ['wow', 'jet', 'drum', 'suspense', 'amazing', 'ooh', 'wait', 'mayday'],
             'block'    => ['no gas', 'wait', 'jeff', 'good', 'clap', 'nope', 'denied', 'block', 'shield', 'not today'],
         ],
     ],

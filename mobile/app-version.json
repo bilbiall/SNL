@@ -1,9 +1,9 @@
 {
-  "versionName": "1.8.5",
-  "versionCode": 14,
+  "versionName": "1.8.6",
+  "versionCode": 15,
   "notes": [
-    "Play online and Public games now appear in the app whenever you have internet",
-    "Phone view: squared player cards, louder music",
-    "Updates download inside the app"
+    "More meme reactions during play — on dice rolls, game start, close to the finish, quiet squares and more",
+    "Online play and Public games always show on the home screen and switch on when you have internet",
+    "Update card closes once the update starts"
   ]
 }

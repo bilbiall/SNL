@@ -354,7 +354,7 @@
     const who = a.player_id !== undefined ? P(a.player_id) : null;
     feedAdd(a);
     switch (a.type) {
-      case 'start': toast(`${ic('flag')} Game on!`, 2200, '#f59e0b'); snd('notify'); await sleep(450); break;
+      case 'start': toast(`${ic('flag')} Game on!`, 2200, '#f59e0b'); snd('notify'); meme('start'); await sleep(450); break;
 
       case 'roll': {
         spinDie();
@@ -362,8 +362,10 @@
         await sleep(620);
         settleDie(a.roll);
         rollPop(a.player_id, a.roll);
+        meme(a.roll === 6 ? 'six' : a.roll === 1 ? 'one' : null);
         await sleep(560);
         await hop(a.player_id, a.hop_path || []);
+        { const end = (a.hop_path || []).slice(-1)[0]; if (end && S.room && end >= S.room.tile_count - 10) meme('close'); }
         if (a.overshoot) { toast(`Needed exactly ${a.overshoot.needed} — bounced back to ${a.overshoot.bounced_to}`, 2400); await sleep(500); }
         await sleep(280);
         break;
@@ -439,7 +441,7 @@
       }
 
       case 'neutral':
-        snd('arrive');
+        snd('arrive'); meme('neutral');
         flavorSplash(who, a.text);
         await sleep(4000);
         break;
@@ -549,7 +551,7 @@
       default: head = 'Card';
     }
     snd(a.kind === 'heart' ? 'heart' : (a.kind === 'everyone' || a.kind === 'groupgame') ? (C.mode.label === 'Drinks' ? 'cheers' : 'sparkle') : a.kind === 'fact' ? 'notify' : (a.kind === 'self' || a.kind === 'pick') ? (C.mode.label === 'Drinks' ? 'clink' : 'decisionPing') : 'mystery');
-    if (!a.random) meme(a.kind === 'pick' ? 'pick' : (a.kind === 'everyone' || a.kind === 'groupgame') ? 'everyone' : (a.kind === 'self' && C.mode.label === 'Drinks') || (a.kind === 'self' && a.icon === 'fire') ? 'shot' : null);
+    if (!a.random) meme(a.kind === 'pick' ? 'pick' : (a.kind === 'everyone' || a.kind === 'groupgame') ? 'everyone' : a.kind === 'self' || a.icon === 'fire' ? 'shot' : a.kind === 'heart' ? 'heart' : null);
     return holdCard('ovCard', { color: a.kind === 'blank' || a.spin ? kindColor('spin') : kindColor(a.kind), head, icon: a.icon || 'cards', who, text: a.text, intensity: a.intensity || 0 });
   }
 

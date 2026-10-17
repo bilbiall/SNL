@@ -73,10 +73,10 @@ class ExportApp extends Command
     {
         // online play / public games stay, but point at the live site and only show when the device is online
         $site = rtrim(config('snl.public_url'), '/');
-        $html = preg_replace_callback('#<a ([^>]*)href="https://localhost((?:/new\?type=online|/rooms)[^"]*)"([^>]*)>#', fn ($m) => '<a data-online style="display:none" ' . $m[1] . 'href="' . $site . html_entity_decode($m[2]) . '"' . $m[3] . '>', $html);
+        $html = preg_replace_callback('#<a ([^>]*)href="https://localhost((?:/new\?type=online|/rooms)[^"]*)"([^>]*)>#', fn ($m) => '<a data-online aria-disabled="true" title="Needs internet" style="opacity:.4;pointer-events:none;filter:grayscale(.7)" ' . $m[1] . 'href="' . $site . html_entity_decode($m[2]) . '"' . $m[3] . '>', $html);
         // anchors that lead to admin / downloads / content pages don't belong in the offline app
         $html = preg_replace('#<a (?![^>]*data-online)[^>]*href="[^"]*(?:type=online|/login|/join|/app|/download|/rooms|/how-to-play|/fun-facts)[^"]*"[^>]*>.*?</a>#s', '', $html);
-        $reveal = '<script>(function(){var l=[].slice.call(document.querySelectorAll("a[data-online]"));if(!l.length||!navigator.onLine)return;var c=new AbortController(),t=setTimeout(function(){c.abort()},4000);fetch(' . json_encode($site . '/favicon.ico') . ',{mode:"no-cors",cache:"no-store",signal:c.signal}).then(function(){clearTimeout(t);l.forEach(function(a){a.style.display=""});}).catch(function(){});})();</script>';
+        $reveal = '<script>' . str_replace('SITE', json_encode($site), '(function(){var l=[].slice.call(document.querySelectorAll("a[data-online]"));if(!l.length)return;var url=SITE+"/favicon.ico";function set(on){l.forEach(function(a){a.style.cssText=on?"":"opacity:.4;pointer-events:none;filter:grayscale(.7)";a.setAttribute("aria-disabled",on?"false":"true");a.title=on?"":"Needs internet";});}function check(){if(!navigator.onLine){set(false);return;}var c=new AbortController(),t=setTimeout(function(){c.abort()},4000);fetch(url,{mode:"no-cors",cache:"no-store",signal:c.signal}).then(function(){clearTimeout(t);set(true);}).catch(function(){set(false);});}window.addEventListener("online",check);window.addEventListener("offline",function(){set(false);});check();setInterval(check,20000);})();') . '</script>';
         $html = str_replace('</body>', $reveal . '</body>', $html);
         $html = preg_replace('#<section class="getapp".*?</section>#s', '', $html);
         $html = preg_replace('#<section class="about".*?</section>#s', '', $html);

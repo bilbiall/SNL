@@ -64,7 +64,7 @@
       plug.install({ url: site + '/downloads/snakes-and-liquor.apk', sha256: remote.sha256 || '' }).then(function (r) {
         go.disabled = false; go.style.opacity = '1';
         if (r && r.needsPermission) { msg.textContent = 'Turn on "Allow from this source" for this app, come back and tap Update now again.'; el.querySelector('#updBar').style.display = 'none'; }
-        else { msg.textContent = 'Tap Install in the Android window — your game is kept.'; go.textContent = 'Update now'; }
+        else close(false);                       // Android's installer window takes over; the card has done its job
       }, function (e) {
         go.disabled = false; go.style.opacity = '1'; el.querySelector('#updBar').style.display = 'none';
         msg.textContent = (e && e.message ? e.message : 'Download failed') + ' · or use the browser link';
