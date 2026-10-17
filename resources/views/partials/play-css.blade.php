@@ -374,6 +374,25 @@
         .stage.feed-mini .fi { font-size: clamp(.5rem, 2cqh, .66rem); padding: .22rem .4rem; border-radius: .5rem; line-height: 1.25; }
         .stage.feed-mini .fi:nth-last-child(n+6) { display: none; }
     }
+    /* ── phones: the left strip shows every player as a small squared card — name, tile number, meter ── */
+    .pl .sq { display: none; }
+    @container (max-width: 999px), (max-height: 599px) {
+        .stage.list-mini .hud-left { width: var(--lw, 150px); max-height: calc(100cqh - var(--nav) - 90px); overflow: hidden; gap: 4px; }
+        .stage.list-mini .pl { width: 100%; box-sizing: border-box; gap: 6px; padding: 3px 6px 3px 3px; border-radius: 7px; background: linear-gradient(160deg, rgba(24,21,42,.86), rgba(8,7,16,.78)); border: 1px solid rgba(255,255,255,.14); border-left: 3px solid var(--c); box-shadow: 0 3px 8px rgba(0,0,0,.35); }
+        .stage.list-mini .pl.cur { transform: none; border-color: var(--c); }
+        .stage.list-mini .pl .ring { --d: clamp(24px, 7cqh, 32px); border-radius: 6px; padding: 2px; }
+        .stage.list-mini .pl .ring .av, .stage.list-mini .pl .ring .avimg { border-radius: 4px; }
+        .stage.list-mini .pl .info { display: flex; flex: 1; min-width: 0; gap: 2px; }
+        .stage.list-mini .pl .info > .nm { display: inline; max-width: none; font-size: clamp(.58rem, 2.2cqh, .72rem); }
+        .stage.list-mini .pl .pos, .stage.list-mini .pl .bar, .stage.list-mini .pl .bz-l, .stage.list-mini .pl .bz-mini { display: none; }
+        .stage.list-mini .pl .sq { display: inline-block; margin-left: 4px; padding: 0 .3rem; border-radius: 4px; background: rgba(255,255,255,.12); font-size: .54rem; font-weight: 900; color: #e5e7eb; vertical-align: middle; }
+        .stage.list-mini .pl .bz { display: flex; margin-top: 1px; gap: .3rem; }
+        .stage.list-mini .pl .bz-bar { height: 5px; border-radius: 2px; min-width: 0; } .stage.list-mini .pl .bz-bar b { border-radius: 2px; }
+        .stage.list-mini .pl .bz-n { font-size: .56rem; min-width: .9em; }
+        .stage.list-mini .pl .pw { display: flex; font-size: .52rem; }
+        .stage.list-mini .pl .rk { width: 1rem; height: 1rem; border-radius: 4px; font-size: .55rem; }
+        .stage.list-mini .pl .lead-flame { top: -.3rem; right: -.2rem; font-size: .7rem; }
+    }
     /* ═════ answer cards (two or more buttons): balanced, compact, everything visible at a glance — no scrolling ═════ */
     .pcard.fit { width: min(92cqw, 540px); aspect-ratio: auto; height: auto; max-height: 96cqh; }
     .pcard.fit .pc-body { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'icon mid' 'btns btns' 'foot foot'; align-items: center; justify-content: stretch; gap: .35rem .9rem; padding: clamp(.4rem, 2cqh, .8rem) clamp(.7rem, 3cqh, 1.1rem) clamp(.35rem, 1.6cqh, .6rem); }
