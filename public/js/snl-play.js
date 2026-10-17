@@ -733,23 +733,26 @@
     const r = S.room, box = $('players'), max = (C.buzz && C.buzz.max) || 12, cfg = buzzCfg();
     const before = {};
     box.querySelectorAll('.pl[data-id]').forEach((el) => { before[el.dataset.id] = { x: el.offsetLeft, y: el.offsetTop }; });
-    const order = S.players.slice().sort((x, y) => ((x.status === 'left') - (y.status === 'left')) || ((y.buzz || 0) - (x.buzz || 0)) || (x.turn_order - y.turn_order));
-    const topBuzz = order[0] && order[0].status !== 'left' ? (order[0].buzz || 0) : 0;
-    const leaders = order.filter((p) => p.status !== 'left' && topBuzz > 0 && (p.buzz || 0) === topBuzz).length;
-    box.innerHTML = `<div class="pl-head">${ic('fire')} ${esc(cfg.name)}</div>` + order.map((p) => {
+    const meter = cfg.enabled !== false;          // Drinks games use the Buzz Meter; Family games just rank by square
+    const score = (p) => (meter ? (p.buzz || 0) : (p.status === 'won' ? 1e6 : p.position));
+    const order = S.players.slice().sort((x, y) => ((x.status === 'left') - (y.status === 'left')) || (score(y) - score(x)) || (x.turn_order - y.turn_order));
+    const topScore = order[0] && order[0].status !== 'left' ? score(order[0]) : 0;
+    const leaders = order.filter((p) => p.status !== 'left' && topScore > 0 && score(p) === topScore).length;
+    box.classList.toggle('no-meter', !meter);
+    box.innerHTML = `<div class="pl-head">${ic(meter ? 'fire' : 'trophy')} ${esc(cfg.name)}</div>` + order.map((p, idx) => {
       const cur = r.status === 'active' && p.id === r.current_player_id;
       const out = p.status === 'left';
       const won = p.status === 'won';
       const pw = Object.entries(C.powersCfg).filter(([k]) => p.powers[k]).map(([k, c]) => `<span>${ic(c.icon)}${p.powers[k]}</span>`).join('');
       const pct = won ? 100 : Math.round((p.position / r.tile_count) * 100);
       const bz = p.buzz || 0, bpct = Math.min(100, Math.round((bz / max) * 100));
-      const lead = leaders === 1 && bz === topBuzz && !out;
+      const lead = leaders === 1 && score(p) === topScore && !out;
       const fill = `style="width:${bpct}%;background-size:${bpct ? (10000 / bpct).toFixed(0) : 100}% 100%"`;
       return `<div class="pl ${cur ? 'cur' : ''} ${out ? 'out' : ''} ${lead ? 'lead' : ''}" data-id="${p.id}" style="--c:${p.color}">
-        <div class="ring" style="--p:${pct}"><div class="av">${won ? ic('crown') : avatar(p)}</div>${lead ? `<span class="lead-flame">${ic('fire')}</span>` : ''}</div>
+        <div class="ring" style="--p:${pct}"><div class="av">${won ? ic('crown') : avatar(p)}</div>${lead ? `<span class="lead-flame">${ic(meter ? 'fire' : 'crown')}</span>` : ''}</div>
         <div class="info"><span class="nm">${esc(p.name)}${p.id === C.meId ? ' (you)' : ''}</span><span class="pos">${won ? 'Finished' : 'Square ' + p.position + ' of ' + r.tile_count}</span><i class="bar"><b style="width:${pct}%"></b></i>
-          <span class="bz"><span class="bz-l">${ic('cheers')} ${esc(buzzLevel(bz))}</span><i class="bz-bar"><b ${fill}></b></i><span class="bz-n">${bz}</span></span></div>
-        <span class="pw">${pw}</span><i class="bz-mini"><b ${fill}></b></i></div>`;
+          ${meter ? `<span class="bz"><span class="bz-l">${ic('cheers')} ${esc(buzzLevel(bz))}</span><i class="bz-bar"><b ${fill}></b></i><span class="bz-n">${bz}</span></span>` : ''}</div>
+        <span class="pw">${pw}</span>${meter ? `<i class="bz-mini"><b ${fill}></b></i>` : `<span class="rk">${idx + 1}</span>`}</div>`;
     }).join('');
     // glide each row from where it used to be (layout coordinates, so it works inside the rotated phone stage too)
     box.querySelectorAll('.pl[data-id]').forEach((el) => {

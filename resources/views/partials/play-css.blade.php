@@ -385,6 +385,12 @@
     .pcard.fit .ov-btns .obtn { flex: 1 1 0; min-width: 0; padding-inline: .6rem; white-space: nowrap; font-size: clamp(.78rem, 3.1cqh, 1.02rem); }
     .pcard.fit .pc-foot { grid-area: foot; }
     .pcard.fit .pc-mark { font-size: min(34cqh, 120px); }
+    /* family games: a plain leaderboard — rank badge, no meter */
+    .pl .rk { display: none; width: 1.35rem; height: 1.35rem; border-radius: 50%; place-items: center; font-size: .72rem; font-weight: 900; background: rgba(255,255,255,.12); color: #e5e7eb; flex-shrink: 0; }
+    .pl.lead .rk { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #1b1830; }
+    #players.no-meter .pl .rk { display: inline-grid; }
+    #players.no-meter .pl .lead-flame { color: #fbbf24; filter: drop-shadow(0 0 5px #f59e0b); }
+    #players.no-meter .pl.lead { border-color: rgba(251,191,36,.7); }
     .board-dim { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,.10) 40%, rgba(0,0,0,.30) 100%), rgba(4,6,18,.14); }
     .pcard .spark { position: absolute; color: var(--k); font-size: clamp(.7rem, 3cqh, 1rem); opacity: .9; animation: twinkle 1.6s ease-in-out infinite; pointer-events: none; }
     @keyframes twinkle { 0%,100% { transform: scale(.6) rotate(0); opacity: .3; } 50% { transform: scale(1.15) rotate(25deg); opacity: 1; } }
