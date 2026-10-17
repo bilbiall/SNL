@@ -8,6 +8,7 @@
     <meta name="robots" content="noindex">
     <title>{{ ($local ?? false) ? 'Party game' : ($room->isOnline() ? 'Room ' . $room->join_code : 'Party game') }} — Snakes & Liquor</title>
     @include('partials.pwa-head')
+    @include('partials.analytics')
     <style>:root { --bw: {{ $board->board_width ?: 1264 }}; --bh: {{ $board->board_height ?: 848 }}; }</style>
     @include('partials.pieces-css')
     @include('partials.play-css')

@@ -214,6 +214,9 @@ return [
     ],
 
     // The live site (used by the Android app to look for a newer APK). Set SNL_PUBLIC_URL in .env if it changes.
+    // Google Analytics 4 measurement id (G-XXXXXXXXXX). Leave empty to turn tracking off.
+    'analytics' => ['ga4_id' => env('SNL_GA4_ID')],
+
     'public_url' => env('SNL_PUBLIC_URL', 'https://snakesandliquor.co.ke'),
 
     // Public room names are shown to strangers — these can't appear in them (whole words, case-insensitive).

@@ -368,7 +368,7 @@
     actorId = a.player_id !== undefined ? a.player_id : (a.actor_id !== undefined ? a.actor_id : (a.a_id !== undefined ? a.a_id : null));
     feedAdd(a);
     switch (a.type) {
-      case 'start': toast(`${ic('flag')} Game on!`, 2200, '#f59e0b'); snd('notify'); meme('start'); await sleep(450); break;
+      case 'start': toast(`${ic('flag')} Game on!`, 2200, '#f59e0b'); snd('notify'); meme('start'); try { window.snlTrack && snlTrack('game_start', { mode: C.mode && C.mode.label, players: latest.players.length, party: !!C.isParty }); } catch (_) {} await sleep(450); break;
 
       case 'roll': {
         spinDie();
@@ -490,7 +490,7 @@
       case 'rule': meme('rule'); await ruleOverlay(a); break;
 
       case 'win': {
-        snd('win'); setTimeout(() => snd('quest'), 900); meme('win');
+        snd('win'); setTimeout(() => snd('quest'), 900); meme('win'); try { window.snlTrack && snlTrack('game_win', { mode: C.mode && C.mode.label, party: !!C.isParty }); } catch (_) {}
         confetti();
         toast(`${ic('trophy')} <b>${esc(who.name)}</b> reached the finish!`, 3200, '#fbbf24');
         await sleep(1400);
