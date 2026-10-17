@@ -56,6 +56,6 @@ The app's files live **inside the .apk**, so `git pull` on the website does not 
 
 1. Bump `mobile/app-version.json` (`versionCode` must go up), then `php artisan snl:export-app` and `npm run apk`.
 2. Commit + push (the new `public/downloads/snakes-and-liquor.apk` and `version.json` go with it) and `git pull` on the server.
-3. People open the app online → a green **"New version … is ready — Update"** bar appears (it reads `/downloads/version.json` from the site set in `SNL_PUBLIC_URL`, default `https://snl.moski.org`). Tapping it downloads the new APK; installing it **over the old one** (no uninstall) updates the app and keeps their saved game. Always sign with the same keystore.
+3. People open the app online → a green **"New version … is ready — Update"** bar appears (it reads `/downloads/version.json` from the site set in `SNL_PUBLIC_URL`, default `https://snakesandliquor.co.ke`). Tapping it downloads the new APK; installing it **over the old one** (no uninstall) updates the app and keeps their saved game. Always sign with the same keystore.
 
 People using the website or the installed web app (PWA) get updates automatically — the service worker refreshes the files the next time they're online.

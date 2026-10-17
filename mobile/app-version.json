@@ -1,9 +1,8 @@
 {
-  "versionName": "1.8.10",
-  "versionCode": 19,
+  "versionName": "1.9.0",
+  "versionCode": 20,
   "notes": [
-    "Reaction sounds now play in offline / local games too (they were pointing at the wrong address in the app)",
-    "Conditional cards (\"…if you have ever…\") get a Pass button",
-    "Back and Pause buttons, buzz meter always shown, reactions pop over the player who moved"
+    "The app now lives at snakesandliquor.co.ke — online play and updates come from there",
+    "Reaction sounds play offline, Pass button on conditional cards, Back and Pause buttons"
   ]
 }

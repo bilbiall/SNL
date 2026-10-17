@@ -7,6 +7,6 @@ const arg = (process.argv.find((a) => a.startsWith('--snl-version=')) || '').sli
 contextBridge.exposeInMainWorld('SNLDesktop', {
   versionName: arg[0] || '1.0.0',
   versionCode: parseInt(arg[1], 10) || 1,
-  site: 'https://snl.moski.org',
+  site: 'https://snakesandliquor.co.ke',
   platform: process.platform,
 });

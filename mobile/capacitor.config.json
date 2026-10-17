@@ -3,6 +3,6 @@
   "appName": "Snakes & Liquor",
   "webDir": "www",
   "backgroundColor": "#0b0a16",
-  "server": { "androidScheme": "https", "cleartext": false, "allowNavigation": ["snl.moski.org"] },
+  "server": { "androidScheme": "https", "cleartext": false, "allowNavigation": ["snakesandliquor.co.ke", "www.snakesandliquor.co.ke"] },
   "android": { "allowMixedContent": false, "backgroundColor": "#0b0a16" }
 }
