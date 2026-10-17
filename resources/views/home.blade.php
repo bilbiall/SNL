@@ -1,6 +1,32 @@
 @extends('layouts.site')
 
-@section('title', 'Snakes & Liquor')
+@section('title', 'Snakes & Liquor — free party board game for your phone (works offline)')
+@section('meta_description', 'Snakes & Liquor is a free party board game: race along a snakes-and-ladders board while every square asks for a true-or-false fact, a bluff, a ten-second challenge or a group game. Family mode for everyone, play on one phone even offline, or online with friends.')
+
+@php
+    $faq = [
+        ['What is Snakes & Liquor?', 'A free party board game. You race along a snakes-and-ladders board and every square asks something of the table: a true-or-false fact, a bluff to call, a ten-second quickfire challenge, a group game, or a kind word for a friend.'],
+        ['How many people can play?', 'Two to twelve. Pass one phone around the table, or play online where everyone joins from their own phone with a five-letter code.'],
+        ['Is it free, and do I need an account?', 'It is free and there are no accounts. Open it, pick a mode, add the players and go.'],
+        ['Does it work offline?', 'Yes. Install the app (Android, or add it to your home screen) and party mode runs on your phone with no signal. Your game is saved after every move, so you can pick up where you left off.'],
+        ['Is there a family-friendly version?', 'Family mode has no alcohol at all — silly actions, facts and challenges everyone can play. The adults-only mode is optional, 18+, and any drink can always be swapped for water.'],
+        ['How do public games work?', 'Create an online game, give it a name and make it public: it appears on the Public games page so others can join while it is waiting. Keep it private and only people with your code can get in.'],
+        ['What kinds of squares are there?', 'True or false, fact or bluff, spotlight challenges, pick-a-friend, duels, swaps, group games, new table rules, power-ups, mystery spins, love-ladder compliments, and calm free squares.'],
+    ];
+@endphp
+
+@push('jsonld')
+<script type="application/ld+json">
+{!! json_encode(['@context' => 'https://schema.org', '@graph' => [
+    ['@type' => 'WebSite', 'name' => 'Snakes & Liquor', 'url' => url('/'), 'inLanguage' => 'en'],
+    ['@type' => 'SoftwareApplication', 'name' => 'Snakes & Liquor', 'applicationCategory' => 'GameApplication', 'operatingSystem' => 'Android, Web, Windows, iOS (home-screen app)',
+        'description' => 'A free party board game for 2–12 players with trivia, bluffing, quickfire challenges and group games. Plays offline.',
+        'url' => url('/'), 'image' => asset('img/og-image.png'), 'offers' => ['@type' => 'Offer', 'price' => '0', 'priceCurrency' => 'USD'],
+        'audience' => ['@type' => 'PeopleAudience', 'suggestedMinAge' => 12], 'isAccessibleForFree' => true, 'inLanguage' => 'en'],
+    ['@type' => 'FAQPage', 'mainEntity' => array_map(fn ($f) => ['@type' => 'Question', 'name' => $f[0], 'acceptedAnswer' => ['@type' => 'Answer', 'text' => $f[1]]], $faq)],
+]], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+</script>
+@endpush
 
 @push('head')
 <style>
@@ -86,6 +112,16 @@
     .tw { position: absolute; width: var(--s); height: var(--s); fill: #fff; opacity: 0; filter: drop-shadow(0 0 5px rgba(253,224,71,.9)); animation: twinkle 4.2s ease-in-out var(--d) infinite; }
     .tw:nth-child(3n) { fill: #fde68a; } .tw:nth-child(4n) { fill: #f9a8d4; filter: drop-shadow(0 0 5px rgba(244,114,182,.9)); }
     @keyframes twinkle { 0%, 100% { opacity: 0; transform: scale(.4) rotate(0); } 45% { opacity: .95; transform: scale(1) rotate(45deg); } 60% { opacity: .5; transform: scale(.8) rotate(60deg); } }
+    .go.d { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22); box-shadow: none; }
+    .badge-n { display: inline-grid; place-items: center; min-width: 1.5rem; height: 1.5rem; padding: 0 .35rem; border-radius: 999px; background: #34d399; color: #052e1d; font-size: .8rem; font-weight: 900; }
+    .about { max-width: 46rem; margin: 0 auto; padding: 2.5rem 1.2rem 3.5rem; line-height: 1.6; }
+    .about h2 { font-family: 'Bungee', 'Figtree', sans-serif; font-weight: 400; font-size: clamp(1.3rem, 5vw, 1.9rem); margin: 0 0 .6rem; }
+    .about p { color: #cbd5e1; font-weight: 500; }
+    .about .faq { margin: .5rem 0; border-radius: 1rem; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); }
+    .about .faq summary { cursor: pointer; padding: .8rem 1rem; font-weight: 800; list-style: none; }
+    .about .faq summary::-webkit-details-marker { display: none; }
+    .about .faq div { padding: 0 1rem .9rem; color: #cbd5e1; font-size: .92rem; }
+    .about a { color: #f9a8d4; font-weight: 700; }
     .go.c { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 12px 34px rgba(16,185,129,.4); margin-bottom: 1.1rem; animation: fadeUp .6s ease both; }
     .getapp { margin-top: 1.6rem; display: grid; grid-template-columns: auto 1fr; gap: .4rem .9rem; align-items: center; max-width: 30rem; width: 100%; padding: .9rem 1rem; text-align: left; border-radius: 1.2rem; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(8px); animation: fadeUp .8s ease 1.9s both; }
     .getapp img { width: 3.2rem; height: 3.2rem; border-radius: .9rem; box-shadow: 0 6px 18px rgba(236,72,153,.4); }
@@ -152,7 +188,10 @@
     <div class="cta">
         <a href="{{ route('setup', ['type' => 'party']) }}" class="go a"><x-icon name="phone" /> Play here</a>
         <a href="{{ route('setup', ['type' => 'online']) }}" class="go b"><x-icon name="globe" /> Play online</a>
+        <a href="{{ route('rooms.index') }}" class="go d"><x-icon name="team" /> Public games @if(($openRooms ?? 0) > 0) <span class="badge-n">{{ $openRooms }}</span>@endif</a>
     </div>
+
+    <x-share title="Snakes & Liquor" text="Snakes & Liquor — the free party board game where every square has a story. Play on your phone, even offline." :url="url('/')" />
 
     <section class="getapp" id="getApp" aria-label="Get the app" style="display:none;">
         <img src="{{ asset('icons/icon-96.png') }}" alt="" width="56" height="56">
@@ -167,6 +206,14 @@
 
     <div class="lp-foot"><a href="{{ route('app.page') }}">Android app</a> · 18+ for Drinks mode · Drink responsibly · Icons <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a> · <a href="{{ route('login') }}">Admin</a></div>
 </div>
+
+<section class="about" aria-label="About Snakes & Liquor">
+    <h2>A party game that is never the same twice</h2>
+    <p>Snakes &amp; Liquor turns the classic snakes-and-ladders race into a night of laughs: facts to judge, bluffs to call, ten-second challenges and group games, with fresh cards every game. Play <a href="{{ route('setup', ['type' => 'party']) }}">on one phone</a>, join a <a href="{{ route('rooms.index') }}">public game</a>, or read <a href="{{ route('how-to-play') }}">how to play</a> and try the <a href="{{ route('fun-facts') }}">fun facts quiz</a>.</p>
+    @foreach($faq as $f)
+        <details class="faq"><summary>{{ $f[0] }}</summary><div>{{ $f[1] }}</div></details>
+    @endforeach
+</section>
 
 <script>
 // "Continue your game" — a party game saved on this device — and the get-the-app card.

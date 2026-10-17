@@ -127,6 +127,9 @@ return [
 
     'players' => ['min' => 2, 'max' => 12],
 
+    // Public room names are shown to strangers — these can't appear in them (whole words, case-insensitive).
+    'blocked_words' => ['fuck', 'shit', 'cunt', 'bitch', 'nigger', 'nigga', 'faggot', 'whore', 'slut', 'rape', 'nazi', 'porn', 'dick', 'cock', 'pussy'],
+
     /*
     | The Buzz Meter: every hit a player takes (a sip, a shot, a forfeit) fills it — shots count by their size.
     | `max` is the number that fills the bar; `levels` are [from, label]. The leaderboard on the left is ordered by it.

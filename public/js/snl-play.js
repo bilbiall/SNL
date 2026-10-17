@@ -706,6 +706,7 @@
     const r = S.room;
     const lv = C.levels[r.intensity] || { label: '', icon: 'fire' };
     let nav = `<span class="chip">${ic(C.mode.icon)} ${esc(C.mode.label)} · ${ic(lv.icon)} ${esc(lv.label)}</span>`;
+    if (r.name) nav = `<span class="chip" title="${r.is_public ? 'Public game' : 'Private game'}">${ic(r.is_public ? 'globe' : 'tavern')} ${esc(r.name)}</span>` + nav;
     if (r.join_code) nav += `<button class="chip" type="button" id="codeChip" style="cursor:pointer;">${ic('share')} ${esc(r.join_code)}</button>`;
     $('navMid').innerHTML = nav;
     let h = '';
@@ -985,7 +986,7 @@
     const iHost = r.host_player_id === C.meId;
     show('ovLobby', `<div class="ov-card wide" style="--k:#f59e0b">
       <div class="ov-icon">${ic('tavern')}</div>
-      <div class="ov-title">Room code</div>
+      <div class="ov-title">${r.name ? esc(r.name) + (r.is_public ? ' · public' : '') : 'Room code'}</div>
       <div class="code-big">${esc(r.join_code)}</div>
       <div class="ov-sub">Friends open <b>${esc(location.host)}</b> → <b>Join</b>, or tap Share.</div>
       <div class="tgt-row">${active.map(chip).join('')}</div>
@@ -1020,9 +1021,16 @@
       ${awardsHtml ? `<div style="text-align:left;margin:.4rem 0;border-top:1px solid rgba(255,255,255,.1);padding-top:.3rem;">${awardsHtml}</div>` : ''}
       <div class="ov-btns">
         <button class="obtn" id="winAgain">${ic('replay')} ${r.rematch_token ? 'Join rematch' : 'Play again'}</button>
+        <button class="obtn vio" id="winShare">${ic('share')} Share</button>
         <a class="obtn alt" href="${C.urls.home}">${ic('home')} Home</a>
       </div>
       <div class="ov-sub" style="margin-top:.5rem;">Thanks for playing — drink responsibly and never drive after drinking.</div></div>`);
+    $('winShare').onclick = async () => {
+      const w = P(r.winner_player_id);
+      const data = { title: 'Snakes & Liquor', text: `${w.name} just won our game of Snakes & Liquor! Play free on your phone:`, url: location.origin + '/' };
+      try { if (navigator.share) { await navigator.share(data); return; } } catch (_) { return; }
+      try { await navigator.clipboard.writeText(`${data.text} ${data.url}`); toast(`${ic('check')} Link copied — paste it anywhere`, 2600, '#34d399'); } catch (_) { toast(esc(data.url), 5000); }
+    };
     $('winAgain').onclick = async () => {
       if (r.rematch_token) { location.href = C.urls.base + '/' + r.rematch_token; return; }
       if (C.local) { SNLLocal.act('rematch'); location.reload(); return; }
@@ -1108,7 +1116,7 @@
   async function shareInvite() {
     const code = latest.room.join_code;
     const url = location.origin + C.urls.join.replace(location.origin, '');
-    const text = `Join my Snakes & Liquor game! Code: ${code}`;
+    const text = `Join my Snakes & Liquor game${latest.room.name ? ' "' + latest.room.name + '"' : ''}! Code: ${code}`;
     try {
       if (navigator.share) { await navigator.share({ title: 'Snakes & Liquor', text, url }); return; }
     } catch (_) { return; }

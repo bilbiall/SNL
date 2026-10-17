@@ -68,8 +68,10 @@ class ExportApp extends Command
     private function localise(string $html): string
     {
         // anchors that lead to online rooms / admin don't belong in the offline app
-        $html = preg_replace('#<a [^>]*href="[^"]*(?:type=online|/login|/join|/app|/download)[^"]*"[^>]*>.*?</a>#s', '', $html);
+        $html = preg_replace('#<a [^>]*href="[^"]*(?:type=online|/login|/join|/app|/download|/rooms|/how-to-play|/fun-facts)[^"]*"[^>]*>.*?</a>#s', '', $html);
         $html = preg_replace('#<section class="getapp".*?</section>#s', '', $html);
+        $html = preg_replace('#<section class="about".*?</section>#s', '', $html);
+        $html = preg_replace('#<div class="share-row".*?</div>#s', '', $html);
 
         $pairs = [
             'https://localhost/offline/pack.json' => '/pack.json',

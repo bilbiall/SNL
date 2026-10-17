@@ -1,5 +1,6 @@
 @extends('layouts.site')
 
+@section('robots', 'noindex,nofollow')
 @section('title', ($type === 'party' ? 'New party game' : 'New online room') . ' — Snakes & Liquor')
 
 @section('body')
@@ -136,6 +137,22 @@
             @endif
         </div>
 
+        @if($type === 'online')
+        {{-- Public room: listed on /rooms so anyone can find and join it --}}
+        @php $wantPublic = (bool) old('public', request('public')); @endphp
+        <div class="snl-card">
+            <label class="flex items-start gap-3" style="cursor:pointer;">
+                <input type="checkbox" name="public" value="1" id="pubBox" {{ $wantPublic ? 'checked' : '' }} style="width:1.2rem;height:1.2rem;margin-top:.15rem;">
+                <span class="text-sm" style="font-weight:800;"><x-icon name="globe" /> Make it a public game<br><span class="snl-muted" style="font-weight:600;font-size:.76rem;">Show it on the Public games page so other people can find and join while it's waiting. Leave it off to keep it code-only.</span></span>
+            </label>
+            <div id="pubName" style="display:none;margin-top:.7rem;">
+                <label class="snl-label" for="room_name">Give your game a name</label>
+                <input class="snl-input" id="room_name" name="room_name" value="{{ old('room_name') }}" maxlength="40" placeholder="e.g. Friday Night Showdown" autocomplete="off">
+                <p class="snl-muted text-xs mt-1">Everyone browsing will see this name, your name and your avatar — keep it friendly (no links).</p>
+            </div>
+        </div>
+        @endif
+
         <button class="btn btn-primary btn-block" style="font-size:1.05rem;padding:1rem;">
             <x-icon :name="$type === 'party' ? 'dice' : 'globe'" /> {{ $type === 'party' ? 'Start the game' : 'Create room' }}
         </button>
@@ -238,6 +255,9 @@
         }
     });
     @else
+    const pubBox = document.getElementById('pubBox'), pubName = document.getElementById('pubName'), roomName = document.getElementById('room_name');
+    const syncPub = () => { pubName.style.display = pubBox.checked ? 'block' : 'none'; roomName.required = pubBox.checked; if (pubBox.checked && !roomName.value) roomName.focus({ preventScroll: true }); };
+    pubBox.addEventListener('change', syncPub); syncPub();
     const hostAv = document.getElementById('hostAvatar'), hostImg = document.getElementById('hostAvatarImg');
     const showHost = () => { hostImg.src = SNLAvatars.url(hostAv.value); };
     document.getElementById('hostAvatarBtn').onclick = () => SNLAvatars.open(hostAv.value, key => { hostAv.value = key; showHost(); });

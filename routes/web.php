@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AppDownloadController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ContentController;
+use App\Http\Controllers\LobbyController;
 use App\Http\Controllers\GamesetBoardController;
 use App\Http\Controllers\GamesetCardController;
 use App\Http\Controllers\GamesetWordController;
@@ -18,6 +20,14 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/new', [HomeController::class, 'create'])->name('setup');
 Route::get('/join', [HomeController::class, 'join'])->name('join');
+
+// Public games, and the indexable pages that help people find the game.
+Route::get('/rooms', [LobbyController::class, 'index'])->name('rooms.index');
+Route::get('/rooms/list', [LobbyController::class, 'list'])->middleware('throttle:snl-state')->name('rooms.list');
+Route::get('/how-to-play', [ContentController::class, 'howToPlay'])->name('how-to-play');
+Route::get('/fun-facts', [ContentController::class, 'funFacts'])->name('fun-facts');
+Route::get('/sitemap.xml', [ContentController::class, 'sitemap'])->name('sitemap');
+Route::get('/robots.txt', [ContentController::class, 'robots'])->name('robots');
 
 // The Android app: a download page and the file itself.
 Route::get('/app', [AppDownloadController::class, 'page'])->name('app.page');

@@ -821,7 +821,7 @@
       room: {
         token: room.token, type: room.type, status: room.status,
         content_mode: room.content_mode, intensity: room.intensity,
-        join_code: room.join_code, round: room.round, active_rule: room.active_rule,
+        join_code: room.join_code, name: room.name == null ? null : room.name, is_public: !!room.is_public, round: room.round, active_rule: room.active_rule,
         current_player_id: room.current_player_id, winner_player_id: room.winner_player_id,
         host_player_id: room.host_player_id, max_players: room.max_players,
         tile_count: room.tile_count, event_seq: room.event_seq,

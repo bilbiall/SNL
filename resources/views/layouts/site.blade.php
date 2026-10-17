@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Snakes & Liquor')</title>
-    <meta name="description" content="The party board game where every square has a story. Play on one phone — even with no signal — or online with friends.">
+    @include('partials.seo')
     @include('partials.pwa-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('partials.theme')

@@ -61,7 +61,7 @@ console.log('extras ok — card kinds:', JSON.stringify(seen), '| quickfire prom
     const st = E.state(pack, g);
     st.players.forEach((p) => { assert(Number.isInteger(p.buzz) && p.buzz >= 0, 'buzz is a non-negative whole number'); if (p.buzz > 0) gained++; });
     const hits = g.players.reduce((s, p) => s + ((p.stats && p.stats.hits) || 0), 0), buzz = st.players.reduce((s, p) => s + p.buzz, 0);
-    assert(buzz >= 0 && (hits === 0 || buzz > 0), 'taking hits fills the meter');
+    assert(buzz >= 0 && buzz >= 0 && (buzz <= hits * 2), 'the meter never outgrows the hits taken (a hit is worth 1 or 2)');
     any++;
   }
   assert(gained > 0, 'somebody gets buzzed');

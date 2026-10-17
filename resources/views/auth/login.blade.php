@@ -1,5 +1,6 @@
 @extends('layouts.site')
 
+@section('robots', 'noindex,nofollow')
 @section('title', 'GameSet sign-in — Snakes & Liquor')
 
 @section('body')

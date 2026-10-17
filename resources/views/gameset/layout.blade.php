@@ -1,5 +1,7 @@
 @extends('layouts.site')
 
+@section('robots', 'noindex,nofollow')
+
 @push('head')
 <style>
     .gs-nav { position: sticky; top: 0; z-index: 50; background: rgba(8,7,16,.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }

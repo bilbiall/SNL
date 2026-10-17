@@ -59,6 +59,13 @@ Tick each line only after it has been verified (how is in brackets). [x] = verif
 - [x] Prompt cards (pick / shield / true-false / bluff / quickfire) + menu / confirm / win use the animated glass card style; pick uses avatar tiles
 - [x] Free squares: Quickfire, Roll again, Gift, Group game (config chance + weights, 4 new card kinds, 100+ cards, both engines, tests)
 
+## Round 3 (public games, sharing, SEO)
+- [x] Public rooms: name + public flag, /rooms browser (live list, join, in-progress), rude-name/link filter, idle/finished rooms hidden — tested through the real controllers
+- [x] Share component on landing / rooms / how-to-play / fun-facts / app page; share on the win screen and lobby
+- [x] SEO: meta + canonical + robots per page, OG/Twitter card image, JSON-LD (SoftwareApplication, FAQ, HowTo), dynamic sitemap + robots.txt, noindex on utility pages
+- [x] Content pages: /how-to-play and a family-safe /fun-facts quiz
+- [x] The offline app build strips online-only links, the about/FAQ block and the share row
+
 ## Known limits (see OFFLINE-APP.md)
 - Online rooms need a connection (the fallback converts them to pass-the-phone).
 - A browser PWA that has never been opened online has nothing cached; the Android app does not have this problem.

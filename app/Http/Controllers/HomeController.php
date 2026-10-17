@@ -20,7 +20,7 @@ class HomeController extends Controller
             $apk = json_decode(file_get_contents(public_path('downloads/version.json')), true);
         }
 
-        return view('home', ['boards' => Board::playable(), 'pool' => $pool, 'apk' => $apk]);
+        return view('home', ['boards' => Board::playable(), 'pool' => $pool, 'apk' => $apk, 'openRooms' => \App\Models\Room::listed()->where('status', 'open')->count()]);
     }
 
     /** Game setup. ?type=party (one device) or ?type=online (room code). */

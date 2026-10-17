@@ -10,6 +10,7 @@ use App\Services\GameException;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Everything a player does at the table. There are no accounts: party mode is one
@@ -41,6 +42,8 @@ class RoomController extends Controller
             'avatars.*'    => 'nullable|string|max:12',
             'avatar'       => 'nullable|string|max:12',
             'host_name'    => 'required_if:type,online|nullable|string|max:24',
+            'public'       => 'nullable|boolean',
+            'room_name'    => 'required_if:public,1|nullable|string|min:3|max:40',
             'max_players'  => 'nullable|integer|min:2|max:' . config('snl.players.max'),
         ]);
 
@@ -59,7 +62,8 @@ class RoomController extends Controller
             } else {
                 [$room, $host] = $this->engine->createOnline(
                     $board, (string) $data['host_name'], $data['content_mode'], (int) $data['intensity'], (int) ($data['max_players'] ?? 8), $data['avatar'] ?? null,
-                    isset($data['start_shields']) ? (int) $data['start_shields'] : null
+                    isset($data['start_shields']) ? (int) $data['start_shields'] : null,
+                    $this->cleanRoomName($data['room_name'] ?? null), $request->boolean('public') && filled($data['room_name'] ?? null)
                 );
                 $this->rememberMe($request, $room, $host);
             }
@@ -68,6 +72,20 @@ class RoomController extends Controller
         }
 
         return redirect()->route('play.show', $room->token);
+    }
+
+    /** Room names are shown to strangers: trim, collapse spaces, and keep them free of links and a short blocklist. */
+    private function cleanRoomName(?string $name): ?string
+    {
+        $name = trim(preg_replace('/\s+/', ' ', strip_tags((string) $name)));
+        if ($name === '') {
+            return null;
+        }
+        if (preg_match('~https?://|www\.|\.(com|net|org|io|co)\b~i', $name) || preg_match('/\b(' . implode('|', config('snl.blocked_words', [])) . ')\b/i', $name)) {
+            throw ValidationException::withMessages(['room_name' => 'Pick a friendlier room name — no links or rude words.']);
+        }
+
+        return $name;
     }
 
     public function joinStore(Request $request)

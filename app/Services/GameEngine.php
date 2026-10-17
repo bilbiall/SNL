@@ -111,14 +111,15 @@ class GameEngine
     }
 
     /** Online: creates a lobby with the host seated. @return array{0: Room, 1: Player} */
-    public function createOnline(Board $board, string $hostName, string $mode, int $intensity, int $max, ?string $hostAvatar = null, ?int $startShields = null): array
+    public function createOnline(Board $board, string $hostName, string $mode, int $intensity, int $max, ?string $hostAvatar = null, ?int $startShields = null, ?string $roomName = null, bool $public = false): array
     {
         $this->validateSetup($board, $mode, $intensity);
         $cfg = config('snl.players');
 
-        return DB::transaction(function () use ($board, $hostName, $mode, $intensity, $max, $cfg, $hostAvatar, $startShields) {
+        return DB::transaction(function () use ($board, $hostName, $mode, $intensity, $max, $cfg, $hostAvatar, $startShields, $roomName, $public) {
             $room = Room::create([
                 'token' => Room::newToken(), 'join_code' => Room::newJoinCode(), 'board_id' => $board->id, 'type' => 'online',
+                'name' => $roomName ? mb_substr(trim($roomName), 0, 40) : null, 'is_public' => $public && $roomName,
                 'content_mode' => $mode, 'intensity' => $intensity, 'status' => 'open',
                 'max_players' => max($cfg['min'], min($cfg['max'], $max)),
                 'deck_state' => ['start_shields' => $this->clampShields($startShields)],
@@ -189,7 +190,7 @@ class GameEngine
                 'token' => Room::newToken(), 'join_code' => $old->isOnline() ? Room::newJoinCode() : null,
                 'board_id' => $old->board_id, 'type' => $old->type, 'content_mode' => $old->content_mode,
                 'intensity' => $old->intensity, 'max_players' => $old->max_players,
-                'status' => $old->isParty() ? 'active' : 'open', 'rematch_of' => $old->id,
+                'status' => $old->isParty() ? 'active' : 'open', 'rematch_of' => $old->id, 'name' => $old->name, 'is_public' => $old->is_public,
                 'deck_state' => ['start_shields' => $old->deck_state['start_shields'] ?? null],
             ]);
 
@@ -1135,7 +1136,7 @@ class GameEngine
             'room' => [
                 'token' => $room->token, 'type' => $room->type, 'status' => $room->status,
                 'content_mode' => $room->content_mode, 'intensity' => $room->intensity,
-                'join_code' => $room->join_code, 'round' => $room->round, 'active_rule' => $room->active_rule,
+                'join_code' => $room->join_code, 'name' => $room->name, 'is_public' => (bool) $room->is_public, 'round' => $room->round, 'active_rule' => $room->active_rule,
                 'current_player_id' => $room->current_player_id, 'winner_player_id' => $room->winner_player_id,
                 'host_player_id' => $room->host_player_id, 'max_players' => $room->max_players,
                 'tile_count' => $room->board->tile_count, 'event_seq' => $room->event_seq,

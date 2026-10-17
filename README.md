@@ -62,6 +62,12 @@ Intensity (**Chill / Normal / Spicy**) decides which cards can appear and how ha
 * **Start zone** (GameSet → Boards → *Start zone*): drag a green box over the area where players wait before their first roll (the START sign works well). They spread out inside it instead of stacking on square 1, then hop onto the board when they roll. Remove it to go back to square 1.
 * **Add a player mid-game** (party mode): hamburger menu → *Add a player*. They take a seat at the start zone and play last in the order (up to 12 players).
 
+## Public games, sharing and SEO
+
+* **Public rooms:** when creating an online game, tick *Make it a public game* and give it a name. It appears on **/rooms** (live, refreshed every few seconds) while it is waiting for players and while it is under way; anyone can tap *Join*. Private rooms stay code-only. Rooms that finish or sit idle for an hour drop off the list; names can't contain links or a short blocklist of rude words (`config/snl.php` → `blocked_words`).
+* **Share buttons** (native share sheet, WhatsApp, Telegram, X, Facebook, email, copy link — plain links, no trackers) on the landing page, game browser, how-to-play, fun-facts and the app page; the win screen and the room lobby have share buttons too.
+* **SEO:** every page gets a title, description, canonical URL, Open Graph + Twitter card (`public/img/og-image.png`, regenerate with `node scripts/gen-og-image.mjs`) and JSON-LD (app, FAQ, how-to). `/sitemap.xml` and `/robots.txt` are generated from `APP_URL`. Utility pages (setup, join, sign-in, GameSet, the table) are `noindex`. `/how-to-play` and `/fun-facts` (a family-friendly true-or-false quiz built from the game's own facts) are written to help people find the game honestly — they never glamorise drinking. Set `APP_URL` to the live https domain so canonical links and the sitemap are right.
+
 ## Boards
 
 The game ships with **Neon Night** (80 squares, 5 ladders, 5 snakes) — `database/seeders/data/snl-night.php` holds its artwork path, how the 6 rows of squares sit on the image, every square type and the ladder/snake links. `php artisan db:seed --class=BoardSeeder` creates it (once) and makes it the only active board.

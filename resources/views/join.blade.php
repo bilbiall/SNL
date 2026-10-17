@@ -1,5 +1,6 @@
 @extends('layouts.site')
 
+@section('robots', 'noindex,nofollow')
 @section('title', 'Join a room — Snakes & Liquor')
 
 @section('body')
