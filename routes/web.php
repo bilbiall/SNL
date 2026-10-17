@@ -23,6 +23,10 @@ Route::get('/join', [HomeController::class, 'join'])->name('join');
 
 // Public games, and the indexable pages that help people find the game.
 Route::get('/rooms', [LobbyController::class, 'index'])->name('rooms.index');
+// TV mode: a big-screen view of an online room (the phones play, the TV watches)
+Route::get('/tv', [LobbyController::class, 'tvIndex'])->name('tv.index');
+Route::get('/tv/go', [LobbyController::class, 'tvGo'])->name('tv.go');
+Route::get('/tv/{code}', [RoomController::class, 'tv'])->name('tv.show');
 Route::get('/rooms/list', [LobbyController::class, 'list'])->middleware('throttle:snl-state')->name('rooms.list');
 Route::get('/how-to-play', [ContentController::class, 'howToPlay'])->name('how-to-play');
 Route::get('/fun-facts', [ContentController::class, 'funFacts'])->name('fun-facts');

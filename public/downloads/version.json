@@ -1,12 +1,15 @@
 {
-  "versionName": "1.9.0",
-  "versionCode": 20,
-  "sizeBytes": 27725052,
+  "versionName": "1.9.1",
+  "versionCode": 21,
+  "sizeBytes": 28239355,
   "notes": [
-    "The app now lives at snakesandliquor.co.ke — online play and updates come from there",
-    "Reaction sounds play offline, Pass button on conditional cards, Back and Pause buttons"
+    "Pass button now really appears on \"take a shot if you have ever…\" cards",
+    "Tap outside a card to close it",
+    "Clearer, more relatable cards",
+    "New illustrated avatars including dreadlocks",
+    "Home screen: content centred with the background photos showing again"
   ],
-  "sha256": "6b75b61d90c17dc0d2b6f10d7bb495910c618804122db7ee682c192a0f762408",
-  "builtAt": "2026-10-17T07:44:55.725Z",
+  "sha256": "eb2f3ff32d2e2635c21cddf1de5af72e8377032c574753edd2479dca13658f01",
+  "builtAt": "2026-10-17T08:45:03.790Z",
   "certSha256": "2a4dce20c1650504c343933159a6682a0362a0420e0e0ade01bba1347ee7d7f3"
 }

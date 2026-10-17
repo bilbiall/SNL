@@ -743,7 +743,7 @@ class GameEngine
     /** A hit on a single player — pauses for their Shield if they hold one. */
     public static function conditionalCard(array $card): bool
     {
-        return ($card['kind'] ?? '') === 'self' && (bool) preg_match('/if/i', (string) ($card['text'] ?? ''));
+        return ($card['kind'] ?? '') === 'self' && (bool) preg_match('/^\s*(sip|take (a )?(shot|sip)|drink|finish)\b[^.!?]*\bif\b/i', (string) ($card['text'] ?? ''));
     }
 
     private function hit(Player $source, array $targets, array $card, ?int $tile): void

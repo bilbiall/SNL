@@ -542,8 +542,9 @@
         buttons: '<button class="obtn" data-ok>Got it</button>',
         extra: auto ? `<div class="autobar" style="width:100%;animation-duration:${seconds}s"></div>` : '' }));
       let timer = null;
-      const done = () => { clearTimeout(timer); hide(id); snd('close'); try { SNLAudio.duck(false); } catch (_) {} resolve(); };
+      const done = () => { clearTimeout(timer); $(id).onclick = null; hide(id); snd('close'); try { SNLAudio.duck(false); } catch (_) {} resolve(); };
       $(id).querySelector('[data-ok]').onclick = done;
+      $(id).onclick = (e) => { if (e.target === $(id)) done(); };          // a tap outside the card closes it
       if (auto) timer = setTimeout(done, seconds * 1000);
     });
   }
@@ -1052,6 +1053,22 @@
     if (sig === lobbySig && $('ovLobby').classList.contains('show')) return;
     const first = lobbySig === null;
     lobbySig = sig;
+    if (C.tv) {                                          // big-screen waiting room: scan to join, no buttons
+      const joinUrl = location.origin + '/join?code=' + encodeURIComponent(r.join_code);
+      show('ovLobby', `<div class="ov-card wide tv-lobby ${first ? '' : 'still'}" style="--k:#f59e0b">
+        <div class="ov-title">${r.name ? esc(r.name) : 'Join this game'}</div>
+        <div class="tv-join">
+          <div class="tv-qr">${window.snlQR ? snlQR(joinUrl, 8) : ''}</div>
+          <div class="tv-how">
+            <div class="ov-sub">Scan the code, or go to <b>${esc(location.host)}/join</b> and enter</div>
+            <div class="code-big">${esc(r.join_code)}</div>
+          </div>
+        </div>
+        <div class="tgt-row">${active.map(chip).join('')}</div>
+        <div class="wait"><div class="w-txt">${active.length < 2 ? 'Waiting for players to join' : 'Waiting for the host to start'}…</div></div>
+        <div class="ov-sub">${active.length} / ${r.max_players} players</div></div>`);
+      return;
+    }
     const tiles = [['#f59e0b', 'self'], ['#ec4899', 'pick'], ['#22d3ee', 'fact'], ['#facc15', 'power'], ['#34d399', 'trophy']].map(([c, i]) => `<div class="w-tile" style="--c:${c}">${ic(i)}</div>`).join('');
     show('ovLobby', `<div class="ov-card wide ${first ? '' : 'still'}" style="--k:#f59e0b">
       <div class="ov-icon">${ic('tavern')}</div>
@@ -1062,6 +1079,7 @@
       <div class="wait"><div class="w-track" id="waitTrack">${tiles}<div class="w-tok" id="waitTok"><div><img id="waitAv" src="${C.avatarBase}/${(active[0] && AV.test(active[0].avatar || '')) ? active[0].avatar : 'f1-3'}.svg" alt=""></div></div></div>
         <div class="w-txt">${active.length < 2 ? 'Waiting for players to join' : (iHost ? 'Ready when you are' : 'Waiting for the host to start')}…</div></div>
       <div class="ov-sub">${active.length} / ${r.max_players} players</div>
+      <div class="ov-sub" style="opacity:.8;">On a TV? Open <b>${esc(location.host)}/tv</b> and enter the code.</div>
       <div class="ov-btns">
         <button class="obtn vio" id="lobbyShare">${ic('share')} Share invite</button>
         ${iHost ? `<button class="obtn" id="lobbyStart" ${active.length < 2 ? 'disabled' : ''}>${ic('play')} Start game</button>` : ''}
@@ -1204,12 +1222,26 @@
   /** The back button / Android back key: party → pause screen, online → "leave this game?". */
   function goBack() {
     if (document.querySelector('.ov.show')) { const open = ['ovConfirm', 'ovMenu', 'ovPrompt', 'ovCard', 'ovLobby'].find((id) => $(id) && $(id).classList.contains('show')); if (open === 'ovMenu') { hide('ovMenu'); return; } if (open === 'ovConfirm') { if ($('ovConfirm').dataset.pause) { delete $('ovConfirm').dataset.pause; hide('ovConfirm'); try { SNLAudio.setPaused(false); } catch (_) {} } else hide('ovConfirm'); return; } }
+    if (C.tv) { location.href = '/tv'; return; }
     if (C.isParty) openPause(); else confirmLeave(C.meId);
   }
+  (function tvSoundHint() {
+    if (!C.tv) return;
+    const el = document.createElement('div');
+    el.className = 'tv-hint';
+    el.textContent = 'Press OK on the remote to turn the sound on';
+    document.body.appendChild(el);
+    const go = () => { el.remove(); ['keydown', 'click', 'pointerdown'].forEach((ev) => removeEventListener(ev, go, true)); };
+    ['keydown', 'click', 'pointerdown'].forEach((ev) => addEventListener(ev, go, true));
+    setTimeout(go, 20000);
+  })();
+
   (function wireBack() {
     const b = $('backBtn'), pb = $('pauseBtn');
     if (b) b.onclick = goBack;
     if (pb) { if (C.isParty) pb.style.display = ''; pb.onclick = openPause; }
+    // a tap on the dimmed area outside the menu / pause / confirm cards closes them (decision prompts stay — they need an answer)
+    ['ovMenu', 'ovConfirm'].forEach((id) => { const el = $(id); if (el) el.addEventListener('click', (e) => { if (e.target === el) goBack(); }); });
     // the phone's own back key must not drop people out of a game by accident: take the first press ourselves
     try { history.pushState({ snl: 1 }, ''); } catch (_) {}
     addEventListener('popstate', () => { try { history.pushState({ snl: 1 }, ''); } catch (_) {} goBack(); });

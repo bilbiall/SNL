@@ -16,6 +16,23 @@ class LobbyController extends Controller
         return view('rooms', ['rooms' => $this->rooms()]);
     }
 
+    /** The TV start screen: type a room code, or pick one of the public games. */
+    public function tvIndex()
+    {
+        return view('tv', ['rooms' => $this->rooms()]);
+    }
+
+    public function tvGo(\Illuminate\Http\Request $request)
+    {
+        $code = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $request->query('code')));
+        $room = $code !== '' ? Room::where('join_code', $code)->first() : null;
+        if (!$room || !$room->isOnline()) {
+            return redirect()->route('tv.index')->withErrors(['code' => 'No online game with that code — check it and try again.']);
+        }
+
+        return redirect()->route('tv.show', $room->join_code);
+    }
+
     public function list(): JsonResponse
     {
         return response()->json(['rooms' => $this->rooms(), 'at' => now()->toIso8601String()], 200, ['Cache-Control' => 'no-store']);
@@ -37,6 +54,7 @@ class LobbyController extends Controller
                 return [
                     'name'      => $r->name,
                     'code'      => $open ? $r->join_code : null,       // only waiting rooms can be joined
+                    'tv'        => $r->join_code,                       // anyone can watch a listed room on a TV
                     'open'      => $open,
                     'mode'      => ['label' => $modes[$r->content_mode]['label'] ?? $r->content_mode, 'icon' => $modes[$r->content_mode]['icon'] ?? 'cards', 'adult' => (bool) ($modes[$r->content_mode]['adult'] ?? false)],
                     'intensity' => ['label' => $levels[$r->intensity]['label'] ?? '', 'icon' => $levels[$r->intensity]['icon'] ?? 'star'],

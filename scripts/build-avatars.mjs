@@ -8,6 +8,7 @@ import { createAvatar } from '@dicebear/core';
 import { pixelArt, lorelei } from '@dicebear/collection';
 import { HEROES, heroSvg } from './lib/heroes.mjs';
 import { GENZ, genzSvg } from './lib/genz.mjs';
+import { locsLayers } from './lib/locs.mjs';
 import { BARCREW, barSvg } from './lib/barcrew.mjs';
 import { ANIMAL_ROSTER, COLOURWAYS, animalSvg } from './lib/animals.mjs';
 
@@ -97,11 +98,30 @@ const ILLUS = [
   { id: 'i7',  gender: 'm', label: 'Jett',     seed: 'Jett'    }, { id: 'i8',  gender: 'm', label: 'Ziggy',    seed: 'Ziggy'   },
   { id: 'i9',  gender: 'm', label: 'Dash',     seed: 'Dash'    }, { id: 'i10', gender: 'm', label: 'Onyx',     seed: 'Onyx'    },
   { id: 'i11', gender: 'm', label: 'Rio',      seed: 'Rio'     }, { id: 'i12', gender: 'm', label: 'Kai',      seed: 'Kai'     },
+  // more illustrated characters
+  { id: 'i13', gender: 'f', label: 'Zuri',     seed: 'Zuri'    }, { id: 'i14', gender: 'f', label: 'Amani',    seed: 'Amani'   },
+  { id: 'i15', gender: 'f', label: 'Nia',      seed: 'Nia'     }, { id: 'i16', gender: 'f', label: 'Wanjiru',  seed: 'Wanjiru' },
+  { id: 'i17', gender: 'f', label: 'Aisha',    seed: 'Aisha'   }, { id: 'i18', gender: 'f', label: 'Tilly',    seed: 'Tilly'   },
+  { id: 'i19', gender: 'm', label: 'Baraka',   seed: 'Baraka'  }, { id: 'i20', gender: 'm', label: 'Otieno',   seed: 'Otieno'  },
+  { id: 'i21', gender: 'm', label: 'Sam',      seed: 'Sam'     }, { id: 'i22', gender: 'm', label: 'Kamau',    seed: 'Kamau'   },
+  { id: 'i23', gender: 'm', label: 'Leo',      seed: 'Leo'     }, { id: 'i24', gender: 'm', label: 'Jabari',   seed: 'Jabari'  },
+  // dreadlocks (drawn on top of a near-bald illustrated head — see scripts/lib/locs.mjs)
+  { id: 'i25', gender: 'f', label: 'Locs Queen',   seed: 'Onyx1', locs: '#2b1b14' }, { id: 'i26', gender: 'm', label: 'Locs King',   seed: 'Onyx2', locs: '#14100e' },
+  { id: 'i27', gender: 'f', label: 'Honey Locs',   seed: 'Onyx3', locs: '#8a5a22' }, { id: 'i28', gender: 'm', label: 'Dread Head',  seed: 'Onyx4', locs: '#3b1d0f' },
+  { id: 'i29', gender: 'f', label: 'Purple Locs',  seed: 'Onyx5', locs: '#6d28d9' }, { id: 'i30', gender: 'm', label: 'Red Locs',    seed: 'Onyx6', locs: '#9f1d1d' },
+  { id: 'i31', gender: 'f', label: 'Teal Locs',    seed: 'Onyx7', locs: '#0f766e' }, { id: 'i32', gender: 'm', label: 'Blonde Locs', seed: 'Onyx8', locs: '#c9a24a' },
 ];
 let il = 0;
 ILLUS.forEach((look, k) => {
   for (const skin of SKINS) {
-    const svg = createAvatar(lorelei, { seed: look.seed, hairColor: [ILLUS_HAIR[k]], mouth: ['happy01','happy02','happy03','happy04','happy05','happy06','happy07','happy08','happy09','happy10'], skinColor: [skin.hex], backgroundColor: [ILLUS_BG[k % ILLUS_BG.length]], size: 128 }).toString();
+    if (look.locs) {
+      let base = createAvatar(lorelei, { seed: look.seed, hair: ['variant34'], hairColor: [look.locs.slice(1)], beardProbability: look.gender === 'f' ? 0 : 30, mouth: ['happy01','happy02','happy03','happy04','happy05','happy06','happy07','happy08','happy09','happy10'], skinColor: [skin.hex], backgroundColor: [ILLUS_BG[k % ILLUS_BG.length]], size: 128 }).toString();
+      const L = locsLayers(look.locs);
+      base = base.replace('y="0" /><g transform', 'y="0" />' + L.back + '<g transform').replace(/<\/g><\/svg>$/, L.front + '</g></svg>');
+      fs.writeFileSync(`public/avatars/${look.id}-${skin.id}.svg`, base); il++;
+      continue;
+    }
+    const svg = createAvatar(lorelei, { seed: look.seed, hairColor: [ILLUS_HAIR[k % ILLUS_HAIR.length]], mouth: ['happy01','happy02','happy03','happy04','happy05','happy06','happy07','happy08','happy09','happy10'], skinColor: [skin.hex], backgroundColor: [ILLUS_BG[k % ILLUS_BG.length]], size: 128 }).toString();
     fs.writeFileSync(`public/avatars/${look.id}-${skin.id}.svg`, svg); il++;
   }
 });

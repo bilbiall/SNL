@@ -148,9 +148,10 @@
     }
     /* phones: declutter — dim the busy photo, one share button, a one-line app card, footer in the flow */
     @media (max-width: 560px) {
-        .lp { justify-content: flex-start; padding-top: 4.6rem; padding-bottom: 1.2rem; }
-        .bg i { filter: brightness(.55) saturate(.9); }
-        .wash { background: radial-gradient(ellipse 80% 55% at 50% 40%, rgba(7,6,15,.55), rgba(7,6,15,.9) 80%), linear-gradient(180deg, rgba(7,6,15,.8), rgba(7,6,15,.5) 40%, rgba(7,6,15,.95)); }
+        /* centred in the screen, so the space above and below the content is even; the photos show through a lighter wash */
+        .lp { justify-content: center; padding: 4.4rem 1.2rem 2.2rem; }
+        .bg i { filter: none; }
+        .wash { background: radial-gradient(ellipse 85% 60% at 50% 45%, rgba(7,6,15,.12), rgba(7,6,15,.62) 85%), linear-gradient(180deg, rgba(7,6,15,.6), rgba(7,6,15,.12) 35%, rgba(7,6,15,.12) 65%, rgba(7,6,15,.72)); }
         .mini { transform: scale(.88); margin: .9rem 0 .8rem; }
         .share-row { margin-top: .8rem; gap: .35rem; }
         .share-row .share-l, .share-row .sb:not(.nat):not(.cp) { display: none; }
@@ -234,7 +235,7 @@
         <p class="ga-tip" id="gaTip"></p>
     </section>
 
-    <div class="lp-foot">18+ for Drinks mode · Drink responsibly · <a href="{{ route('login') }}">Admin</a> · <button type="button" class="faq-link" id="faqLink">FAQ</button></div>
+    <div class="lp-foot">18+ for Drinks mode · Drink responsibly · <a href="{{ route('login') }}">Admin</a> · <a href="{{ route('tv.index') }}">TV</a> · <button type="button" class="faq-link" id="faqLink">FAQ</button></div>
 </div>
 
 <section class="about" id="aboutSec" aria-label="About Snakes & Liquor" hidden>

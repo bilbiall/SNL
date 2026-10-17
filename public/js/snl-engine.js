@@ -297,7 +297,7 @@
     this.hit(source, [target], { kind: 'self', icon: icon, text: this.penaltyText(units), spin: false, units: units }, tile);
   };
 
-  P.conditionalCard = function (card) { return !!card && card.kind === 'self' && /if/i.test(String(card.text || '')); };
+  P.conditionalCard = function (card) { return !!card && card.kind === 'self' && /^\s*(sip|take (a )?(shot|sip)|drink|finish)\b[^.!?]*\bif\b/i.test(String(card.text || '')); };
 
   /** A hit on a single player — pauses for their Shield if they hold one. */
   P.hit = function (source, targets, card, tile) {

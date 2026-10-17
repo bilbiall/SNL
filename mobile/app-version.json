@@ -1,8 +1,11 @@
 {
-  "versionName": "1.9.0",
-  "versionCode": 20,
+  "versionName": "1.9.1",
+  "versionCode": 21,
   "notes": [
-    "The app now lives at snakesandliquor.co.ke — online play and updates come from there",
-    "Reaction sounds play offline, Pass button on conditional cards, Back and Pause buttons"
+    "Pass button now really appears on \"take a shot if you have ever…\" cards",
+    "Tap outside a card to close it",
+    "Clearer, more relatable cards",
+    "New illustrated avatars including dreadlocks",
+    "Home screen: content centred with the background photos showing again"
   ]
 }

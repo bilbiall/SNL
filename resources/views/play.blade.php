@@ -14,7 +14,7 @@
     @include('partials.play-css')
     @include('partials.brand-css')
 </head>
-<body>
+<body class="{{ ($tv ?? false) ? 'tv' : '' }}">
 @include('partials.loader', ['wait' => 1])
 <div class="stage" id="stage">
 
@@ -55,7 +55,7 @@
             <div class="feed-list" id="feedList"></div>
         </div>
 
-        @if(!($local ?? false) && $room->isOnline())
+        @if(!($local ?? false) && !($tv ?? false) && $room->isOnline())
         <div class="hud hud-bl">
             <div class="reactbar" id="reactBar">
                 @foreach($reactions as $key)<button type="button" data-react="{{ $key }}" aria-label="React"><x-icon :name="$key" /></button>@endforeach
@@ -168,6 +168,8 @@ window.SNL = {
     },
     packUrl: @json(url('/offline/pack.json')),
     isParty: @json($room->isParty()),
+    tv: @json((bool) ($tv ?? false)),
+    joinCode: @json($room->join_code),
     meId: @json($meId),
     positions: @json($positions),
     state: @json($state),
@@ -187,6 +189,9 @@ window.SNL = {
     iconKeys: @json(\App\Support\Icons::keys()),
 };
 </script>
+@if($tv ?? false)
+<script src="{{ asset('js/qr.js') }}"></script>
+@endif
 @if($room->isOnline())
 <script src="{{ \App\Support\OfflineAssets::js('snl-engine.js') }}"></script>
 <script src="{{ \App\Support\OfflineAssets::js('snl-local.js') }}"></script>

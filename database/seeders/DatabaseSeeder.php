@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             BoardSeeder::class,
             CardSeeder::class,
             MoreCardsSeeder::class,
+            ClearerCardsSeeder::class,
             WordListSeeder::class,
         ]);
     }

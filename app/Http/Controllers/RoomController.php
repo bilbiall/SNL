@@ -149,6 +149,28 @@ class RoomController extends Controller
         ]);
     }
 
+    /** TV mode: the same table, but nobody is "me" — it only watches. */
+    public function tv(Request $request, string $code)
+    {
+        $room = Room::where('join_code', strtoupper(trim($code)))->first();
+        abort_unless($room && $room->isOnline(), 404);
+        $room->load('board');
+
+        return view('play', [
+            'room'      => $room,
+            'board'     => $room->board,
+            'positions' => $room->board->positions(),
+            'state'     => $this->engine->state($room, null),
+            'meId'      => null,
+            'tv'        => true,
+            'mode'      => config("snl.modes.{$room->content_mode}"),
+            'tileKinds' => $this->tileKindsOnBoard($room->board),
+            'reactions' => config('snl.reactions'),
+            'music'     => file_exists(public_path('audio/playback.mp3')) ? asset('audio/playback.mp3') : null,
+            'timing'    => config('snl.timing'),
+        ]);
+    }
+
     public function state(Request $request, Room $room): JsonResponse
     {
         return response()->json($this->engine->state($room, $this->meFor($request, $room)?->id));

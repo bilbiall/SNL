@@ -1,7 +1,7 @@
 {
-  "versionName": "1.1.0",
-  "versionCode": 7,
+  "versionName": "1.1.1",
+  "versionCode": 8,
   "notes": [
-    "The app now lives at snakesandliquor.co.ke — online play and updates come from there"
+    "Pass button on conditional cards, tap outside a card to close it, clearer cards, new avatars"
   ]
 }

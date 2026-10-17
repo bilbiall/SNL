@@ -528,6 +528,106 @@
           "id": "i12",
           "gender": "m",
           "label": "Kai"
+        },
+        {
+          "id": "i13",
+          "gender": "f",
+          "label": "Zuri"
+        },
+        {
+          "id": "i14",
+          "gender": "f",
+          "label": "Amani"
+        },
+        {
+          "id": "i15",
+          "gender": "f",
+          "label": "Nia"
+        },
+        {
+          "id": "i16",
+          "gender": "f",
+          "label": "Wanjiru"
+        },
+        {
+          "id": "i17",
+          "gender": "f",
+          "label": "Aisha"
+        },
+        {
+          "id": "i18",
+          "gender": "f",
+          "label": "Tilly"
+        },
+        {
+          "id": "i19",
+          "gender": "m",
+          "label": "Baraka"
+        },
+        {
+          "id": "i20",
+          "gender": "m",
+          "label": "Otieno"
+        },
+        {
+          "id": "i21",
+          "gender": "m",
+          "label": "Sam"
+        },
+        {
+          "id": "i22",
+          "gender": "m",
+          "label": "Kamau"
+        },
+        {
+          "id": "i23",
+          "gender": "m",
+          "label": "Leo"
+        },
+        {
+          "id": "i24",
+          "gender": "m",
+          "label": "Jabari"
+        },
+        {
+          "id": "i25",
+          "gender": "f",
+          "label": "Locs Queen"
+        },
+        {
+          "id": "i26",
+          "gender": "m",
+          "label": "Locs King"
+        },
+        {
+          "id": "i27",
+          "gender": "f",
+          "label": "Honey Locs"
+        },
+        {
+          "id": "i28",
+          "gender": "m",
+          "label": "Dread Head"
+        },
+        {
+          "id": "i29",
+          "gender": "f",
+          "label": "Purple Locs"
+        },
+        {
+          "id": "i30",
+          "gender": "m",
+          "label": "Red Locs"
+        },
+        {
+          "id": "i31",
+          "gender": "f",
+          "label": "Teal Locs"
+        },
+        {
+          "id": "i32",
+          "gender": "m",
+          "label": "Blonde Locs"
         }
       ]
     }

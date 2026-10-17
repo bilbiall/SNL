@@ -374,6 +374,18 @@
         .stage.feed-mini .fi { font-size: clamp(.5rem, 2cqh, .66rem); padding: .22rem .4rem; border-radius: .5rem; line-height: 1.25; }
         .stage.feed-mini .fi:nth-last-child(n+6) { display: none; }
     }
+    /* ═════ TV mode (/tv/CODE): big, readable from the sofa, and a clear focus ring for the remote ═════ */
+    body.tv { cursor: none; }
+    body.tv a:focus, body.tv button:focus { outline: 4px solid #34d399; outline-offset: 3px; }
+    body.tv #pauseBtn { display: none !important; }
+    body.tv .icon-btn { width: 3.2rem; height: 3.2rem; font-size: 1.5rem; }
+    body.tv .ov-card { font-size: 1.15em; }
+    .tv-join { display: flex; align-items: center; justify-content: center; gap: 2rem; margin: .6rem 0; flex-wrap: wrap; }
+    .tv-qr { width: min(34vh, 16rem); background: #fff; padding: .6rem; border-radius: 1rem; box-shadow: 0 8px 30px rgba(0,0,0,.5); }
+    .tv-qr svg { width: 100%; height: auto; display: block; }
+    .tv-how { text-align: center; }
+    .tv-how .code-big { font-size: clamp(2.4rem, 9vh, 5rem); }
+    .tv-hint { position: fixed; left: 50%; bottom: 3vh; transform: translateX(-50%); z-index: 60; padding: .7rem 1.4rem; border-radius: 999px; background: rgba(16,185,129,.95); color: #fff; font: 900 1.1rem Figtree, system-ui, sans-serif; animation: wPulse 1.6s ease-in-out infinite; }
     /* ── phones: the left strip shows every player as a small squared card — name, tile number, meter ── */
     .pl .sq { display: none; }
     .pl.rx { animation: rxPulse 1.3s ease-out; } @keyframes rxPulse { 0% { box-shadow: 0 0 0 0 var(--c); transform: scale(1); } 25% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 55%, transparent), 0 0 22px var(--c); transform: scale(1.05); } 100% { box-shadow: 0 0 0 0 transparent; transform: scale(1); } }
