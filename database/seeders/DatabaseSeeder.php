@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             MoreCardsSeeder::class,
             ClearerCardsSeeder::class,
             WordListSeeder::class,
+            FriendsModesSeeder::class,
         ]);
     }
 }

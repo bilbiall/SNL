@@ -25,7 +25,8 @@
     <ul>
         <li><b>Party mode</b> — pass one phone around the table. It works with no signal once loaded.</li>
         <li><b>Online</b> — host a room, share the code or QR, and everyone joins from their own phone. Put it on a TV from <a href="{{ route('tv.index') }}">/tv</a> for a big shared board.</li>
-        <li><b>Family or Adults</b> — Family mode suits every age. The adults-only mode is for people 18 and over.</li>
+        <li><b>Family, Boyz or Girlies</b> — Family mode suits every age. Boyz and Girlies have their own banter, dares and trivia for a group of guy friends or girl friends, with no alcohol.</li>
+        <li><b>Drinks</b> — the adults-only mode, for people 18 and over.</li>
     </ul>
     <p>New here? Read <a href="{{ route('how-to-play') }}">how to play</a> or try the <a href="{{ route('fun-facts') }}">fun facts quiz</a>. The game is also available as an <a href="{{ route('app.page') }}">Android app</a>.</p>
 

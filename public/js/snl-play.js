@@ -336,7 +336,7 @@
       case 'neutral': return [`${ic('hourglass')} ${n(who)}: ${clip(a.text, 50)}`, '#6b7280'];
       case 'extra_turn': return [`${ic('dice')} ${n(who)} rolls again`, '#38bdf8'];
       case 'joined': return [`${ic('team')} ${n(who)} joined the game`, '#34d399'];
-      case 'factcheck': return [`${ic(a.correct ? 'check' : 'cross')} ${n(who)} ${a.correct ? 'got it right' : 'got it wrong'} — it's <b>${a.answer ? 'TRUE' : 'FALSE'}</b>`, a.correct ? '#34d399' : '#f87171'];
+      case 'factcheck': return [`${ic(a.correct ? 'check' : 'cross')} ${n(who)} said <b>${a.guess ? 'TRUE' : 'FALSE'}</b> — ${a.correct ? 'right' : 'wrong'}, it's <b>${a.answer ? 'TRUE' : 'FALSE'}</b>`, a.correct ? '#34d399' : '#f87171'];
       case 'bluff_said': return [`${ic('jester')} ${n(who)} made a claim`, '#14b8a6'];
       case 'bluff_pass': return [`${ic('check')} Nobody doubted ${n(who)}`, '#34d399'];
       case 'bluff_called':
@@ -602,14 +602,16 @@
   /** True-or-false reveal: right or wrong, the real answer, and why. */
   function factResultOverlay(a) {
     snd(a.correct ? 'quest' : 'buzz'); meme(a.correct ? 'correct' : 'fail');
+    const roller = P(a.player_id);
+    const said = a.guess === undefined ? '' : `${esc(roller.name)} said <b>${a.guess ? 'TRUE' : 'FALSE'}</b>. `;
     return holdCard('ovCard', {
       color: a.correct ? '#34d399' : '#f87171',
       head: a.correct ? 'Correct!' : 'Wrong!',
       icon: a.correct ? 'check' : 'cross',
-      who: chip(P(a.player_id)),
+      who: chip(roller),
       text: `${a.text}`,
-      sub: `<b>${a.answer ? 'TRUE' : 'FALSE'}</b>${a.explain ? ' — ' + esc(a.explain) : ''}`,
-      seconds: 9,
+      sub: `${said}The answer is <b>${a.answer ? 'TRUE' : 'FALSE'}</b>.${a.explain ? '<br>Why: ' + esc(a.explain) : ''}`,
+      seconds: 10,
     });
   }
 
@@ -850,7 +852,7 @@
     };
     if (!card || !heads[p.type]) { w.classList.remove('show'); return; }
     const status = {
-      tf: `${esc(who.name)} is making the call…`,
+      tf: `${esc(who.name)} is deciding: true or false?`,
       bluff_say: `${esc(who.name)} is about to make a claim…`,
       bluff_call: p.actors && p.actors.includes(C.meId) ? 'Think they\'re bluffing?' : `Waiting for challengers…`,
       bluff_verdict: `${esc(P(p.caller_id).name)} called bluff on ${esc(who.name)} — judges are deciding…`,
@@ -858,7 +860,9 @@
     }[p.type];
     w.style.setProperty('--k', kindColor(p.type === 'tf' ? 'fact' : p.type === 'spot' ? (card.kind === 'quickfire' ? 'quickfire' : 'spotlight') : 'bluff'));
     w.innerHTML = `<div class="w-ic">${ic(card.icon || 'cards')}</div><div class="w-tx"><b>${heads[p.type]}</b>
-      <div>${p.type === 'bluff_verdict' ? '' : esc(card.text)}</div><span>${status}</span></div>`;
+      <div>${p.type === 'bluff_verdict' ? '' : esc(card.text)}</div>
+      ${p.type === 'tf' ? `<div class="w-ch"><i class="t">${ic('check')} True</i><em>or</em><i class="f">${ic('cross')} False</i></div>` : ''}
+      <span>${status}</span></div>`;
     w.classList.add('show');
   }
 

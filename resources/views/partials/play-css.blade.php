@@ -455,17 +455,22 @@
     .obtn.no { background: linear-gradient(135deg, #ef4444, #dc2626); }
     .watch {
         --k: #06b6d4; position: absolute; top: calc(var(--nav) + 6px); left: 50%; transform: translateX(-50%) translateY(-8px); z-index: 36; display: none; align-items: center; gap: .6rem;
-        width: min(52cqw, 360px); padding: .45rem .7rem .45rem .5rem; border-radius: .9rem; text-align: left; pointer-events: none;
+        width: min(90cqw, 520px); padding: .6rem .85rem .6rem .6rem; border-radius: .9rem; text-align: left; pointer-events: none;
         background: linear-gradient(135deg, color-mix(in srgb, var(--k) 22%, #14121f), rgba(8,7,16,.92)); border: 1.5px solid var(--k);
         box-shadow: 0 8px 24px rgba(0,0,0,.5), 0 0 22px color-mix(in srgb, var(--k) 35%, transparent);
     }
     .watch.show { display: flex; animation: watchIn .3s ease both; }
     @keyframes watchIn { to { transform: translateX(-50%) translateY(0); } }
-    .watch .w-ic { width: clamp(26px, 8cqh, 38px); height: clamp(26px, 8cqh, 38px); border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: clamp(.95rem, 4cqh, 1.35rem); color: var(--k); border: 2px solid var(--k); background: rgba(255,255,255,.05); }
-    .watch .w-tx { min-width: 0; font-size: clamp(.58rem, 2.3cqh, .76rem); line-height: 1.3; }
+    .watch .w-ic { width: clamp(34px, 9cqh, 46px); height: clamp(34px, 9cqh, 46px); border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: clamp(.95rem, 4cqh, 1.35rem); color: var(--k); border: 2px solid var(--k); background: rgba(255,255,255,.05); }
+    .watch .w-tx { min-width: 0; font-size: clamp(.8rem, 3.1cqh, 1.02rem); line-height: 1.35; }
     .watch .w-tx b { display: block; font-size: .88em; letter-spacing: .08em; text-transform: uppercase; color: var(--k); }
     .watch .w-tx div { font-weight: 800; }
     .watch .w-tx span { color: #9ca3af; font-weight: 600; }
+    .watch .w-ch { display: flex; align-items: center; gap: .5rem; margin: .3rem 0 .2rem; }
+    .watch .w-ch i { font-style: normal; display: inline-flex; align-items: center; gap: .3em; padding: .15em .7em; border-radius: 999px; font-weight: 900; font-size: .92em; border: 1.5px solid; }
+    .watch .w-ch i.t { color: #6ee7b7; border-color: #10b981; background: rgba(16,185,129,.16); }
+    .watch .w-ch i.f { color: #fca5a5; border-color: #ef4444; background: rgba(239,68,68,.16); }
+    .watch .w-ch em { font-style: normal; color: #9ca3af; font-weight: 700; font-size: .85em; }
     .spot-clock { margin: .25rem 0; }
     .spot-clock b { display: inline-flex; align-items: center; justify-content: center; min-width: 2.4em; padding: .1em .5em; font-size: clamp(1.3rem, 8cqh, 2.4rem); font-weight: 900; font-variant-numeric: tabular-nums; border-radius: .6em; background: rgba(251,146,60,.18); border: 2px solid #fb923c; color: #fdba74; }
     .spot-clock.low b { background: rgba(239,68,68,.22); border-color: #ef4444; color: #fca5a5; animation: clockPulse .6s ease-in-out infinite; }

@@ -26,6 +26,10 @@ return [
                      'blurb' => 'Shots, sips and forfeits. 18+ only — please drink responsibly.'],
         'family' => ['label' => 'Family', 'icon' => 'balloons', 'adult' => false, 'enabled' => true,
                      'blurb' => 'Zero alcohol. Silly actions, facts and challenges everyone can play.'],
+        'boyz'   => ['label' => 'Boyz', 'icon' => 'fist', 'adult' => false, 'enabled' => true,
+                     'blurb' => 'Guys together: banter, football talk, dares and push-up forfeits. No alcohol.'],
+        'girlies' => ['label' => 'Girlies', 'icon' => 'sparkles', 'adult' => false, 'enabled' => true,
+                     'blurb' => 'Girls and their friends: hype, confessions, dares and runway forfeits. No alcohol.'],
         'lovers' => ['label' => 'Lovers', 'icon' => 'heart',    'adult' => true,  'enabled' => false,
                      'blurb' => 'For couples. Coming soon.'],
     ],
@@ -61,6 +65,8 @@ return [
     'mode_icons' => [
         'drinks' => ['self' => 'martini', 'everyone' => 'cheers', 'pick' => 'wine'],
         'family' => ['self' => 'party', 'everyone' => 'balloons'],
+        'boyz' => ['self' => 'fist', 'everyone' => 'team', 'pick' => 'crown'],
+        'girlies' => ['self' => 'sparkles', 'everyone' => 'party', 'pick' => 'crown'],
     ],
 
     // What a Mystery spin can turn into (kind => weight).
@@ -122,6 +128,16 @@ return [
             1 => [1 => 'Do three star jumps.', 2 => 'Do six star jumps.'],
             2 => [1 => 'Do five star jumps.',  2 => 'Do ten star jumps.'],
             3 => [1 => 'Dance like nobody is watching for ten seconds.', 2 => 'Sing the chorus of any song — loudly.'],
+        ],
+        'boyz' => [
+            1 => [1 => 'Do five push-ups.', 2 => 'Do ten push-ups.'],
+            2 => [1 => 'Do eight push-ups.', 2 => 'Do fifteen push-ups.'],
+            3 => [1 => 'Hold a plank for 20 seconds.', 2 => 'Hold a plank for 40 seconds.'],
+        ],
+        'girlies' => [
+            1 => [1 => 'Strike three model poses.', 2 => 'Do a full runway walk.'],
+            2 => [1 => 'Do a runway walk with a dramatic turn.', 2 => 'Sing the chorus of a throwback song.'],
+            3 => [1 => 'Give an Oscar speech for winning nothing.', 2 => 'Do your best diva exit and re-entrance.'],
         ],
     ],
 
