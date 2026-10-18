@@ -217,6 +217,18 @@ return [
     // Google Analytics 4 measurement id (G-XXXXXXXXXX). Leave empty to turn tracking off.
     'analytics' => ['ga4_id' => env('SNL_GA4_ID')],
 
+    // Shown on the About and Privacy pages. Leave empty to hide it.
+    'contact_email' => env('SNL_CONTACT_EMAIL'),
+
+    // Google AdSense publisher id (ca-pub-1234567890123456). Empty = no ads anywhere.
+    // Ads only run at a pause (a host starting a new game / tapping Play again), never mid-game and never in the apps.
+    // min_gap = seconds between ads for one player; free_games = games per visit before the first ad.
+    'ads' => [
+        'client' => env('SNL_ADSENSE_ID'),
+        'min_gap' => (int) env('SNL_ADS_MIN_GAP', 180),
+        'free_games' => (int) env('SNL_ADS_FREE_GAMES', 1),
+    ],
+
     'public_url' => env('SNL_PUBLIC_URL', 'https://snakesandliquor.co.ke'),
 
     // Public room names are shown to strangers — these can't appear in them (whole words, case-insensitive).

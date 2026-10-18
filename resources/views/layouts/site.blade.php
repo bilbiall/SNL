@@ -7,6 +7,7 @@
     <title>@yield('title', 'Snakes & Liquor')</title>
     @include('partials.seo')
     @include('partials.analytics')
+    @if(preg_match('/^ca-pub-\d+$/', (string) config('snl.ads.client')))<meta name="google-adsense-account" content="{{ config('snl.ads.client') }}">@endif
     @include('partials.pwa-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('partials.theme')

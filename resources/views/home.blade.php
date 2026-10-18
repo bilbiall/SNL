@@ -235,7 +235,7 @@
         <p class="ga-tip" id="gaTip"></p>
     </section>
 
-    <div class="lp-foot">18+ for Drinks mode · Drink responsibly · <a href="{{ route('login') }}">Admin</a> · <a href="{{ route('tv.index') }}">TV</a> · <button type="button" class="faq-link" id="faqLink">FAQ</button></div>
+    <div class="lp-foot">18+ for Drinks mode · Drink responsibly · <a href="{{ route('login') }}">Admin</a> · <a href="{{ route('tv.index') }}">TV</a> · <a href="{{ route('about') }}">About</a> · <a href="{{ route('privacy') }}">Privacy</a> · <button type="button" class="faq-link" id="faqLink">FAQ</button></div>
 </div>
 
 <section class="about" id="aboutSec" aria-label="About Snakes & Liquor" hidden>

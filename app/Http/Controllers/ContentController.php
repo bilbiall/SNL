@@ -29,12 +29,23 @@ class ContentController extends Controller
         return view('fun-facts', ['facts' => $facts]);
     }
 
+    public function about()
+    {
+        return view('about', ['email' => config('snl.contact_email')]);
+    }
+
+    public function privacy()
+    {
+        return view('privacy', ['email' => config('snl.contact_email'), 'updated' => '18 October 2026']);
+    }
+
     public function sitemap(): Response
     {
         $today = now()->toDateString();
         $urls = [
             [url('/'), '1.0', 'weekly'], [route('how-to-play'), '0.8', 'monthly'], [route('fun-facts'), '0.8', 'monthly'],
             [route('rooms.index'), '0.6', 'hourly'], [route('app.page'), '0.6', 'monthly'],
+            [route('about'), '0.5', 'monthly'], [route('privacy'), '0.3', 'yearly'],
         ];
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
         foreach ($urls as [$loc, $prio, $freq]) {
@@ -46,8 +57,17 @@ class ContentController extends Controller
 
     public function robots(): Response
     {
-        $txt = "User-agent: *\nAllow: /\nDisallow: /gameset\nDisallow: /login\nDisallow: /play/\nDisallow: /new\nDisallow: /join\nDisallow: /offline/\nDisallow: /download/\n\nSitemap: " . url('/sitemap.xml') . "\n";
+        $txt = "User-agent: Mediapartners-Google\nAllow: /\n\nUser-agent: *\nAllow: /\nDisallow: /gameset\nDisallow: /login\nDisallow: /play/\nDisallow: /new\nDisallow: /join\nDisallow: /offline/\nDisallow: /download/\n\nSitemap: " . url('/sitemap.xml') . "\n";
 
         return response($txt, 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
+    }
+
+    /** ads.txt: tells ad buyers this AdSense account may sell the site's ad space. 404 until SNL_ADSENSE_ID is set. */
+    public function adsTxt(): Response
+    {
+        $id = (string) config('snl.ads.client');
+        abort_unless(preg_match('/^ca-pub-\d+$/', $id), 404);
+
+        return response('google.com, ' . substr($id, 3) . ", DIRECT, f08c47fec0942fa0\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
     }
 }

@@ -30,8 +30,11 @@ Route::get('/tv/{code}', [RoomController::class, 'tv'])->name('tv.show');
 Route::get('/rooms/list', [LobbyController::class, 'list'])->middleware('throttle:snl-state')->name('rooms.list');
 Route::get('/how-to-play', [ContentController::class, 'howToPlay'])->name('how-to-play');
 Route::get('/fun-facts', [ContentController::class, 'funFacts'])->name('fun-facts');
+Route::get('/about', [ContentController::class, 'about'])->name('about');
+Route::get('/privacy', [ContentController::class, 'privacy'])->name('privacy');
 Route::get('/sitemap.xml', [ContentController::class, 'sitemap'])->name('sitemap');
 Route::get('/robots.txt', [ContentController::class, 'robots'])->name('robots');
+Route::get('/ads.txt', [ContentController::class, 'adsTxt'])->name('ads.txt');
 
 // The Android app: a download page and the file itself.
 Route::get('/app', [AppDownloadController::class, 'page'])->name('app.page');

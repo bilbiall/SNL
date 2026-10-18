@@ -1123,8 +1123,9 @@
     };
     $('winAgain').onclick = async () => {
       if (r.rematch_token) { location.href = C.urls.base + '/' + r.rematch_token; return; }
-      if (C.local) { SNLLocal.act('rematch'); location.reload(); return; }
       $('winAgain').disabled = true;
+      if (!C.tv && window.SNLAds) await SNLAds.show('play_again'); // game is over: a safe pause, and only for whoever starts the rematch
+      if (C.local) { SNLLocal.act('rematch'); location.reload(); return; }
       const res = await fetch(C.urls.rematch, { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': C.csrf } }).then((x) => x.json()).catch(() => ({}));
       if (res.redirect) location.href = res.redirect; else { $('winAgain').disabled = false; toast(`${ic('info')} ${esc(res.error || 'Could not start a rematch')}`, 3000, '#f87171'); }
     };

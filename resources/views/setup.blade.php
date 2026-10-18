@@ -3,6 +3,11 @@
 @section('robots', 'noindex,nofollow')
 @section('title', ($type === 'party' ? 'New party game' : 'New online room') . ' — Snakes & Liquor')
 
+@push('head')
+@include('partials.ads')
+<script src="{{ \App\Support\OfflineAssets::js('snl-ads.js') }}"></script>
+@endpush
+
 @section('body')
 <div class="snl-narrow">
     <header class="flex items-center justify-between py-3 mb-2">
@@ -246,6 +251,7 @@
         const mode = fd.get('content_mode');
         if (modes[mode] && modes[mode].adult && !fd.get('adult')) { showErr('Please confirm that everyone playing is 18 or over for this mode.'); return; }
         const nm = fd.getAll('names[]'), co = fd.getAll('colors[]'), av = fd.getAll('avatars[]');
+        if (window.SNLAds) await SNLAds.show('new_game'); // a pause: the host is starting a game
         if (window.SNLLoader) SNLLoader.show();
         try {
             await SNLLocal.create({ boardId: +fd.get('board_id'), mode: mode, intensity: +fd.get('intensity'), startShields: fd.get('start_shields'), entries: nm.map((n, i) => ({ name: n, color: co[i], avatar: av[i] })) });
@@ -260,6 +266,13 @@
     const pubBox = document.getElementById('pubBox'), pubName = document.getElementById('pubName'), roomName = document.getElementById('room_name');
     const syncPub = () => { pubName.style.display = pubBox.checked ? 'block' : 'none'; roomName.required = pubBox.checked; if (pubBox.checked && !roomName.value) roomName.focus({ preventScroll: true }); };
     pubBox.addEventListener('change', syncPub); syncPub();
+    form.addEventListener('submit', async (e) => {
+        if (form.dataset.adDone || !window.SNLAds || !form.checkValidity()) return;
+        e.preventDefault();
+        await SNLAds.show('new_room'); // a pause: the host is creating a room
+        form.dataset.adDone = '1';
+        form.submit();
+    });
     const hostAv = document.getElementById('hostAvatar'), hostImg = document.getElementById('hostAvatarImg');
     const showHost = () => { hostImg.src = SNLAvatars.url(hostAv.value); };
     document.getElementById('hostAvatarBtn').onclick = () => SNLAvatars.open(hostAv.value, key => { hostAv.value = key; showHost(); });

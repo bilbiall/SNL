@@ -9,6 +9,7 @@
     <title>{{ ($local ?? false) ? 'Party game' : ($room->isOnline() ? 'Room ' . $room->join_code : 'Party game') }} — Snakes & Liquor</title>
     @include('partials.pwa-head')
     @include('partials.analytics')
+    @unless($tv ?? false)@include('partials.ads')@endunless
     <style>:root { --bw: {{ $board->board_width ?: 1264 }}; --bh: {{ $board->board_height ?: 848 }}; }</style>
     @include('partials.pieces-css')
     @include('partials.play-css')
@@ -101,6 +102,7 @@
 @endif
 <script src="{{ \App\Support\OfflineAssets::js('arcade-sounds.js') }}"></script>
 <script src="{{ \App\Support\OfflineAssets::js('snl-audio.js') }}"></script>
+<script src="{{ \App\Support\OfflineAssets::js('snl-ads.js') }}"></script>
 <script src="{{ \App\Support\OfflineAssets::js('pwa.js') }}"></script>
 <script src="{{ \App\Support\OfflineAssets::js('app-update.js') }}"></script>
 @if($local ?? false)
