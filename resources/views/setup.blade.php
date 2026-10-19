@@ -50,7 +50,7 @@
                     <input type="radio" name="content_mode" value="{{ $key }}" data-adult="{{ $m['adult'] ? 1 : 0 }}"
                            {{ old('content_mode', 'drinks') === $key ? 'checked' : '' }} {{ $m['enabled'] ? '' : 'disabled' }}>
                     <span><x-icon :name="$m['icon']" style="font-size:1.7rem;" />{{ $m['label'] }}
-                        <small>{{ $m['enabled'] ? ($m['adult'] ? '18+ only' : 'Everyone') : 'Coming soon' }}</small></span>
+                        <small>{{ $m['enabled'] ? ($m['adult'] ? '18+ only' : 'Everyone') : 'Coming soon' }}@if(isset($pay['prices'][$key])) · <b style="color:#fbbf24;">KES {{ number_format($pay['prices'][$key]) }}</b>@endif</small></span>
                 </label>
                 @endforeach
             </div>
@@ -186,9 +186,10 @@
         </div>
         @endif
 
-        <button class="btn btn-primary btn-block" style="font-size:1.05rem;padding:1rem;">
-            <x-icon :name="$type === 'party' ? 'dice' : 'globe'" /> {{ $type === 'party' ? 'Start the game' : 'Create room' }}
+        <button class="btn btn-primary btn-block" id="submitBtn" style="font-size:1.05rem;padding:1rem;">
+            <x-icon :name="$type === 'party' ? 'dice' : 'globe'" /> <span id="submitLabel">{{ $type === 'party' ? 'Start the game' : 'Create room' }}</span>
         </button>
+        <p class="snl-muted text-xs" id="payNote" style="text-align:center;margin-top:.5rem;display:none;"></p>
     </form>
 
     <footer class="snl-foot">Drink responsibly. Never drive after drinking.</footer>
@@ -233,9 +234,22 @@
         paint();
     })();
 
+    // Pay-per-game: a paid mode is bought AFTER everything is set up. Submitting goes to the server, which saves the setup and opens the checkout;
+    // the game is only created once the M-Pesa payment succeeds. So a paid mode never starts in the browser here, and no ad is shown before paying.
+    const pay = @json($pay);
+    const paidPrice = () => { const r = form.querySelector('input[name=content_mode]:checked'); return r && pay.enabled && pay.prices[r.value] ? +pay.prices[r.value] : 0; };
+    function syncPay() {
+        const price = paidPrice(), label = document.getElementById('submitLabel'), note = document.getElementById('payNote');
+        const base = label.dataset.base || (label.dataset.base = label.textContent);
+        label.textContent = price ? 'Continue to payment · KES ' + price.toLocaleString() : base;
+        note.style.display = price ? '' : 'none';
+        note.textContent = price ? 'You pay once with M-Pesa on the next step, and the game starts as soon as the payment goes through.' + (pay.simulate ? ' (Test mode: no real money.)' : '') : '';
+    }
+
     function syncMode() {
         const r = form.querySelector('input[name=content_mode]:checked');
-        document.getElementById('modeBlurb').textContent = r ? modes[r.value].blurb : '';
+        document.getElementById('modeBlurb').textContent = r ? modes[r.value].blurb + (paidPrice() ? ' Costs KES ' + paidPrice().toLocaleString() + ' per game.' : '') : '';
+        syncPay();
         document.getElementById('adultBox').style.display = (r && r.dataset.adult === '1') ? 'flex' : 'none';
         document.getElementById('adultNote').textContent = (r && r.value === 'lovers')
             ? "Everything is optional — skip any card you're not comfortable with."
@@ -319,6 +333,7 @@
     form.addEventListener('submit', async (e) => {
         const tp = teamProblem();
         if (tp) { e.preventDefault(); showErr(tp); return; }
+        if (paidPrice()) return; // paid mode: the server saves this setup and opens the checkout
         if (typeof SNLLocal === 'undefined' || !SNLLocal.hasEngine()) return; // old browser → the server path below still works
         e.preventDefault();
         const fd = new FormData(form);
@@ -341,7 +356,7 @@
     const syncPub = () => { pubName.style.display = pubBox.checked ? 'block' : 'none'; roomName.required = pubBox.checked; if (pubBox.checked && !roomName.value) roomName.focus({ preventScroll: true }); };
     pubBox.addEventListener('change', syncPub); syncPub();
     form.addEventListener('submit', async (e) => {
-        if (form.dataset.adDone || !window.SNLAds || !form.checkValidity()) return;
+        if (form.dataset.adDone || paidPrice() || !window.SNLAds || !form.checkValidity()) return;
         e.preventDefault();
         await SNLAds.show('new_room'); // a pause: the host is creating a room
         form.dataset.adDone = '1';

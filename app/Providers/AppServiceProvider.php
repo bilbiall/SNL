@@ -25,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('snl-play', fn (Request $r) => Limit::perMinute(240)->by('play|' . $device($r)));
         RateLimiter::for('snl-voice', fn (Request $r) => Limit::perMinute(420)->by('voice|' . $device($r))); // a phone in voice polls about once a second
+        RateLimiter::for('snl-checkout', fn (Request $r) => Limit::perMinute(12)->by('checkout|' . $r->ip())); // M-Pesa prompts cost the customer attention: no spamming
         RateLimiter::for('snl-state', fn (Request $r) => Limit::perMinute(150)->by('state|' . $device($r)));
         // Creating/joining rooms: per phone, but with an IP backstop generous enough for a busy venue.
         RateLimiter::for('snl-create', fn (Request $r) => [

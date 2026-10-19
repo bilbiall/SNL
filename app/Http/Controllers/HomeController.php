@@ -41,6 +41,7 @@ class HomeController extends Controller
             'limits' => config('snl.players'),
             'colors' => config('snl.colors'),
             'avatarDefaults' => array_map(fn ($i) => Avatars::default($i), range(0, 11)),
+            'pay'    => \App\Support\Payments::publicConfig(), // which modes cost money (empty unless an admin switched payments on)
         ]);
     }
 

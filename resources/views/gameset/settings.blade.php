@@ -54,4 +54,6 @@
 
     <button class="gs-btn go">Save settings</button>
 </form>
+
+@include('gameset._payments-settings', ['pay' => \App\Http\Controllers\GamesetPaymentController::settingsData()])
 @endsection

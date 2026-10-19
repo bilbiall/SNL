@@ -1585,6 +1585,12 @@ class GameEngine
 
     // ───────────────────────────── Internals ─────────────────────────────
 
+    /** The same setup checks createParty / createOnline make, so a paid order can be refused up front instead of after the money is taken. */
+    public function checkSetup(Board $board, string $mode, int $intensity): void
+    {
+        $this->validateSetup($board, $mode, $intensity);
+    }
+
     private function validateSetup(Board $board, string $mode, int $intensity): void
     {
         $cfg = config("snl.modes.$mode");

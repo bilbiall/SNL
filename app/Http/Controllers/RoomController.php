@@ -59,28 +59,75 @@ class RoomController extends Controller
             return back()->withInput()->withErrors(['adult' => 'Please confirm that everyone playing is 18 or over for this mode.']);
         }
 
-        $board = Board::findOrFail($data['board_id']);
-        try {
-            if ($data['type'] === 'party') {
-                $entries = [];
-                foreach (array_values($data['names']) as $i => $name) {
-                    $entries[] = ['name' => (string) $name, 'color' => $data['colors'][$i] ?? null, 'avatar' => $data['avatars'][$i] ?? null,
-                        'team' => $request->boolean('teams') ? ($data['team_of'][$i] ?? null) : null]; // which team the table put this player on
-                }
-                $room = $this->engine->createParty($board, $entries, $data['content_mode'], (int) $data['intensity'], isset($data['start_shields']) ? (int) $data['start_shields'] : null, $request->boolean('teams'), array_values($data['team_names'] ?? []), array_values($data['topics'] ?? []));
-            } else {
-                [$room, $host] = $this->engine->createOnline(
-                    $board, (string) $data['host_name'], $data['content_mode'], (int) $data['intensity'], (int) ($data['max_players'] ?? 8), $data['avatar'] ?? null,
-                    isset($data['start_shields']) ? (int) $data['start_shields'] : null,
-                    $this->cleanRoomName($data['room_name'] ?? null), $request->boolean('public') && filled($data['room_name'] ?? null), $request->boolean('teams'), array_values($data['topics'] ?? [])
-                );
-                $this->rememberMe($request, $room, $host);
+        $payload = $data + ['teams' => $request->boolean('teams'), 'public' => $request->boolean('public')];
+
+        // A paid mode: nothing is created yet. The finished setup is saved as an order and the host pays first (M-Pesa STK push);
+        // the room is created from that saved setup only after the payment succeeds (see CheckoutController).
+        if (($price = \App\Support\Payments::priceFor($data['content_mode'])) !== null) {
+            try {
+                $this->precheck($payload); // never take money for a game that could not be created
+            } catch (GameException $e) {
+                return back()->withInput()->withErrors([$e->getMessage()]);
             }
+            $order = \App\Models\Payment::create([
+                'token' => \Illuminate\Support\Str::random(40), 'status' => 'created', 'mode' => $data['content_mode'], 'amount' => $price,
+                'payload' => $payload, 'env' => \App\Support\Payments::env(), 'ip' => $request->ip(),
+            ]);
+
+            return redirect()->route('checkout.show', $order->token);
+        }
+
+        try {
+            $room = $this->createGame($request, $payload);
         } catch (GameException $e) {
             return back()->withInput()->withErrors([$e->getMessage()]);
         }
 
         return redirect()->route('play.show', $room->token);
+    }
+
+    /** Creates the room (and, online, seats the host in this browser's session) from a validated setup. Used by free modes and, after payment, by the checkout. */
+    public function createGame(Request $request, array $data): Room
+    {
+        $board = Board::findOrFail($data['board_id']);
+        $teams = !empty($data['teams']);
+        if (($data['type'] ?? '') === 'party') {
+            $entries = [];
+            foreach (array_values($data['names']) as $i => $name) {
+                $entries[] = ['name' => (string) $name, 'color' => $data['colors'][$i] ?? null, 'avatar' => $data['avatars'][$i] ?? null,
+                    'team' => $teams ? ($data['team_of'][$i] ?? null) : null]; // which team the table put this player on
+            }
+
+            return $this->engine->createParty($board, $entries, $data['content_mode'], (int) $data['intensity'], isset($data['start_shields']) ? (int) $data['start_shields'] : null, $teams, array_values($data['team_names'] ?? []), array_values($data['topics'] ?? []));
+        }
+        [$room, $host] = $this->engine->createOnline(
+            $board, (string) $data['host_name'], $data['content_mode'], (int) $data['intensity'], (int) ($data['max_players'] ?? 8), $data['avatar'] ?? null,
+            isset($data['start_shields']) ? (int) $data['start_shields'] : null,
+            $this->cleanRoomName($data['room_name'] ?? null), !empty($data['public']) && filled($data['room_name'] ?? null), $teams, array_values($data['topics'] ?? [])
+        );
+        $this->rememberMe($request, $room, $host);
+
+        return $room;
+    }
+
+    /** The checks that would make room creation fail, run BEFORE the customer is asked to pay. */
+    private function precheck(array $d): void
+    {
+        $this->engine->checkSetup(Board::findOrFail($d['board_id']), $d['content_mode'], (int) $d['intensity']);
+        $this->cleanRoomName($d['room_name'] ?? null);
+        if (($d['type'] ?? '') === 'party') {
+            $n = count(array_values($d['names'] ?? []));
+            $lim = config('snl.players');
+            if ($n < $lim['min'] || $n > $lim['max']) {
+                throw new GameException("Party games need {$lim['min']}–{$lim['max']} players.");
+            }
+            if (!empty($d['teams'])) {
+                $per = array_count_values(array_map('intval', array_values($d['team_of'] ?? [])));
+                if ($n < 4 || $n % 2 !== 0 || count($per) < 2 || count(array_filter($per, fn ($c) => $c !== 2)) > 0 || count($per) * 2 !== $n) {
+                    throw new GameException('Every team needs exactly two players, and there must be at least two teams.');
+                }
+            }
+        }
     }
 
     /** Room names are shown to strangers: trim, collapse spaces, and keep them free of links and a short blocklist. */

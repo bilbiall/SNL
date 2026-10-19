@@ -6,7 +6,10 @@ use App\Http\Controllers\ContentController;
 use App\Http\Controllers\LobbyController;
 use App\Http\Controllers\GamesetBoardController;
 use App\Http\Controllers\GamesetCardController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\GamesetPackController;
+use App\Http\Controllers\GamesetPaymentController;
+use App\Http\Controllers\MpesaCallbackController;
 use App\Http\Controllers\GamesetSettingsController;
 use App\Http\Controllers\VoiceController;
 use App\Http\Controllers\GamesetWordController;
@@ -33,6 +36,13 @@ Route::get('/tv/{code}', [RoomController::class, 'tv'])->name('tv.show');
 Route::get('/rooms/list', [LobbyController::class, 'list'])->middleware('throttle:snl-state')->name('rooms.list');
 Route::get('/how-to-play', [ContentController::class, 'howToPlay'])->name('how-to-play');
 Route::get('/fun-facts', [ContentController::class, 'funFacts'])->name('fun-facts');
+// Pay-per-game: a paid mode is bought at /checkout/{token} (M-Pesa prompt), and the room is created once the payment succeeds.
+Route::get('/checkout/{payment}', [CheckoutController::class, 'show'])->name('checkout.show');
+Route::post('/checkout/{payment}/pay', [CheckoutController::class, 'pay'])->middleware('throttle:snl-checkout')->name('checkout.pay');
+Route::get('/checkout/{payment}/status', [CheckoutController::class, 'status'])->middleware('throttle:snl-state')->name('checkout.status');
+Route::post('/checkout/{payment}/finish', [CheckoutController::class, 'finish'])->middleware('throttle:snl-checkout')->name('checkout.finish');
+Route::post('/mpesa/callback/{secret}', MpesaCallbackController::class)->name('mpesa.callback'); // Safaricom reports each payment here (no CSRF: it is not a browser)
+
 Route::get('/about', [ContentController::class, 'about'])->name('about');
 Route::get('/privacy', [ContentController::class, 'privacy'])->name('privacy');
 Route::get('/sitemap.xml', [ContentController::class, 'sitemap'])->name('sitemap');
@@ -99,6 +109,12 @@ Route::middleware(['auth', 'gameset'])->prefix('gameset')->name('gameset.')->gro
     Route::post('/cards/bulk', [GamesetCardController::class, 'bulk'])->name('cards.bulk');
     Route::put('/cards/{card}', [GamesetCardController::class, 'update'])->name('cards.update');
     Route::delete('/cards/{card}', [GamesetCardController::class, 'destroy'])->name('cards.destroy');
+
+    Route::get('/payments', [GamesetPaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/export', [GamesetPaymentController::class, 'export'])->name('payments.export');
+    Route::post('/payments/{payment}/check', [GamesetPaymentController::class, 'check'])->name('payments.check');
+    Route::post('/settings/payments', [GamesetPaymentController::class, 'saveSettings'])->name('settings.payments');
+    Route::post('/settings/payments/test', [GamesetPaymentController::class, 'test'])->name('settings.payments.test');
 
     Route::get('/settings', [GamesetSettingsController::class, 'index'])->name('settings');
     Route::post('/settings', [GamesetSettingsController::class, 'save'])->name('settings.save');

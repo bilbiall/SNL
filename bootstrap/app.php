@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'gameset' => \App\Http\Middleware\GamesetMiddleware::class,
         ]);
         $middleware->redirectGuestsTo(fn () => route('login'));
+        $middleware->validateCsrfTokens(except: ['mpesa/callback/*']); // Safaricom's payment callbacks are server-to-server
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
