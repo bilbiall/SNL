@@ -107,6 +107,14 @@
             <input type="hidden" name="start_shields" id="startShields" value="{{ (int) old('start_shields', config('snl.powers.shield.start', 1)) }}">
         </div>
 
+        {{-- Teams of two --}}
+        <div class="snl-card">
+            <label class="flex items-start gap-3 text-sm font-bold" style="cursor:pointer;">
+                <input type="checkbox" name="teams" id="teamsBox" value="1" {{ old('teams') ? 'checked' : '' }} class="mt-1" style="width:1.1rem;height:1.1rem;">
+                <span>Play in teams of two <span class="snl-muted font-semibold">— partners share one token and share every penalty. Needs 4, 6, 8, 10 or 12 players{{ $type === 'online' ? ' when the host starts (partners are paired in the order people join)' : ' (partners are the pairs 1 &amp; 2, 3 &amp; 4 … in the list below)' }}.</span></span>
+            </label>
+        </div>
+
         {{-- Players --}}
         <div class="snl-card">
             @if($type === 'party')
@@ -205,11 +213,17 @@
     const rows = document.getElementById('playerRows');
     const oldNames = @json(array_values(old('names', [])));
     const oldAvatars = @json(array_values(old('avatars', [])));
+    const teamsBox = document.getElementById('teamsBox');
+    const teamsOn = () => teamsBox.checked;
+    const teamNameVals = @json(array_values(old('team_names', [])));
+    const keepTeamNames = () => rows.querySelectorAll('input[name="team_names[]"]').forEach((el, i) => teamNameVals[i] = el.value);
+    const minPlayers = () => (teamsOn() ? Math.max(4, limits.min) : limits.min);
+    const step = () => (teamsOn() ? 2 : 1);
     let count = Math.max(limits.min, Math.min(limits.max, oldNames.length || 4));
     const names = oldNames.slice();
     const avs = oldAvatars.slice();
 
-    function keepNames() { rows.querySelectorAll('input[name="names[]"]').forEach((el, i) => names[i] = el.value); }
+    function keepNames() { rows.querySelectorAll('input[name="names[]"]').forEach((el, i) => names[i] = el.value); keepTeamNames(); }
     function render() {
         keepNames();
         rows.innerHTML = '';
@@ -222,12 +236,20 @@
                 <button type="button" class="avbtn" data-i="${i}" title="Choose avatar"><img src="${SNLAvatars.url(avs[i])}" alt=""></button>
                 <input type="hidden" name="avatars[]" value="${avs[i]}">
                 <input type="hidden" name="colors[]" value="${colors[i % colors.length]}">
+                ${teamsOn() ? `<span style="font-size:.62rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:${colors[(Math.floor(i / 2) * 2) % colors.length]};min-width:3.4rem;">Team ${Math.floor(i / 2) + 1}</span>` : ''}
                 <input class="snl-input" name="names[]" maxlength="24" placeholder="Player ${i + 1}" value="${(names[i] || '').replace(/"/g, '&quot;')}" autocomplete="off" required>`;
             rows.appendChild(row);
+            if (teamsOn() && i % 2 === 1) {
+                const tn = document.createElement('div');
+                tn.className = 'flex items-center gap-3';
+                tn.style.cssText = 'margin:-.3rem 0 1rem 3.2rem;';
+                tn.innerHTML = `<input class="snl-input" name="team_names[]" maxlength="20" placeholder="Team ${Math.floor(i / 2) + 1} name (optional)" value="${(teamNameVals[Math.floor(i / 2)] || '').replace(/"/g, '&quot;')}" autocomplete="off" style="font-size:.85rem;padding:.4rem .7rem;">`;
+                rows.appendChild(tn);
+            }
         }
         document.getElementById('countLabel').textContent = count + ' players';
-        document.getElementById('minusBtn').disabled = count <= limits.min;
-        document.getElementById('plusBtn').disabled = count >= limits.max;
+        document.getElementById('minusBtn').disabled = count - step() < minPlayers();
+        document.getElementById('plusBtn').disabled = count + step() > limits.max;
     }
     rows.addEventListener('click', e => {
         const b = e.target.closest('.avbtn'); if (!b) return;
@@ -235,8 +257,9 @@
         keepNames();
         SNLAvatars.open(avs[i], key => { avs[i] = key; render(); });
     });
-    document.getElementById('plusBtn').onclick = () => { if (count < limits.max) { count++; render(); } };
-    document.getElementById('minusBtn').onclick = () => { if (count > limits.min) { count--; render(); } };
+    document.getElementById('plusBtn').onclick = () => { if (count + step() <= limits.max) { count += step(); render(); } };
+    document.getElementById('minusBtn').onclick = () => { if (count - step() >= minPlayers()) { count -= step(); render(); } };
+    teamsBox.addEventListener('change', () => { if (teamsOn()) { count = Math.max(4, Math.min(limits.max - (limits.max % 2), count + (count % 2))); } render(); });
     render();
 
     // Party games run on this device (works with no signal): build the game here instead of posting to the server.
@@ -257,7 +280,7 @@
         if (window.SNLAds) await SNLAds.show('new_game'); // a pause: the host is starting a game
         if (window.SNLLoader) SNLLoader.show();
         try {
-            await SNLLocal.create({ boardId: +fd.get('board_id'), mode: mode, intensity: +fd.get('intensity'), startShields: fd.get('start_shields'), entries: nm.map((n, i) => ({ name: n, color: co[i], avatar: av[i] })) });
+            await SNLLocal.create({ boardId: +fd.get('board_id'), mode: mode, intensity: +fd.get('intensity'), startShields: fd.get('start_shields'), teams: !!fd.get('teams'), teamNames: fd.getAll('team_names[]'), entries: nm.map((n, i) => ({ name: n, color: co[i], avatar: av[i] })) });
             location.href = @json(route('play.local'));
         } catch (err) {
             if (navigator.onLine && !(err && err.name === 'GameError')) { form.submit(); return; }

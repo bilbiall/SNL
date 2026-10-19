@@ -106,6 +106,35 @@ return [
     'event_icons' => ['quickfire' => 'clock', 'rollagain' => 'dice', 'gift' => 'sparkles', 'groupgame' => 'team', 'vote' => 'pick'],
     'event_colors' => ['quickfire' => '#f97316', 'groupgame' => '#22c55e', 'gift' => '#eab308', 'rollagain' => '#38bdf8', 'vote' => '#ec4899'],
 
+    /*
+    | Secret missions (online rooms): each player gets a private goal; finishing it earns a Shield or a Reroll, then a new one (up to `mission_limit` per game).
+    | `stat` + `target`: detected automatically (the stat must rise by `target` since the mission was given).
+    | `claim`: the player taps "I did it" and the whole table sees the reveal — an honour system, so the table can protest.
+    */
+    'mission_limit' => 3,
+    'mission_claim_after' => 90, // seconds before a "claim" mission can be claimed
+    'missions' => [
+        ['id' => 'snakes2', 'text' => 'Land on 2 snakes', 'stat' => 'snakes', 'target' => 2, 'reward' => 'shield'],
+        ['id' => 'ladders2', 'text' => 'Climb 2 ladders', 'stat' => 'ladders', 'target' => 2, 'reward' => 'reroll'],
+        ['id' => 'sixes2', 'text' => 'Roll two sixes', 'stat' => 'sixes', 'target' => 2, 'reward' => 'reroll'],
+        ['id' => 'facts2', 'text' => 'Get 2 true-or-false facts right', 'stat' => 'facts_right', 'target' => 2, 'reward' => 'shield'],
+        ['id' => 'duel1', 'text' => 'Win a duel', 'stat' => 'duels_won', 'target' => 1, 'reward' => 'shield'],
+        ['id' => 'picks2', 'text' => 'Pick a friend twice', 'stat' => 'picks', 'target' => 2, 'reward' => 'reroll'],
+        ['id' => 'bluff1', 'text' => 'Back up a bluff someone doubted', 'stat' => 'bluffs_won', 'target' => 1, 'reward' => 'shield'],
+        ['id' => 'caught1', 'text' => 'Catch someone bluffing', 'stat' => 'bluffs_caught', 'target' => 1, 'reward' => 'reroll'],
+        ['id' => 'spot1', 'text' => 'Nail a spotlight challenge', 'stat' => 'spots_nailed', 'target' => 1, 'reward' => 'shield'],
+        ['id' => 'dodge1', 'text' => 'Block a hit with a Shield', 'stat' => 'dodges', 'target' => 1, 'reward' => 'reroll'],
+        ['id' => 'vote1', 'text' => 'Get voted "most likely to…" once', 'stat' => 'votes_won', 'target' => 1, 'reward' => 'shield'],
+        ['id' => 'c-bro', 'text' => 'Make someone say "bro" or "bestie" without asking them to', 'claim' => true, 'reward' => 'shield'],
+        ['id' => 'c-compliment', 'text' => 'Get someone to give you a compliment without asking for one', 'claim' => true, 'reward' => 'reroll'],
+        ['id' => 'c-same', 'text' => 'Make two people say the same word at the same time', 'claim' => true, 'reward' => 'shield'],
+        ['id' => 'c-stand', 'text' => 'Get someone to stand up for a moment without telling them why', 'claim' => true, 'reward' => 'reroll'],
+        ['id' => 'c-laugh', 'text' => 'Make someone laugh out loud with a joke', 'claim' => true, 'reward' => 'shield'],
+        ['id' => 'c-what', 'text' => 'Get someone to say "wait, what?"', 'claim' => true, 'reward' => 'reroll'],
+        ['id' => 'c-chant', 'text' => 'Start a clap or a chant that three people join', 'claim' => true, 'reward' => 'shield'],
+        ['id' => 'c-name', 'text' => 'Get someone to say your name three times', 'claim' => true, 'reward' => 'reroll'],
+    ],
+
     // "Most likely to…" votes (online rooms, 3+ players): the chance an Everyone square becomes a vote, and how long players have to vote.
     'vote_chance' => (int) env('SNL_VOTE_CHANCE', 30),
     'vote_seconds' => 25,
@@ -267,7 +296,11 @@ return [
     */
     'buzz' => [
         'max' => 12,
-        'drinks' => ['name' => 'Buzz Meter', 'levels' => [[0, 'Sober'], [2, 'Tipsy'], [4, 'Buzzed'], [7, 'Wobbly'], [10, 'Legend']]],
+        'drinks' => ['name' => 'Buzz Meter', 'icon' => 'cheers', 'levels' => [[0, 'Sober'], [2, 'Tipsy'], [4, 'Buzzed'], [7, 'Wobbly'], [10, 'Legend']]],
+        // The other modes have no alcohol, so their meters have their own names and levels (every card or forfeit you take fills it).
+        'boyz' => ['name' => 'Hype Meter', 'icon' => 'fire', 'levels' => [[0, 'Warming up'], [2, 'Locked in'], [4, 'Fired up'], [7, 'On fire'], [10, 'Legend']]],
+        'girlies' => ['name' => 'Vibe Meter', 'icon' => 'sparkles', 'levels' => [[0, 'Calm'], [2, 'Glowing'], [4, 'Sparkling'], [7, 'Iconic'], [10, 'Legend']]],
+        'lovers' => ['name' => 'Spark Meter', 'icon' => 'heart', 'levels' => [[0, 'Shy'], [2, 'Curious'], [4, 'Warm'], [7, 'Smitten'], [10, 'Head over heels']]],
         // Family games have no meter: the left list is a plain leaderboard, furthest square first.
         'family' => ['name' => 'Leaderboard', 'enabled' => false, 'levels' => [[0, 'Calm']]],
     ],

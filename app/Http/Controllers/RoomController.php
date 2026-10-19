@@ -44,6 +44,9 @@ class RoomController extends Controller
             'avatar'       => 'nullable|string|max:12',
             'host_name'    => 'required_if:type,online|nullable|string|max:24',
             'public'       => 'nullable|boolean',
+            'teams'        => 'nullable|boolean',
+            'team_names'   => 'nullable|array|max:6',
+            'team_names.*' => 'nullable|string|max:20',
             'room_name'    => 'required_if:public,1|nullable|string|min:3|max:40',
             'max_players'  => 'nullable|integer|min:2|max:' . config('snl.players.max'),
         ]);
@@ -59,12 +62,12 @@ class RoomController extends Controller
                 foreach (array_values($data['names']) as $i => $name) {
                     $entries[] = ['name' => (string) $name, 'color' => $data['colors'][$i] ?? null, 'avatar' => $data['avatars'][$i] ?? null];
                 }
-                $room = $this->engine->createParty($board, $entries, $data['content_mode'], (int) $data['intensity'], isset($data['start_shields']) ? (int) $data['start_shields'] : null);
+                $room = $this->engine->createParty($board, $entries, $data['content_mode'], (int) $data['intensity'], isset($data['start_shields']) ? (int) $data['start_shields'] : null, $request->boolean('teams'), array_values($data['team_names'] ?? []));
             } else {
                 [$room, $host] = $this->engine->createOnline(
                     $board, (string) $data['host_name'], $data['content_mode'], (int) $data['intensity'], (int) ($data['max_players'] ?? 8), $data['avatar'] ?? null,
                     isset($data['start_shields']) ? (int) $data['start_shields'] : null,
-                    $this->cleanRoomName($data['room_name'] ?? null), $request->boolean('public') && filled($data['room_name'] ?? null)
+                    $this->cleanRoomName($data['room_name'] ?? null), $request->boolean('public') && filled($data['room_name'] ?? null), $request->boolean('teams')
                 );
                 $this->rememberMe($request, $room, $host);
             }
@@ -224,7 +227,9 @@ class RoomController extends Controller
 
     public function start(Request $request, Room $room): JsonResponse
     {
-        return $this->act($request, $room, fn (?Player $me) => $this->engine->start($room, $this->requireMe($me)->id));
+        $data = $request->validate(['team_names' => 'nullable|array|max:6', 'team_names.*' => 'nullable|string|max:20']);
+
+        return $this->act($request, $room, fn (?Player $me) => $this->engine->start($room, $this->requireMe($me)->id, array_values($data['team_names'] ?? [])));
     }
 
     public function leave(Request $request, Room $room): JsonResponse
@@ -253,6 +258,14 @@ class RoomController extends Controller
             if ($room->isOnline()) {
                 $this->engine->react($room, $this->requireMe($me)->id, $data['reaction']);
             }
+        });
+    }
+
+    /** "I did it" for a secret mission only the table can judge. */
+    public function claimMission(Request $request, Room $room): JsonResponse
+    {
+        return $this->act($request, $room, function (?Player $me) use ($room) {
+            $this->engine->claimMission($room, $this->requireMe($me)->id);
         });
     }
 

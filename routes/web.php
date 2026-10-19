@@ -59,6 +59,7 @@ Route::prefix('play/{room:token}')->name('play.')->group(function () {
     Route::post('/start', [RoomController::class, 'start'])->name('start');
     Route::post('/leave', [RoomController::class, 'leave'])->name('leave');
     Route::post('/react', [RoomController::class, 'react'])->middleware('throttle:snl-play')->name('react');
+    Route::post('/mission', [RoomController::class, 'claimMission'])->middleware('throttle:snl-play')->name('mission');
     Route::post('/rematch', [RoomController::class, 'rematch'])->name('rematch');
     Route::post('/addplayer', [RoomController::class, 'addPlayer'])->middleware('throttle:snl-play')->name('addplayer');
 });

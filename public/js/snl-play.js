@@ -53,8 +53,12 @@
   const shown = {};           // playerId -> square the token is displayed on
 
   const ST = $('stage'), BOARD = $('boardWrap'), DIE = $('dieBtn'), CUBE = $('dieCube');
+  let missionHinted = false;
+  const teamNameVals = [];   // what the host has typed into the lobby's team-name boxes (survives the lobby redrawing)
   const players = () => latest.players;
   /** 1-based seat number (order of play) — the optional player-number badges use it so colour is never the only clue. */
+  /** A team's name (typed at setup, or "Team N"). */
+  const teamName = (t) => (S.room.team_names && S.room.team_names[t]) || ('Team ' + t);
   const seatNo = (p) => latest.players.filter((q) => q.turn_order < p.turn_order).length + 1;
   const P = (id) => players().find((p) => p.id === id) || { id, name: 'Someone', color: '#64748b', avatar: 'm1-3', powers: {}, status: 'active' };
   const iAmActor = (id) => C.isParty || id === C.meId;
@@ -295,6 +299,10 @@
     const fresh = (ns.actions || []).filter((a) => a.seq > lastSeq);
     if (fresh.length) { lastSeq = fresh[fresh.length - 1].seq; queue.push(...fresh); }
     latest = ns;
+    if (ns.mission && ns.mission.current && ns.room.status === 'active' && !missionHinted) { // a one-time nudge: everyone has a private goal
+      missionHinted = true;
+      setTimeout(() => toast(`${ic('mask')} You have a secret mission — tap the mask to see it`, 5200, '#a78bfa'), 2800);
+    }
     turnLeft = ns.room.turn_seconds_left;
     pendingLeft = ns.room.pending_seconds_left;
     pump();
@@ -342,6 +350,7 @@
       case 'vote_result': return a.winners.length
         ? [`${ic('pick')} The vote: <b>${a.winners.map((id) => esc(P(id).name)).join(' & ')}</b> ${a.winners.length > 1 ? 'tie' : 'won'} — ${clip(a.text, 50)}`, kindColor('vote')]
         : [`${ic('pick')} Nobody voted — nobody pays`, kindColor('vote')];
+      case 'mission_done': return [`${ic('mask')} ${n(who)} ${a.claimed ? 'claims' : 'completed'} a secret mission: ${clip(a.text, 55)}`, '#a78bfa'];
       case 'bluff_said': return [`${ic('jester')} ${n(who)} made a claim`, '#14b8a6'];
       case 'bluff_pass': return [`${ic('check')} Nobody doubted ${n(who)}`, '#34d399'];
       case 'bluff_called':
@@ -444,6 +453,9 @@
 
       case 'factcheck': await factResultOverlay(a); break;
       case 'vote_result': await voteResultOverlay(a); break;
+      case 'mission_done':
+        toast(`${ic('mask')} <b>${esc(who.name)}</b> ${a.claimed ? 'says they completed' : 'completed'} a secret mission: <b>${esc(a.text)}</b> (+1 ${a.reward === 'reroll' ? 'Reroll' : 'Shield'})`, 4600, '#a78bfa');
+        snd('quest'); meme('power'); await sleep(900); break;
 
       case 'random_pick': await randomPickOverlay(a); break;
 
@@ -496,6 +508,7 @@
 
       case 'rule': meme('rule'); await ruleOverlay(a); break;
 
+      case 'team_sync': await glide(a.player_id, a.to); await sleep(150); break; // the partner joins the token on its new square
       case 'win': {
         snd('win'); setTimeout(() => snd('quest'), 900); meme('win'); try { window.snlTrack && snlTrack('game_win', { mode: C.mode && C.mode.label, party: !!C.isParty }); } catch (_) {}
         confetti();
@@ -783,7 +796,8 @@
   }
 
   /** The Buzz Meter: its name and the level label for a score, per mode. */
-  const buzzCfg = () => (C.buzz && (C.buzz[S.room.content_mode] || C.buzz.drinks)) || { name: 'Buzz Meter', levels: [[0, 'Sober']] };
+  // each mode has its own meter (Drinks: Buzz, Boyz: Hype, Girlies: Vibe, Lovers: Spark); a mode without one gets the plain leaderboard
+  const buzzCfg = () => (C.buzz && (C.buzz[S.room.content_mode] || C.buzz.family || C.buzz.drinks)) || { name: 'Leaderboard', enabled: false, levels: [[0, 'Calm']] };
   const buzzLevel = (n) => { const lv = buzzCfg().levels; let out = lv[0][1]; lv.forEach(([from, label]) => { if (n >= from) out = label; }); return out; };
 
   /** Left leaderboard: ordered by the Buzz Meter (not by square), each row still tracks tile progress. Rows glide to their new place. */
@@ -808,8 +822,8 @@
       const fill = `style="width:${bpct}%;background-size:${bpct ? (10000 / bpct).toFixed(0) : 100}% 100%"`;
       return `<div class="pl ${cur ? 'cur' : ''} ${out ? 'out' : ''} ${lead ? 'lead' : ''}" data-id="${p.id}" style="--c:${p.color}">
         <div class="ring" style="--p:${pct}"><i class="tnum">${seatNo(p)}</i><div class="av">${won ? ic('crown') : avatar(p)}</div>${lead ? `<span class="lead-flame">${ic(meter ? 'fire' : 'crown')}</span>` : ''}</div>
-        <div class="info"><span class="nm">${esc(p.name)}${p.id === C.meId ? ' (you)' : ''}</span><span class="sq">${won ? ic('crown') : '#' + p.position}</span><span class="pos">${won ? 'Finished' : 'Square ' + p.position + ' of ' + r.tile_count}</span><i class="bar"><b style="width:${pct}%"></b></i>
-          ${meter ? `<span class="bz"><span class="bz-l">${ic('cheers')} ${esc(buzzLevel(bz))}</span><i class="bz-bar"><b ${fill}></b></i><span class="bz-n">${bz}</span></span>` : ''}</div>
+        <div class="info"><span class="nm">${esc(p.name)}${p.id === C.meId ? ' (you)' : ''}${p.team ? ` <em style="font-style:normal;opacity:.7;font-size:.85em;">· ${esc(teamName(p.team).slice(0, 12))}</em>` : ''}</span><span class="sq">${won ? ic('crown') : '#' + p.position}</span><span class="pos">${won ? 'Finished' : 'Square ' + p.position + ' of ' + r.tile_count}</span><i class="bar"><b style="width:${pct}%"></b></i>
+          ${meter ? `<span class="bz"><span class="bz-l">${ic(cfg.icon || 'cheers')} ${esc(buzzLevel(bz))}</span><i class="bz-bar"><b ${fill}></b></i><span class="bz-n">${bz}</span></span>` : ''}</div>
         <span class="pw">${pw}</span>${meter ? `<i class="bz-mini"><b ${fill}></b></i>` : `<span class="rk">${idx + 1}</span>`}</div>`;
     }).join('');
     // glide each row from where it used to be (layout coordinates, so it works inside the rotated phone stage too)
@@ -1104,6 +1118,7 @@
     if (r.status !== 'open') { hide('ovLobby'); lobbySig = null; cancelAnimationFrame(waitRaf); return; }
     const active = S.players.filter((p) => p.status === 'active');
     const iHost = r.host_player_id === C.meId;
+    const need = r.team_mode ? 4 : 2, canStart = active.length >= need && (!r.team_mode || active.length % 2 === 0); // teams of two: an even number, 4 or more
     // Only redraw when something actually changed — a card that keeps re-drawing (and re-animating) can't be clicked.
     const sig = JSON.stringify([r.join_code, r.name, r.is_public, r.max_players, r.host_player_id, C.meId, active.map((p) => [p.id, p.name, p.avatar])]);
     if (sig === lobbySig && $('ovLobby').classList.contains('show')) return;
@@ -1132,21 +1147,24 @@
       <div class="code-big">${esc(r.join_code)}</div>
       <div class="ov-sub">Friends open <b>${esc(location.host)}</b> → <b>Join</b>, or tap Share.</div>
       <div class="tgt-row">${active.map(chip).join('')}</div>
+      ${r.team_mode ? '<div class="ov-sub" style="color:#fde68a;">Teams of two: partners are paired in the order people join (1 &amp; 2, 3 &amp; 4 …). Needs 4, 6, 8, 10 or 12 players.</div>' : ''}
+      ${r.team_mode && iHost && canStart ? `<div class="ov-sub" style="text-align:left;">Name your teams (optional):</div>${Array.from({ length: active.length / 2 }, (_, i) => `<div style="display:flex;gap:.4rem;align-items:center;margin:.2rem 0;"><span style="font-size:.7rem;font-weight:900;color:#9ca3af;min-width:4.2rem;text-align:left;">${esc(active[i * 2].name)} &amp; ${esc(active[i * 2 + 1].name).slice(0, 10)}</span><input class="tn-in" data-i="${i}" maxlength="20" placeholder="Team ${i + 1}" value="${esc(teamNameVals[i] || '')}" style="flex:1;min-width:0;border-radius:.5rem;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;padding:.3rem .5rem;font:inherit;font-size:.8rem;"></div>`).join('')}` : ''}
       <div class="wait"><div class="w-track" id="waitTrack">${tiles}<div class="w-tok" id="waitTok"><div><img id="waitAv" src="${C.avatarBase}/${(active[0] && AV.test(active[0].avatar || '')) ? active[0].avatar : 'f1-3'}.svg" alt=""></div></div></div>
-        <div class="w-txt">${active.length < 2 ? 'Waiting for players to join' : (iHost ? 'Ready when you are' : 'Waiting for the host to start')}…</div></div>
+        <div class="w-txt">${active.length < need ? 'Waiting for players to join' : !canStart ? 'Teams of two need an even number of players' : (iHost ? 'Ready when you are' : 'Waiting for the host to start')}…</div></div>
       <div class="ov-sub">${active.length} / ${r.max_players} players</div>
       <div class="ov-sub" style="opacity:.8;">On a TV? Open <b>${esc(location.host)}/tv</b> and enter the code.</div>
       <div class="ov-btns">
         <button class="obtn ok" id="lobbyWa">${ic('phone')} WhatsApp</button>
         <button class="obtn vio" id="lobbyShare">${ic('share')} Share invite</button>
-        ${iHost ? `<button class="obtn" id="lobbyStart" ${active.length < 2 ? 'disabled' : ''}>${ic('play')} Start game</button>` : ''}
+        ${iHost ? `<button class="obtn" id="lobbyStart" ${canStart ? '' : 'disabled'}>${ic('play')} Start game</button>` : ''}
         <button class="obtn alt" id="lobbyLeave">Leave</button>
       </div></div>`);
     $('lobbyShare').onclick = shareInvite;
     $('lobbyWa').onclick = shareWhatsApp;
     $('lobbyLeave').onclick = () => confirmLeave(C.meId);
     const st = $('lobbyStart');
-    if (st) st.onclick = async () => { st.disabled = true; snd('toggle'); await post(C.urls.start); };
+    document.querySelectorAll('.tn-in').forEach((el) => { el.oninput = () => { teamNameVals[+el.dataset.i] = el.value; }; });
+    if (st) st.onclick = async () => { st.disabled = true; snd('toggle'); await post(C.urls.start, r.team_mode ? { team_names: Array.from({ length: Math.floor(active.length / 2) }, (_, i) => teamNameVals[i] || '') } : {}); };
     startWaitLoader();
   }
 
@@ -1163,7 +1181,7 @@
     show('ovWin', `<div class="ov-card wide" style="--k:#fbbf24">
       <div class="ov-icon">${ic('trophy')}</div>
       <div class="ov-title">${r.winner_player_id ? 'We have a winner' : 'Game over'}</div>
-      <div class="ov-text">${r.winner_player_id ? esc(winner.name) + ' wins!' : 'That\'s a wrap.'}</div>
+      <div class="ov-text">${r.winner_player_id ? (r.team_mode && winner.team ? esc(teamName(winner.team)) + ' (' + S.players.filter((q) => q.team === winner.team && q.status !== 'left').map((q) => esc(q.name)).join(' &amp; ') + ') win!' : esc(winner.name) + ' wins!') : 'That\'s a wrap.'}</div>
       <div class="ov-sub">${rc.rounds || r.round} rounds played</div>
       <div style="text-align:left;margin:.3rem 0;">${rankHtml}</div>
       ${awardsHtml ? `<div style="text-align:left;margin:.4rem 0;border-top:1px solid rgba(255,255,255,.1);padding-top:.3rem;">${awardsHtml}</div>` : ''}
@@ -1173,7 +1191,7 @@
         <button class="obtn ok" id="winCard">${ic('trophy')} Result card</button>
         <a class="obtn alt" href="${C.urls.home}">${ic('home')} Home</a>
       </div>
-      <div class="ov-sub" style="margin-top:.5rem;">Thanks for playing — drink responsibly and never drive after drinking.</div></div>`);
+      <div class="ov-sub" style="margin-top:.5rem;">${C.mode && C.mode.label === 'Drinks' ? 'Thanks for playing — drink responsibly and never drive after drinking.' : 'Thanks for playing!'}</div></div>`);
     $('winShare').onclick = async () => {
       const w = P(r.winner_player_id);
       const data = { title: 'Snakes & Liquor', text: `${w.name} just won our game of Snakes & Liquor! Play free on your phone:`, url: location.origin + '/' };
@@ -1227,7 +1245,7 @@
       <div class="htp">${ic('team')}<span>Player numbers: <a href="#" id="a11yN" style="color:#f9a8d4;font-weight:800;"></a> <span style="color:#9ca3af;">— a number on each token, not just a colour</span></span></div>
       <div class="htp">${ic('clock')}<span>Reduce motion: <a href="#" id="a11yM" style="color:#f9a8d4;font-weight:800;"></a> <span style="color:#9ca3af;">— calmer effects</span></span></div>
       <div class="htp" id="appRow" style="display:none;margin-top:.4rem;">${ic('info')}<span>App version <b id="appVer">…</b> · <a href="#" id="chkUpd" style="color:#f9a8d4;font-weight:800;">Check for updates</a><span id="updMsg" style="display:block;color:#9ca3af;"></span></span></div>
-      <div class="ov-sub" style="text-align:left;margin-top:.5rem;">Any drink can be swapped for water. Never drive after drinking.</div>
+      <div class="ov-sub" style="text-align:left;margin-top:.5rem;">${C.mode && C.mode.label === 'Drinks' ? 'Any drink can be swapped for water. Never drive after drinking.' : (C.mode && C.mode.adult ? 'Everything is optional. Skip anything you are not comfortable with.' : 'Have fun, be kind, and skip anything that is not for you.')}</div>
       <div class="ov-btns" style="justify-content:flex-start;"><a class="obtn alt" href="${C.urls.home}">${ic('home')} Leave to home</a></div></div>`);
     $('menuClose').onclick = () => hide('ovMenu');
     const ap = $('addPlayerBtn'); if (ap) ap.onclick = openAddPlayer;
@@ -1467,6 +1485,28 @@
     musicBtn.onclick = () => setMusic(!SNLAudio.music);
   }
 
+  /** The private mission card (online): what your goal is, how far along you are, and "I did it" for goals only the table can judge. */
+  function openMission() {
+    const m = latest.mission;
+    if (!m) return;
+    const c = m.current;
+    const pips = Array.from({ length: m.limit }, (_, i) => `<i class="${i < m.done ? 'on' : ''}"></i>`).join('');
+    const prize = c ? (c.reward === 'reroll' ? 'a Reroll' : 'a Shield') : '';
+    show('ovConfirm', cardShell({
+      color: '#a78bfa', head: 'Your secret mission', icon: 'mask', cls: 'wide',
+      text: c ? c.text : 'All your missions are done!',
+      sub: c
+        ? (c.claim
+          ? `Only the table can judge this one. Do it, then tap <b>I did it</b>. Everyone sees the reveal, so be honest. Reward: <b>${prize}</b>.${c.claim_in > 0 ? ` Available in about ${Math.ceil(c.claim_in / 10) * 10}s.` : ''}`
+          : `Progress ${c.progress} / ${c.target}. It finishes by itself. Reward: <b>${prize}</b>.`)
+        : 'Nice one. You finished every mission you were given.',
+      extra: `<div class="pc-pips" style="justify-content:center;margin-top:.4rem;" title="Missions finished">${pips}</div><div class="ov-sub">${m.done} of ${m.limit} finished. Keep it secret until you finish!</div>`,
+      buttons: (c && c.claim ? `<button class="obtn ok" id="msClaim">${ic('check')} I did it</button>` : '') + '<button class="obtn alt" id="msClose">Close</button>',
+    }));
+    $('msClose').onclick = () => hide('ovConfirm');
+    const cl = $('msClaim'); if (cl) cl.onclick = async () => { cl.disabled = true; const r = await post(C.urls.mission); if (r !== null) hide('ovConfirm'); else cl.disabled = false; };
+  }
+  const mbtn = $('missionBtn'); if (mbtn) mbtn.onclick = openMission;
   const rt = $('reactToggle');
   if (rt) {
     rt.onclick = () => $('reactBar').classList.toggle('show');

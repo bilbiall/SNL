@@ -63,6 +63,7 @@
                 @foreach($reactions as $key)<button type="button" data-react="{{ $key }}" aria-label="React"><x-icon :name="$key" /></button>@endforeach
             </div>
             <button class="icon-btn" id="reactToggle" type="button" aria-label="Reactions"><x-icon name="jester" /></button>
+            <button class="icon-btn" id="missionBtn" type="button" aria-label="Your secret mission"><x-icon name="mask" /></button>
         </div>
         @endif
 
@@ -181,6 +182,7 @@ window.SNL = {
         setup:   @json(route('setup', ['type' => 'party'])),
         local:   @json(route('play.local')),
         addplayer: @json(route('play.addplayer', $room->token)),
+        mission: @json(route('play.mission', $room->token)),
     },
     packUrl: @json(url('/offline/pack.json')),
     isParty: @json($room->isParty()),

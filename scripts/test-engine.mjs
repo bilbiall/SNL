@@ -238,7 +238,8 @@ else {
   const t = (fn) => { try { fn(); return null; } catch (e) { return e instanceof E.GameError ? e.message : 'WRONG:' + e; } };
   check('too few players message', t(() => E.create(pack, { boardId: board.id, mode: 'family', intensity: 1, entries: [{ name: 'A' }] })) === 'Party games need 2–12 players.');
   check('unknown mode message', t(() => E.create(pack, { boardId: board.id, mode: 'x', intensity: 1, entries: [{}, {}] })) === 'Unknown game mode.');
-  check('lovers disabled message', t(() => E.create(pack, { boardId: board.id, mode: 'lovers', intensity: 1, entries: [{}, {}] })) === "Lovers mode isn't available yet.");
+  check('lovers mode is available', t(() => E.create(pack, { boardId: board.id, mode: 'lovers', intensity: 1, entries: [{}, {}] })) === null);
+  check('unknown mode refused', t(() => E.create(pack, { boardId: board.id, mode: 'nope', intensity: 1, entries: [{}, {}] })) === 'Unknown game mode.');
   check('unknown intensity message', t(() => E.create(pack, { boardId: board.id, mode: 'family', intensity: 9, entries: [{}, {}] })) === 'Unknown intensity.');
   check('unknown board message', t(() => E.create(pack, { boardId: 9999, mode: 'family', intensity: 1, entries: [{}, {}] })) === 'That board is not available.');
   const g = E.create(pack, { boardId: board.id, mode: 'family', intensity: 1, entries: [{ name: '  ' }, { name: 'X' }] });

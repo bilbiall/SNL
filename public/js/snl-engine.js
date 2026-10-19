@@ -316,6 +316,7 @@
 
   P.commitHit = function (source, targets, card, tile) {
     var self = this;
+    if (this.g.room.team_mode && (card.kind === 'self' || card.kind === 'pick' || card.kind === 'duel')) targets = targets.concat(this.teammatesOf(targets)); // teammates share the penalty
     targets.forEach(function (t) {
       self.bump(t, 'hits');
       if (card.kind !== 'heart' && card.kind !== 'groupgame') self.bump(t, 'buzz', Math.max(1, parseInt(card.units || 1, 10) || 1));   // the Buzz Meter
@@ -373,11 +374,46 @@
     this.bump(actor, 'rolls');
     if (value === 6) this.bump(actor, 'sixes');
     this.log({ type: 'roll', player_id: actor.id, roll: value, from: from, hop_path: hop, to: actor.position, overshoot: overshoot });
+    this.syncTeams(actor); // the partner follows the token
 
     if (actor.position >= n) { this.win(actor); return; }
 
     this.resolveTile(actor, this.tile(actor.position), null, false);
+    this.syncTeams(actor); // a snake, ladder or spin may have moved it again
     if (!this.g.pending && !this.extraTurn) this.endTurn();
+  };
+
+  /**
+   * Teammates share one token: whoever just moved drags their partner to the same square (a short "team_sync" event animates it).
+   * The last synced square per team is remembered in g.team_pos, so this also works when a move is finished by a later action.
+   */
+  P.syncTeams = function (mover) {
+    var g = this.g, self = this;
+    if (!g.room.team_mode) return;
+    var byTeam = {};
+    g.players.forEach(function (p) { if (p.team && p.status !== 'left') (byTeam[p.team] = byTeam[p.team] || []).push(p); });
+    Object.keys(byTeam).forEach(function (t) {
+      var members = byTeam[t], last = g.team_pos[t] || 0;
+      var moved = members.filter(function (m) { return m.position !== last; });
+      if (!moved.length) return;
+      var src = (mover && moved.indexOf(mover) !== -1) ? mover : moved[0];
+      members.forEach(function (m) {
+        if (m !== src && m.position !== src.position) { m.position = src.position; self.log({ type: 'team_sync', player_id: m.id, to: src.position }); }
+      });
+      g.team_pos[t] = src.position;
+    });
+  };
+
+  /** The active teammates of these players who are not already among them (they share the penalty). */
+  P.teammatesOf = function (targets) {
+    var ids = targets.map(function (t) { return t.id; }), extra = [];
+    targets.forEach(function (t) {
+      if (!t.team) return;
+      this.g.players.forEach(function (m) {
+        if (m.team === t.team && m.status === 'active' && ids.indexOf(m.id) === -1 && extra.indexOf(m) === -1) extra.push(m);
+      });
+    }, this);
+    return extra;
   };
 
   P.resolveTile = function (actor, tile, forceKind, spin) {
@@ -727,6 +763,7 @@
         this.clearPending();
     }
 
+    this.syncTeams(this.player(room.current_player_id)); // e.g. after a swap of places
     // A prompt can chain into another (pick → shield). Only finish the turn once nothing is waiting.
     if (!this.g.pending && room.status === 'active') this.endTurn();
   };
@@ -853,7 +890,7 @@
       return {
         id: p.id, name: p.name, color: p.color, avatar: p.avatar, position: p.position, status: p.status, turn_order: p.turn_order,
         powers: { shield: self.power(p, 'shield'), reroll: self.power(p, 'reroll') },
-        is_host: p.id === room.host_player_id, missed: p.missed_turns, buzz: (p.stats && p.stats.buzz) || 0,
+        is_host: p.id === room.host_player_id, missed: p.missed_turns, buzz: (p.stats && p.stats.buzz) || 0, team: p.team || null,
       };
     });
     return {
@@ -864,13 +901,14 @@
         current_player_id: room.current_player_id, winner_player_id: room.winner_player_id,
         host_player_id: room.host_player_id, max_players: room.max_players,
         tile_count: room.tile_count, event_seq: room.event_seq,
-        rematch_token: room.rematch_token,
+        rematch_token: room.rematch_token, team_mode: !!room.team_mode, team_names: room.team_names || {},
         turn_seconds_left: null, pending_seconds_left: null,
       },
       players: players,
       pending: view,
       actions: g.actions || [],
       me: null,
+      mission: null, // secret missions are online-only; the key keeps the state shape identical to the server's
       recap: room.status === 'completed' ? this.recap() : null,
     };
   };
@@ -919,23 +957,53 @@
       id: game.nextPlayerId++, name: name, turn_order: order,
       color: e.color || colors[order % colors.length],
       avatar: avatarValid(pack, e.avatar) ? e.avatar : avatarDefault(pack, order),
-      position: 0, status: 'active', powers: powers, stats: {}, missed_turns: 0,
+      position: 0, status: 'active', powers: powers, stats: {}, missed_turns: 0, team: null,
     };
     game.players.push(p);
     return p;
   }
 
-  function newGame(pack, board, mode, intensity, maxPlayers, startShields) {
+  function newGame(pack, board, mode, intensity, maxPlayers, startShields, teams) {
     return {
-      v: 1, packVersion: pack.version || null, nextPlayerId: 1,
+      v: 1, packVersion: pack.version || null, nextPlayerId: 1, team_pos: {},
       room: {
         token: 'local', type: 'party', board_id: board.id, content_mode: mode, intensity: intensity,
         status: 'active', current_player_id: null, winner_player_id: null, host_player_id: null,
         round: 1, active_rule: null, event_seq: 0, rematch_token: null, join_code: null,
-        max_players: maxPlayers, tile_count: board.tile_count, start_shields: startShields,
+        max_players: maxPlayers, tile_count: board.tile_count, start_shields: startShields, team_mode: !!teams,
       },
       players: [], pending: null, actions: [],
     };
+  }
+
+  function assertTeamSize(pack, n) {
+    if (n < 4 || n % 2 !== 0 || n > pack.config.players.max) throw new GameError('Teams of two need 4, 6, 8, 10 or 12 players (an even number, two to a team).');
+  }
+
+  /**
+   * Pairs the players in the order given (1 & 2, 3 & 4 …). Teammates share a colour, and the turn order alternates between teams
+   * (team 1's first player, team 2's first player … then each team's second player), so every team rolls equally often.
+   */
+  /** Team names typed at setup (blank = "Team N"). */
+  function teamNamesFor(names, n) {
+    var out = {};
+    for (var t = 1; t <= n; t++) {
+      var v = String((names && names[t - 1]) == null ? '' : names[t - 1]).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+      out[t] = v ? substr(v, 0, 20) : 'Team ' + t;
+    }
+    return out;
+  }
+
+  function assignTeams(g, ordered) {
+    var teams = Math.floor(ordered.length / 2);
+    g.team_pos = {};
+    ordered.forEach(function (p, i) {
+      var t = Math.floor(i / 2);
+      p.team = t + 1;
+      p.turn_order = (i % 2) * teams + t;
+      p.color = ordered[t * 2].color;
+      g.team_pos[t + 1] = 0;
+    });
   }
 
   /** One device, 2–12 named players, game starts immediately. */
@@ -945,9 +1013,11 @@
     var entries = opts.entries || [], lim = pack.config.players;
     if (entries.length < lim.min || entries.length > lim.max) throw new GameError('Party games need ' + lim.min + '–' + lim.max + ' players.');
     var sh = opts.startShields == null || opts.startShields === '' ? null : Math.max(0, Math.min(((pack.config.powers || {}).shield || { max: 5 }).max, parseInt(opts.startShields, 10) || 0));
-    var g = newGame(pack, board, mode, intensity, lim.max, sh);
+    if (opts.teams) assertTeamSize(pack, entries.length);
+    var g = newGame(pack, board, mode, intensity, lim.max, sh, !!opts.teams);
     entries.forEach(function (e, i) { addPlayer(pack, g, e, i); });
-    var first = g.players[0];
+    if (opts.teams) { assignTeams(g, g.players.slice()); g.room.team_names = teamNamesFor(opts.teamNames, Math.floor(g.players.length / 2)); }
+    var first = g.players.slice().sort(function (a, b) { return a.turn_order - b.turn_order; })[0];
     g.room.current_player_id = first.id;
     g.room.host_player_id = first.id;
     new Ctx(pack, g).log({ type: 'start' });
@@ -958,13 +1028,15 @@
   function rematch(pack, old) {
     if (old.room.status !== 'completed') throw new GameError('The game is still going.');
     var board = validateSetup(pack, old.room.board_id, old.room.content_mode, old.room.intensity);
-    var g = newGame(pack, board, old.room.content_mode, old.room.intensity, old.room.max_players, old.room.start_shields);
+    var g = newGame(pack, board, old.room.content_mode, old.room.intensity, old.room.max_players, old.room.start_shields, !!old.room.team_mode);
     old.players.filter(function (p) { return p.status !== 'left'; })
-      .sort(function (a, b) { return a.turn_order - b.turn_order; })
+      .sort(function (a, b) { return old.room.team_mode ? ((a.team || 0) - (b.team || 0) || a.turn_order - b.turn_order) : (a.turn_order - b.turn_order); }) // team games: back to pair order
       .forEach(function (p, i) { addPlayer(pack, g, { name: p.name, color: p.color, avatar: p.avatar }, i); });
+    if (old.room.team_mode) { assignTeams(g, g.players.slice()); g.room.team_names = old.room.team_names || teamNamesFor([], Math.floor(g.players.length / 2)); }
     if (g.players.length) {
-      g.room.current_player_id = g.players[0].id;
-      g.room.host_player_id = g.players[0].id;
+      var firstP = g.players.slice().sort(function (a, b) { return a.turn_order - b.turn_order; })[0];
+      g.room.current_player_id = firstP.id;
+      g.room.host_player_id = firstP.id;
     }
     new Ctx(pack, g).log({ type: 'start' });
     return g;
@@ -983,20 +1055,22 @@
     if (!board) throw new GameError('That board is not available.');
     var mode = pack.config.modes[rs.content_mode] ? rs.content_mode : 'family';
     var intensity = pack.config.intensities[rs.intensity] ? rs.intensity : 2;
-    var g = newGame(pack, board, mode, intensity, pack.config.players.max);
+    var g = newGame(pack, board, mode, intensity, pack.config.players.max, null, !!rs.team_mode);
     var map = {};
     onlineState.players.slice().sort(function (a, b) { return a.turn_order - b.turn_order; }).forEach(function (op, idx) {
       var np = {
         id: g.nextPlayerId++, name: op.name, turn_order: idx, color: op.color,
         avatar: avatarValid(pack, op.avatar) ? op.avatar : avatarDefault(pack, idx),
         position: Math.max(0, Math.min(board.tile_count, parseInt(op.position, 10) || 0)), status: op.status === 'left' ? 'left' : (op.status === 'won' ? 'won' : 'active'),
-        powers: {}, stats: {}, missed_turns: 0,
+        powers: {}, stats: {}, missed_turns: 0, team: op.team || null,
       };
       var defs = obj(pack.config.powers);
       Object.keys(defs).forEach(function (k) { np.powers[k] = Math.max(0, Math.min(defs[k].max, parseInt((op.powers || {})[k], 10) || 0)); });
       g.players.push(np);
       map[op.id] = np.id;
     });
+    if (g.room.team_mode) g.room.team_names = rs.team_names && Object.keys(rs.team_names).length ? rs.team_names : teamNamesFor([], 6);
+    if (g.room.team_mode) g.players.forEach(function (np) { if (np.team && g.team_pos[np.team] == null) g.team_pos[np.team] = np.position; });
     g.room.round = Math.max(1, parseInt(rs.round, 10) || 1);
     g.room.active_rule = rs.active_rule || null;
     var ctx = new Ctx(pack, g);
@@ -1052,6 +1126,7 @@
       return run(pack, game, function (c) {
         var g = c.g;
         if (g.room.status !== 'active') throw new GameError(g.room.status === 'completed' ? 'This game is over.' : 'The game has not started yet.');
+        if (g.room.team_mode) throw new GameError('Teams are set when the game starts, so nobody can be added now.');
         var seated = g.players.filter(function (p) { return p.status !== 'left'; }).length;
         if (seated >= pack.config.players.max) throw new GameError('The table is full (' + pack.config.players.max + ' players).');
         var order = g.players.reduce(function (m, p) { return Math.max(m, p.turn_order); }, -1) + 1;
