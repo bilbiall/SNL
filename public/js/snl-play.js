@@ -780,15 +780,10 @@
       if (mine) snd('notify');
     }
     lastTurn = S.room.current_player_id;
-    ensureTokens();
-    syncTokens();
-    renderHudTl();
-    renderPlayers();
-    renderTurn();
-    renderPowers();
-    renderPrompt();
-    renderLobby();
-    renderWin();
+    // each part draws on its own: a problem in one (say the leaderboard) must never stop the prompt, the lobby or the winner screen
+    [ensureTokens, syncTokens, renderHudTl, renderPlayers, renderTurn, renderPowers, renderPrompt, renderLobby, renderWin].forEach((fn) => {
+      try { fn(); } catch (e) { console.error('render:', fn.name, e); }
+    });
   }
 
   function renderHudTl() {
@@ -920,14 +915,16 @@
       vote: 'Vote!', tf: 'True or false?', bluff_say: 'Fact or bluff', bluff_call: 'Call bluff?', bluff_verdict: 'Was it proven?', spot: (p.card && p.card.kind === 'quickfire') ? 'Quickfire!' : 'Spotlight',
     };
     if (!card || !heads[p.type]) { w.classList.remove('show'); return; }
-    const status = {
-      vote: `${(p.voted || []).length} of ${p.actors.length} have voted${(p.voted || []).includes(C.meId) ? ' — you have voted' : ''}…`,
-      tf: `${esc(who.name)} is deciding: true or false?`,
-      bluff_say: `${esc(who.name)} is about to make a claim…`,
-      bluff_call: p.actors && p.actors.includes(C.meId) ? 'Think they\'re bluffing?' : `Waiting for challengers…`,
-      bluff_verdict: `${esc(P(p.caller_id).name)} called bluff on ${esc(who.name)} — judges are deciding…`,
-      spot: `${esc(who.name)} is on the clock…`,
-    }[p.type];
+    // Each message is built only when it is needed: building them all up front read fields that most prompts do not have
+    // (p.actors, p.caller_id) and broke the strip for true/false, spotlight and the bluff claim.
+    const status = ({
+      vote: () => `${(p.voted || []).length} of ${(p.actors || []).length} have voted${(p.voted || []).includes(C.meId) ? ' — you have voted' : ''}…`,
+      tf: () => `${esc(who.name)} is deciding: true or false?`,
+      bluff_say: () => `${esc(who.name)} is about to make a claim…`,
+      bluff_call: () => (p.actors && p.actors.includes(C.meId) ? 'Think they\'re bluffing?' : 'Waiting for challengers…'),
+      bluff_verdict: () => `${esc(P(p.caller_id).name)} called bluff on ${esc(who.name)} — judges are deciding…`,
+      spot: () => `${esc(who.name)} is on the clock…`,
+    }[p.type] || (() => ''))();
     w.style.setProperty('--k', kindColor(p.type === 'vote' ? 'vote' : p.type === 'tf' ? 'fact' : p.type === 'spot' ? (card.kind === 'quickfire' ? 'quickfire' : 'spotlight') : 'bluff'));
     w.innerHTML = `<div class="w-ic">${ic(card.icon || 'cards')}</div><div class="w-tx"><b>${heads[p.type]}</b>
       <div>${p.type === 'bluff_verdict' ? '' : esc(card.text)}</div>

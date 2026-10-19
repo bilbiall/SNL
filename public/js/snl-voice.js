@@ -2,6 +2,8 @@
    Two ways to carry the audio, chosen by an admin in GameSet → Settings and given to the page as SNL.voice.mode:
      'p2p'      free: every phone talks directly to every other (WebRTC). The server only passes offers / answers / ICE messages.
      'livekit'  a hosted LiveKit room: the server only signs a token, LiveKit carries the audio.
+   Phones are stricter than a PC: audio must be unlocked inside the tap, remote audio is played through Web Audio (with a muted
+   <audio> element so Chrome delivers the stream), and in-app browsers (WhatsApp, Instagram …) often cannot use the microphone at all.
    Never loaded on the TV screen or in party mode. Exposes window.SNLVoice = { joined(), muted(), leave(), speaking() }
    and fires a 'snl-speaking' event when who-is-talking changes (snl-play.js draws the glow around their token / card). */
 (function () {
@@ -9,13 +11,42 @@
   var C = window.SNL || {}, V = C.voice || {};
   if (!V.mode || V.mode === 'off' || C.tv || C.isParty || !C.meId) return;
   var btn = document.getElementById('micBtn');
-  if (!btn || !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) { if (btn) btn.style.display = 'none'; return; }
+  if (!btn) return;
   var U = (C.urls || {}).voice || {};
-  var speaking = {}, joined = false, muted = true, busy = false, impl = null;
+  var ua = navigator.userAgent || '';
+  var inApp = /FBAN|FBAV|FB_IAB|Instagram|Line\/|MicroMessenger|Snapchat|Twitter|musical_ly|Bytedance|TikTok|WhatsApp|GSA\/|LinkedInApp|; wv\)/i.test(ua); // in-app browsers / WebViews
+  var canMic = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && window.isSecureContext !== false;
+  var speaking = {}, joined = false, muted = true, busy = false, impl = null, shared = null;
 
   function toast(msg, ms, color) { try { if (window.snlToast) window.snlToast(msg, ms || 3200, color); } catch (e) {} }
   function emit() { try { window.dispatchEvent(new CustomEvent('snl-speaking')); } catch (e) {} }
   function setSpeaking(id, on) { id = +id; if (!!speaking[id] === !!on) return false; if (on) speaking[id] = 1; else delete speaking[id]; return true; }
+
+  /** One AudioContext for everything, created and resumed INSIDE the tap so phones allow sound afterwards. */
+  function unlockAudio() {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!shared || shared.state === 'closed') shared = new AC();
+      if (shared.state === 'suspended') { var p = shared.resume(); if (p && p.catch) p.catch(function () {}); }
+      // a one-sample silent buffer: the classic nudge that makes iOS Safari start the audio output
+      var b = shared.createBuffer(1, 1, 22050), s = shared.createBufferSource(); s.buffer = b; s.connect(shared.destination); s.start(0);
+    } catch (e) {}
+    return shared;
+  }
+
+  /** "Tap to hear everyone": shown only when the phone still refuses to play sound (some browsers need a second tap). */
+  var pill = null;
+  function hearPill(onTap) {
+    if (pill) return;
+    pill = document.createElement('button');
+    pill.type = 'button';
+    pill.textContent = '🔊 Tap to hear everyone';
+    pill.style.cssText = 'position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translateX(-50%);z-index:2600;padding:.55rem 1rem;border-radius:999px;border:2px solid #34d399;background:rgba(8,7,16,.95);color:#fff;font:900 .85rem Figtree,system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);';
+    pill.onclick = function () { try { onTap(); } catch (e) {} hidePill(); };
+    document.body.appendChild(pill);
+  }
+  function hidePill() { if (pill) { pill.remove(); pill = null; } }
 
   function api(url, method, body) {
     return fetch(url, {
@@ -43,7 +74,7 @@
 
   // ───────────────────────── free: phone to phone ─────────────────────────
   function p2p() {
-    var me = +C.meId, ice = [], pcs = {}, pending = {}, audios = {}, meters = {}, missing = {}, local = null, ac = null, pollT = null, lvlT = null, queue = Promise.resolve(), stopped = false;
+    var me = +C.meId, ice = [], pcs = {}, pending = {}, audios = {}, nodes = {}, meters = {}, missing = {}, local = null, ac = null, pollT = null, lvlT = null, queue = Promise.resolve(), stopped = false;
 
     function send(to, kind, data) { api(U.signal, 'POST', { to: to, kind: kind, data: data }).catch(function () {}); }
 
@@ -63,12 +94,15 @@
         var on = Math.sqrt(sum / m.buf.length) > 0.035 && (!m.self || !muted);
         if (setSpeaking(m.pid, on)) changed = true;
       });
+      if (ac && ac.state !== 'running') hearPill(function () { ac.resume(); });
+      else if (ac && pill) hidePill();
       if (changed) emit();
     }
 
     function drop(id) {
       var pc = pcs[id]; delete pcs[id]; delete pending[id]; delete meters[id];
       if (pc) { try { pc.onconnectionstatechange = null; pc.close(); } catch (e) {} }
+      if (nodes[id]) { try { nodes[id].disconnect(); } catch (e) {} delete nodes[id]; }
       if (audios[id]) { try { audios[id].srcObject = null; audios[id].remove(); } catch (e) {} delete audios[id]; }
       if (setSpeaking(id, false)) emit();
     }
@@ -79,9 +113,12 @@
       pc.onicecandidate = function (e) { if (e.candidate) send(id, 'ice', e.candidate.toJSON ? e.candidate.toJSON() : e.candidate); };
       pc.ontrack = function (e) {
         var stream = e.streams && e.streams[0] ? e.streams[0] : new MediaStream([e.track]);
-        if (!audios[id]) { var a = document.createElement('audio'); a.autoplay = true; a.setAttribute('playsinline', ''); a.style.display = 'none'; document.body.appendChild(a); audios[id] = a; }
+        // Sound goes out through the AudioContext that was unlocked by the tap. A muted <audio> element is attached as well,
+        // because Chrome only delivers a remote WebRTC stream to Web Audio when something is playing it.
+        if (!audios[id]) { var a = document.createElement('audio'); a.autoplay = true; a.muted = true; a.setAttribute('playsinline', ''); a.style.display = 'none'; document.body.appendChild(a); audios[id] = a; }
         audios[id].srcObject = stream;
         var pp = audios[id].play(); if (pp && pp.catch) pp.catch(function () {});
+        if (ac && !nodes[id]) { try { nodes[id] = ac.createMediaStreamSource(stream); nodes[id].connect(ac.destination); } catch (x) { audios[id].muted = false; } } else if (!ac) audios[id].muted = false;
         meter(id, stream, id);
       };
       pc.onconnectionstatechange = function () {
@@ -140,13 +177,12 @@
 
     return {
       start: function () {
+        ac = unlockAudio(); // already unlocked by the tap; kept here so a context that fell asleep is woken again
         return getMic().then(function (stream) {
           local = stream;
           return api(U.join, 'POST', {}).catch(function (e) { stream.getTracks().forEach(function (t) { t.stop(); }); throw e; });
         }).then(function (j) {
           ice = j.ice || [];
-          ac = new (window.AudioContext || window.webkitAudioContext)();
-          if (ac.resume) ac.resume().catch(function () {});
           meter('me', local, me);
           peersNow(j.peers || []);
           pollT = setInterval(poll, 1000);
@@ -155,10 +191,9 @@
       },
       mute: function (m) { if (local) local.getAudioTracks().forEach(function (t) { t.enabled = !m; }); },
       leave: function () {
-        stopped = true; clearInterval(pollT); clearInterval(lvlT);
+        stopped = true; clearInterval(pollT); clearInterval(lvlT); hidePill();
         Object.keys(pcs).forEach(drop);
         if (local) local.getTracks().forEach(function (t) { t.stop(); });
-        try { ac && ac.close(); } catch (e) {}
         speaking = {}; emit();
         return api(U.leave, 'POST', {}).catch(function () {});
       },
@@ -179,44 +214,59 @@
     var room = null;
     return {
       start: function () {
+        unlockAudio();
         var tok;
         return api(U.token, 'POST', {}).then(function (t) { tok = t; return loadSdk(t.sdk); }).then(function (L) {
           room = new L.Room({ adaptiveStream: false, dynacast: false, audioCaptureDefaults: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
-          room.on(L.RoomEvent.TrackSubscribed, function (track) { if (track.kind === 'audio') { var el = track.attach(); el.style.display = 'none'; document.body.appendChild(el); } });
+          room.on(L.RoomEvent.TrackSubscribed, function (track) { if (track.kind === 'audio') { var el = track.attach(); el.style.display = 'none'; el.setAttribute('playsinline', ''); document.body.appendChild(el); } });
           room.on(L.RoomEvent.TrackUnsubscribed, function (track) { track.detach().forEach(function (e) { e.remove(); }); });
           room.on(L.RoomEvent.ActiveSpeakersChanged, function (list) { speaking = {}; list.forEach(function (p) { if (p.identity) speaking[+p.identity] = 1; }); emit(); });
-          room.on(L.RoomEvent.Disconnected, function () { if (joined) { joined = false; muted = true; speaking = {}; emit(); ui(); toast('Voice chat disconnected', 2600, '#f87171'); } });
+          room.on(L.RoomEvent.AudioPlaybackStatusChanged, function () { if (room.canPlaybackAudio) hidePill(); else hearPill(function () { room.startAudio(); }); });
+          room.on(L.RoomEvent.Disconnected, function () { if (joined) { joined = false; muted = true; speaking = {}; emit(); ui(); hidePill(); toast('Voice chat disconnected', 2600, '#f87171'); } });
           return room.connect(tok.url, tok.token);
         }).then(function () {
-          if (room.startAudio) room.startAudio().catch(function () {});
+          if (room.startAudio) room.startAudio().catch(function () { hearPill(function () { room.startAudio(); }); });
           return room.localParticipant.setMicrophoneEnabled(true);
         });
       },
       mute: function (m) { if (room) room.localParticipant.setMicrophoneEnabled(!m).catch(function () {}); },
-      leave: function () { speaking = {}; emit(); try { room && room.disconnect(); } catch (e) {} return Promise.resolve(); },
+      leave: function () { speaking = {}; emit(); hidePill(); try { room && room.disconnect(); } catch (e) {} return Promise.resolve(); },
     };
   }
 
   // ───────────────────────── the button ─────────────────────────
+  function explainNoMic() {
+    if (window.isSecureContext === false) return 'Voice needs the secure (https) address. Open the game from its normal https link.';
+    if (inApp) return 'This in-app browser cannot use the microphone. Open the game in Chrome or Safari instead (menu ⋮ → "Open in browser").';
+    return 'This browser cannot use the microphone. Try the latest Chrome (Android) or Safari (iPhone).';
+  }
   function fail(e) {
-    var denied = e && (e.name === 'NotAllowedError' || e.name === 'SecurityError');
-    var none = e && (e.name === 'NotFoundError' || e.name === 'OverconstrainedError');
-    toast(denied ? 'Microphone blocked. Allow it for this site in your browser settings, then tap the mic again.'
-      : none ? 'No microphone found on this device.'
-      : (e && e.message) || 'Voice chat could not start.', 5200, '#f87171');
+    var n = (e && e.name) || '';
+    var msg;
+    if (n === 'NotAllowedError' || n === 'SecurityError' || n === 'PermissionDeniedError') {
+      msg = inApp
+        ? 'This in-app browser blocked the microphone. Open the game in Chrome or Safari instead.'
+        : 'The microphone is blocked. Tap the lock icon by the address bar → Permissions → Microphone → Allow, then tap the mic again. (Also check that your browser app is allowed to use the microphone in your phone settings.)';
+    } else if (n === 'NotFoundError' || n === 'OverconstrainedError') msg = 'No microphone was found on this device.';
+    else if (n === 'NotReadableError' || n === 'AbortError') msg = 'Another app is using the microphone. Close it and try again.';
+    else msg = (e && e.message) || 'Voice chat could not start.';
+    toast(msg + (n ? ' (' + n + ')' : ''), 7500, '#f87171');
   }
   btn.addEventListener('click', function () {
     if (busy) return;
+    if (!canMic) { toast(explainNoMic(), 7500, '#f87171'); if (inApp) { try { navigator.clipboard.writeText(location.href); } catch (e) {} } return; }
     busy = true;
     var done = function () { busy = false; ui(); };
-    if (joined) { muted = !muted; impl.mute(muted); toast(muted ? 'Microphone muted' : 'Microphone on', 1400, muted ? '#9ca3af' : '#34d399'); return done(); }
+    if (joined) { muted = !muted; impl.mute(muted); unlockAudio(); toast(muted ? 'Microphone muted' : 'Microphone on', 1400, muted ? '#9ca3af' : '#34d399'); return done(); }
+    unlockAudio(); // first thing, still inside the tap
     btn.classList.add('busy');
     impl = V.mode === 'livekit' ? livekit() : p2p();
     impl.start().then(function () { joined = true; muted = false; toast('You are on voice chat', 1800, '#34d399'); })
       .catch(function (e) { var i = impl; impl = null; if (i) { try { i.leave(); } catch (x) {} } fail(e); })
       .then(function () { btn.classList.remove('busy'); done(); });
   });
-  window.addEventListener('pagehide', function () { if (impl && joined && navigator.sendBeacon) { /* the server forgets a silent phone after ~15 s */ } });
+  // when the phone comes back from the background, wake the audio again
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && joined && shared && shared.state === 'suspended') shared.resume().catch(function () { hearPill(function () { shared.resume(); }); }); });
 
   window.SNLVoice = {
     joined: function () { return joined; },

@@ -1,10 +1,10 @@
 {
-  "versionName": "1.10.0",
-  "versionCode": 23,
+  "versionName": "1.11.0",
+  "versionCode": 24,
   "notes": [
-    "New modes: Boyz, Girlies and Lovers — each with its own cards and meter",
-    "Team mode: play in teams of two with a shared token and shared penalties, and name your team",
-    "Secret missions, Most-likely-to votes, big TV reactions and a shareable result card",
-    "Voice chat in online rooms (tap the mic) and accessibility options"
+    "Pick what the questions are about: football, movies, music, history, Kenya, and 'In the news' for 2026 — or Random",
+    "Team mode: choose who is on which team and name your teams",
+    "You now see the true-or-false question and the spotlight prompt while a friend is answering",
+    "Friends can join a game that is already running; reactions show for everyone; voice chat works better on phones"
   ]
 }
