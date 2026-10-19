@@ -7,6 +7,8 @@ use App\Http\Controllers\LobbyController;
 use App\Http\Controllers\GamesetBoardController;
 use App\Http\Controllers\GamesetCardController;
 use App\Http\Controllers\GamesetPackController;
+use App\Http\Controllers\GamesetSettingsController;
+use App\Http\Controllers\VoiceController;
 use App\Http\Controllers\GamesetWordController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OfflineController;
@@ -60,6 +62,12 @@ Route::prefix('play/{room:token}')->name('play.')->group(function () {
     Route::post('/leave', [RoomController::class, 'leave'])->name('leave');
     Route::post('/react', [RoomController::class, 'react'])->middleware('throttle:snl-play')->name('react');
     Route::post('/mission', [RoomController::class, 'claimMission'])->middleware('throttle:snl-play')->name('mission');
+    // voice chat (online rooms): LiveKit token, or the free phone-to-phone signalling
+    Route::post('/voice/token', [VoiceController::class, 'token'])->middleware('throttle:snl-voice')->name('voice.token');
+    Route::post('/voice/join', [VoiceController::class, 'join'])->middleware('throttle:snl-voice')->name('voice.join');
+    Route::get('/voice/poll', [VoiceController::class, 'poll'])->middleware('throttle:snl-voice')->name('voice.poll');
+    Route::post('/voice/signal', [VoiceController::class, 'signal'])->middleware('throttle:snl-voice')->name('voice.signal');
+    Route::post('/voice/leave', [VoiceController::class, 'leave'])->middleware('throttle:snl-voice')->name('voice.leave');
     Route::post('/rematch', [RoomController::class, 'rematch'])->name('rematch');
     Route::post('/addplayer', [RoomController::class, 'addPlayer'])->middleware('throttle:snl-play')->name('addplayer');
 });
@@ -91,6 +99,9 @@ Route::middleware(['auth', 'gameset'])->prefix('gameset')->name('gameset.')->gro
     Route::post('/cards/bulk', [GamesetCardController::class, 'bulk'])->name('cards.bulk');
     Route::put('/cards/{card}', [GamesetCardController::class, 'update'])->name('cards.update');
     Route::delete('/cards/{card}', [GamesetCardController::class, 'destroy'])->name('cards.destroy');
+
+    Route::get('/settings', [GamesetSettingsController::class, 'index'])->name('settings');
+    Route::post('/settings', [GamesetSettingsController::class, 'save'])->name('settings.save');
 
     Route::get('/packs', [GamesetPackController::class, 'index'])->name('packs.index');
     Route::post('/packs', [GamesetPackController::class, 'store'])->name('packs.store');

@@ -1,14 +1,14 @@
 {
-  "versionName": "1.9.2",
-  "versionCode": 22,
-  "sizeBytes": 28425260,
+  "versionName": "1.10.0",
+  "versionCode": 23,
+  "sizeBytes": 28459567,
   "notes": [
-    "Now installs on Android TV and Fire TV — it opens the big-screen table",
-    "Pass button on conditional cards, tap outside a card to close it",
-    "Clearer cards, new illustrated avatars including dreadlocks",
-    "Home screen centred with background photos back"
+    "New modes: Boyz, Girlies and Lovers — each with its own cards and meter",
+    "Team mode: play in teams of two with a shared token and shared penalties, and name your team",
+    "Secret missions, Most-likely-to votes, big TV reactions and a shareable result card",
+    "Voice chat in online rooms (tap the mic) and accessibility options"
   ],
-  "sha256": "3c5bbb0d6c2353dfdfc338e1b46ad3a15b790b13b64406f288ceca413dfcec31",
-  "builtAt": "2026-10-17T08:55:48.939Z",
+  "sha256": "aa044017d7807c733a739fabd2736c43bc89e242e12ce2b4555e0bd194509658",
+  "builtAt": "2026-10-19T06:42:31.404Z",
   "certSha256": "2a4dce20c1650504c343933159a6682a0362a0420e0e0ade01bba1347ee7d7f3"
 }

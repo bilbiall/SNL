@@ -1,7 +1,10 @@
 {
-  "versionName": "1.1.1",
-  "versionCode": 8,
+  "versionName": "1.2.0",
+  "versionCode": 9,
   "notes": [
-    "Pass button on conditional cards, tap outside a card to close it, clearer cards, new avatars"
+    "New modes: Boyz, Girlies and Lovers — each with its own cards and meter",
+    "Team mode: play in teams of two with a shared token and shared penalties, and name your team",
+    "Most-likely-to votes, big reactions and a shareable result card",
+    "Accessibility options: reduce motion, player numbers, larger pop-up text"
   ]
 }

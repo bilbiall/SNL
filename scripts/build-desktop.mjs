@@ -27,7 +27,12 @@ run('php artisan snl:export-app desktop/www');
 
 console.log('-- packaging');
 fs.rmSync(path.join(desk, 'dist'), { recursive: true, force: true });
-run('npx electron-builder --win --x64', desk, { CSC_IDENTITY_AUTO_DISCOVERY: 'false' });
+// Use the Electron that npm already installed (desktop/node_modules/electron) instead of letting electron-builder download another copy:
+// the build then also works with no internet.
+const electronDist = path.join(desk, 'node_modules', 'electron', 'dist');
+const electronVer = JSON.parse(fs.readFileSync(path.join(desk, 'node_modules', 'electron', 'package.json'), 'utf8')).version;
+const local = fs.existsSync(path.join(electronDist, 'electron.exe')) ? ` -c.electronDist=node_modules/electron/dist -c.electronVersion=${electronVer}` : '';
+run('npx electron-builder --win --x64' + local, desk, { CSC_IDENTITY_AUTO_DISCOVERY: 'false' });
 
 const setup = `Snakes-and-Liquor-Setup-${ver.versionName}.exe`;
 const portable = `Snakes-and-Liquor-Portable-${ver.versionName}.exe`;

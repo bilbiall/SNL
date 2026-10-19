@@ -411,6 +411,18 @@
     .join-badge b { font-size: clamp(.7rem, 2.6cqh, 1.15rem); font-weight: 800; }
     .join-badge span { font: 900 clamp(1.2rem, 6cqh, 2.4rem)/1 Figtree, system-ui, sans-serif; letter-spacing: .25em; padding-left: .25em; color: #fbbf24; }
 
+    /* voice chat: the mic button and the glow around whoever is talking */
+    .mic-btn .mic-mute { display: none; }
+    .mic-btn.off { opacity: .8; }
+    .mic-btn.busy { opacity: .5; pointer-events: none; }
+    .mic-btn.muted { color: #f87171; border-color: #f87171; }
+    .mic-btn.muted .mic-on { display: none; } .mic-btn.muted .mic-mute { display: inline-flex; }
+    .mic-btn.live { color: #34d399; border-color: #34d399; animation: micPulse 1.8s ease-out infinite; }
+    @keyframes micPulse { 0% { box-shadow: 0 0 0 0 rgba(52,211,153,.55); } 100% { box-shadow: 0 0 0 .7rem rgba(52,211,153,0); } }
+    .token.speaking { box-shadow: 0 0 0 3px #34d399, 0 0 16px 4px rgba(52,211,153,.8); }
+    .pl.speaking { box-shadow: 0 0 0 2px #34d399, 0 0 12px rgba(52,211,153,.7); }
+    html.rm .mic-btn.live { animation: none; }
+
     /* big floating reactions on the TV (phones send them) */
     .tvreact { position: absolute; z-index: 47; left: var(--x, 50%); bottom: 10%; display: flex; flex-direction: column; align-items: center; gap: .3rem; pointer-events: none; animation: tvReact 3.2s ease-out forwards; }
     .tvreact .ic { font-size: clamp(2.4rem, 11cqh, 5rem); color: var(--c, #fbbf24); filter: drop-shadow(0 4px 10px rgba(0,0,0,.7)); }

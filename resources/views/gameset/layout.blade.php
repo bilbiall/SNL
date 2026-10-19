@@ -29,6 +29,7 @@
         <a href="{{ route('gameset.cards.index') }}" class="gs-tab {{ request()->routeIs('gameset.cards.*') ? 'on' : '' }}">Cards</a>
         <a href="{{ route('gameset.words.index') }}" class="gs-tab {{ request()->routeIs('gameset.words.*') ? 'on' : '' }}">Words</a>
         <a href="{{ route('gameset.packs.index') }}" class="gs-tab {{ request()->routeIs('gameset.packs.*') ? 'on' : '' }}">Packs</a>
+        <a href="{{ route('gameset.settings') }}" class="gs-tab {{ request()->routeIs('gameset.settings*') ? 'on' : '' }}">Settings</a>
         <span style="flex:1;"></span>
         <a href="{{ route('home') }}" class="gs-tab" target="_blank">↗ View game</a>
         <form method="POST" action="{{ route('logout') }}" style="margin:0;">@csrf<button class="gs-tab" style="background:none;border:none;cursor:pointer;font-family:inherit;">Sign out</button></form>

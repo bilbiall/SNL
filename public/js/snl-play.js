@@ -68,6 +68,7 @@
   const kindColor = (k) => C.kindColors[k] || '#f59e0b';
 
   // ───────────────────────── small UI helpers ─────────────────────────
+  window.snlToast = (t, ms, c) => toast(t, ms, c);
   function toast(text, ms = 2600, color) {
     const box = $('toasts');
     while (box.children.length >= 3) box.firstChild.remove();
@@ -801,6 +802,14 @@
   const buzzLevel = (n) => { const lv = buzzCfg().levels; let out = lv[0][1]; lv.forEach(([from, label]) => { if (n >= from) out = label; }); return out; };
 
   /** Left leaderboard: ordered by the Buzz Meter (not by square), each row still tracks tile progress. Rows glide to their new place. */
+  /** Voice chat: a glow around the token and the leaderboard card of whoever is talking. */
+  function applySpeaking() {
+    const s = (window.SNLVoice && SNLVoice.speaking()) || [];
+    document.querySelectorAll('.pl[data-id]').forEach((el) => el.classList.toggle('speaking', s.includes(+el.dataset.id)));
+    Object.keys(tokens).forEach((id) => tokens[id].classList.toggle('speaking', s.includes(+id)));
+  }
+  window.addEventListener('snl-speaking', applySpeaking);
+
   function renderPlayers() {
     const r = S.room, box = $('players'), max = (C.buzz && C.buzz.max) || 12, cfg = buzzCfg();
     const before = {};
@@ -826,6 +835,7 @@
           ${meter ? `<span class="bz"><span class="bz-l">${ic(cfg.icon || 'cheers')} ${esc(buzzLevel(bz))}</span><i class="bz-bar"><b ${fill}></b></i><span class="bz-n">${bz}</span></span>` : ''}</div>
         <span class="pw">${pw}</span>${meter ? `<i class="bz-mini"><b ${fill}></b></i>` : `<span class="rk">${idx + 1}</span>`}</div>`;
     }).join('');
+    applySpeaking();
     // glide each row from where it used to be (layout coordinates, so it works inside the rotated phone stage too)
     box.querySelectorAll('.pl[data-id]').forEach((el) => {
       const was = before[el.dataset.id];
@@ -1244,12 +1254,14 @@
       <div class="htp">${ic('info')}<span>Text size: <a href="#" id="a11yT" style="color:#f9a8d4;font-weight:800;"></a> <span style="color:#9ca3af;">— bigger pop-ups and messages</span></span></div>
       <div class="htp">${ic('team')}<span>Player numbers: <a href="#" id="a11yN" style="color:#f9a8d4;font-weight:800;"></a> <span style="color:#9ca3af;">— a number on each token, not just a colour</span></span></div>
       <div class="htp">${ic('clock')}<span>Reduce motion: <a href="#" id="a11yM" style="color:#f9a8d4;font-weight:800;"></a> <span style="color:#9ca3af;">— calmer effects</span></span></div>
+      ${window.SNLVoice && SNLVoice.joined() ? `<div class="htp">${ic('mic')}<span>Voice chat: <a href="#" id="voiceLeave" style="color:#f9a8d4;font-weight:800;">Leave voice chat</a></span></div>` : ''}
       <div class="htp" id="appRow" style="display:none;margin-top:.4rem;">${ic('info')}<span>App version <b id="appVer">…</b> · <a href="#" id="chkUpd" style="color:#f9a8d4;font-weight:800;">Check for updates</a><span id="updMsg" style="display:block;color:#9ca3af;"></span></span></div>
       <div class="ov-sub" style="text-align:left;margin-top:.5rem;">${C.mode && C.mode.label === 'Drinks' ? 'Any drink can be swapped for water. Never drive after drinking.' : (C.mode && C.mode.adult ? 'Everything is optional. Skip anything you are not comfortable with.' : 'Have fun, be kind, and skip anything that is not for you.')}</div>
       <div class="ov-btns" style="justify-content:flex-start;"><a class="obtn alt" href="${C.urls.home}">${ic('home')} Leave to home</a></div></div>`);
     $('menuClose').onclick = () => hide('ovMenu');
     const ap = $('addPlayerBtn'); if (ap) ap.onclick = openAddPlayer;
     const mt = $('memeTgl'); if (mt) mt.onclick = (ev) => { ev.preventDefault(); const on = !SNLAudio.memes; SNLAudio.setMemes(on); mt.textContent = on ? 'On' : 'Off'; if (on) SNLAudio.react('win'); };
+    const vl = $('voiceLeave'); if (vl) vl.onclick = (ev) => { ev.preventDefault(); SNLVoice.leave(); hide('ovMenu'); toast(`${ic('mic')} You left voice chat`, 2200); };
     if (window.SNLA11y) {                        // Accessibility: each link cycles its setting and saves it on this device
       const A = window.SNLA11y, sizes = ['Normal', 'Large', 'Extra large'], motion = ['Auto', 'On', 'Off'];
       const paint = () => {

@@ -64,6 +64,7 @@
             </div>
             <button class="icon-btn" id="reactToggle" type="button" aria-label="Reactions"><x-icon name="jester" /></button>
             <button class="icon-btn" id="missionBtn" type="button" aria-label="Your secret mission"><x-icon name="mask" /></button>
+            @if(($voice['mode'] ?? 'off') !== 'off')<button class="icon-btn mic-btn off" id="micBtn" type="button" aria-label="Microphone"><span class="mic-on"><x-icon name="mic" /></span><span class="mic-mute"><x-icon name="mute" /></span></button>@endif
         </div>
         @endif
 
@@ -183,9 +184,11 @@ window.SNL = {
         local:   @json(route('play.local')),
         addplayer: @json(route('play.addplayer', $room->token)),
         mission: @json(route('play.mission', $room->token)),
+        voice: { token: @json(route('play.voice.token', $room->token)), join: @json(route('play.voice.join', $room->token)), poll: @json(route('play.voice.poll', $room->token)), signal: @json(route('play.voice.signal', $room->token)), leave: @json(route('play.voice.leave', $room->token)) },
     },
     packUrl: @json(url('/offline/pack.json')),
     isParty: @json($room->isParty()),
+    voice: @json(($tv ?? false) || $room->isParty() ? ['mode' => 'off'] : ($voice ?? ['mode' => 'off'])),
     tv: @json((bool) ($tv ?? false)),
     joinCode: @json($room->join_code),
     meId: @json($meId),
@@ -215,6 +218,9 @@ window.SNL = {
 <script src="{{ \App\Support\OfflineAssets::js('snl-local.js') }}"></script>
 @endif
 <script src="{{ \App\Support\OfflineAssets::js('snl-play.js') }}"></script>
+@if(!($tv ?? false) && !$room->isParty() && ($voice['mode'] ?? 'off') !== 'off')
+<script src="{{ \App\Support\OfflineAssets::js('snl-voice.js') }}"></script>
+@endif
 @endif
 </body>
 </html>

@@ -145,6 +145,7 @@ class RoomController extends Controller
             'positions' => $room->board->positions(),
             'state'     => $this->engine->state($room, $me?->id),
             'meId'      => $me?->id,
+            'voice'     => \App\Support\Voice::clientConfig(), // 'off' unless an admin set voice up in GameSet → Settings
             'mode'      => $mode,
             'tileKinds' => $this->tileKindsOnBoard($room->board),
             'reactions' => config('snl.reactions'),
