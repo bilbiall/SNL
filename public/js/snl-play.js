@@ -54,6 +54,8 @@
 
   const ST = $('stage'), BOARD = $('boardWrap'), DIE = $('dieBtn'), CUBE = $('dieCube');
   const players = () => latest.players;
+  /** 1-based seat number (order of play) — the optional player-number badges use it so colour is never the only clue. */
+  const seatNo = (p) => latest.players.filter((q) => q.turn_order < p.turn_order).length + 1;
   const P = (id) => players().find((p) => p.id === id) || { id, name: 'Someone', color: '#64748b', avatar: 'm1-3', powers: {}, status: 'active' };
   const iAmActor = (id) => C.isParty || id === C.meId;
   /** Can this device answer the current prompt? (Some — like "call bluff" — let several players respond.) */
@@ -120,7 +122,7 @@
       el.className = 'token';
       el.dataset.pid = p.id;
       el.style.setProperty('--c', p.color);
-      el.innerHTML = `${avatar(p)}<span class="tname">${esc(p.name)}</span>`;
+      el.innerHTML = `${avatar(p)}<span class="tname">${esc(p.name)}</span><i class="tnum">${seatNo(p)}</i>`;
       BOARD.appendChild(el);
       tokens[p.id] = el;
       shown[p.id] = p.position;
@@ -501,7 +503,7 @@
       case 'left': toast(`${ic('exit')} ${esc(who.name)} left the game`, 2400); meme('wasted'); await sleep(350); break;
       case 'skip': toast(`${ic('clock')} ${esc(who.name)} ran out of time`, 2200); meme('timeout'); await sleep(250); break;
       case 'pass': toast(`${ic('check')} <b>${esc(who.name)}</b> passed — it doesn't apply`, 2400, '#34d399'); snd('arrive'); meme('neutral'); await sleep(350); break;
-      case 'react': floater(a.player_id, a.reaction); snd('reaction'); break;
+      case 'react': floater(a.player_id, a.reaction); if (C.tv) bigReact(a.player_id, a.reaction); snd('reaction'); break;
       default: break;
     }
   }
@@ -657,6 +659,18 @@
     BOARD.appendChild(el);
     setTimeout(() => el.remove(), 1800);
   }
+  /** TV only: a big emoji with the sender's name drifts up the screen, so the room can see who is cheering. */
+  function bigReact(playerId, key) {
+    if (ST.querySelectorAll('.tvreact').length >= 14) return;
+    const p = P(playerId);
+    const el = document.createElement('div');
+    el.className = 'tvreact';
+    el.style.setProperty('--c', p.color);
+    el.style.setProperty('--x', (12 + Math.random() * 76).toFixed(1) + '%');
+    el.innerHTML = `${ic(key)}<b>${esc(p.name)}</b>`;
+    ST.appendChild(el);
+    setTimeout(() => el.remove(), 3300);
+  }
   function confetti() {
     const colors = ['#f59e0b', '#ec4899', '#8b5cf6', '#34d399', '#38bdf8', '#fbbf24'];
     for (let i = 0; i < 80; i++) {
@@ -773,7 +787,7 @@
       const lead = leaders === 1 && score(p) === topScore && !out;
       const fill = `style="width:${bpct}%;background-size:${bpct ? (10000 / bpct).toFixed(0) : 100}% 100%"`;
       return `<div class="pl ${cur ? 'cur' : ''} ${out ? 'out' : ''} ${lead ? 'lead' : ''}" data-id="${p.id}" style="--c:${p.color}">
-        <div class="ring" style="--p:${pct}"><div class="av">${won ? ic('crown') : avatar(p)}</div>${lead ? `<span class="lead-flame">${ic(meter ? 'fire' : 'crown')}</span>` : ''}</div>
+        <div class="ring" style="--p:${pct}"><i class="tnum">${seatNo(p)}</i><div class="av">${won ? ic('crown') : avatar(p)}</div>${lead ? `<span class="lead-flame">${ic(meter ? 'fire' : 'crown')}</span>` : ''}</div>
         <div class="info"><span class="nm">${esc(p.name)}${p.id === C.meId ? ' (you)' : ''}</span><span class="sq">${won ? ic('crown') : '#' + p.position}</span><span class="pos">${won ? 'Finished' : 'Square ' + p.position + ' of ' + r.tile_count}</span><i class="bar"><b style="width:${pct}%"></b></i>
           ${meter ? `<span class="bz"><span class="bz-l">${ic('cheers')} ${esc(buzzLevel(bz))}</span><i class="bz-bar"><b ${fill}></b></i><span class="bz-n">${bz}</span></span>` : ''}</div>
         <span class="pw">${pw}</span>${meter ? `<i class="bz-mini"><b ${fill}></b></i>` : `<span class="rk">${idx + 1}</span>`}</div>`;
@@ -1086,11 +1100,13 @@
       <div class="ov-sub">${active.length} / ${r.max_players} players</div>
       <div class="ov-sub" style="opacity:.8;">On a TV? Open <b>${esc(location.host)}/tv</b> and enter the code.</div>
       <div class="ov-btns">
+        <button class="obtn ok" id="lobbyWa">${ic('phone')} WhatsApp</button>
         <button class="obtn vio" id="lobbyShare">${ic('share')} Share invite</button>
         ${iHost ? `<button class="obtn" id="lobbyStart" ${active.length < 2 ? 'disabled' : ''}>${ic('play')} Start game</button>` : ''}
         <button class="obtn alt" id="lobbyLeave">Leave</button>
       </div></div>`);
     $('lobbyShare').onclick = shareInvite;
+    $('lobbyWa').onclick = shareWhatsApp;
     $('lobbyLeave').onclick = () => confirmLeave(C.meId);
     const st = $('lobbyStart');
     if (st) st.onclick = async () => { st.disabled = true; snd('toggle'); await post(C.urls.start); };
@@ -1163,12 +1179,29 @@
       <div class="ov-title" style="text-align:left;display:flex;align-items:center;justify-content:space-between;">Players${C.isParty && r.status === 'active' ? `<button class="obtn ok" id="addPlayerBtn" style="padding:.25rem .7rem;">${ic('team')} Add a player</button>` : ''}</div>${roster}
       ${C.isParty ? '<div class="ov-sub" style="text-align:left;">Someone had enough? Remove them — the game carries on.</div>' : ''}
       <div class="htp">${ic('speaker')}<span>Meme reactions: <a href="#" id="memeTgl" style="color:#f9a8d4;font-weight:800;">${(typeof SNLAudio !== 'undefined' && SNLAudio.memes) ? 'On' : 'Off'}</a> <span style="color:#9ca3af;">— funny sounds on picks, snakes, ladders, wins…</span></span></div>
+      <div class="ov-title" style="text-align:left;">Accessibility</div>
+      <div class="htp">${ic('info')}<span>Text size: <a href="#" id="a11yT" style="color:#f9a8d4;font-weight:800;"></a> <span style="color:#9ca3af;">— bigger pop-ups and messages</span></span></div>
+      <div class="htp">${ic('team')}<span>Player numbers: <a href="#" id="a11yN" style="color:#f9a8d4;font-weight:800;"></a> <span style="color:#9ca3af;">— a number on each token, not just a colour</span></span></div>
+      <div class="htp">${ic('clock')}<span>Reduce motion: <a href="#" id="a11yM" style="color:#f9a8d4;font-weight:800;"></a> <span style="color:#9ca3af;">— calmer effects</span></span></div>
       <div class="htp" id="appRow" style="display:none;margin-top:.4rem;">${ic('info')}<span>App version <b id="appVer">…</b> · <a href="#" id="chkUpd" style="color:#f9a8d4;font-weight:800;">Check for updates</a><span id="updMsg" style="display:block;color:#9ca3af;"></span></span></div>
       <div class="ov-sub" style="text-align:left;margin-top:.5rem;">Any drink can be swapped for water. Never drive after drinking.</div>
       <div class="ov-btns" style="justify-content:flex-start;"><a class="obtn alt" href="${C.urls.home}">${ic('home')} Leave to home</a></div></div>`);
     $('menuClose').onclick = () => hide('ovMenu');
     const ap = $('addPlayerBtn'); if (ap) ap.onclick = openAddPlayer;
     const mt = $('memeTgl'); if (mt) mt.onclick = (ev) => { ev.preventDefault(); const on = !SNLAudio.memes; SNLAudio.setMemes(on); mt.textContent = on ? 'On' : 'Off'; if (on) SNLAudio.react('win'); };
+    if (window.SNLA11y) {                        // Accessibility: each link cycles its setting and saves it on this device
+      const A = window.SNLA11y, sizes = ['Normal', 'Large', 'Extra large'], motion = ['Auto', 'On', 'Off'];
+      const paint = () => {
+        const s = A.get();
+        $('a11yT').textContent = sizes[s.t | 0] || sizes[0];
+        $('a11yN').textContent = s.n ? 'On' : 'Off';
+        $('a11yM').textContent = s.m === undefined ? motion[0] : s.m ? motion[1] : motion[2];
+      };
+      $('a11yT').onclick = (ev) => { ev.preventDefault(); A.set({ t: ((A.get().t | 0) + 1) % 3 }); paint(); };
+      $('a11yN').onclick = (ev) => { ev.preventDefault(); A.set({ n: A.get().n ? 0 : 1 }); paint(); };
+      $('a11yM').onclick = (ev) => { ev.preventDefault(); const m = A.get().m; A.set({ m: m === undefined ? 1 : m ? 0 : null }); paint(); };
+      paint();
+    }
     if (window.SNLUpdate) {                      // inside the Android app: show the version and let people look for a newer one
       SNLUpdate.info().then((mine) => {
         if (!mine) return;
@@ -1270,10 +1303,21 @@
     };
   }
 
-  async function shareInvite() {
+  /** The invite message + one-tap join link (the link's preview card names the host — see join.blade.php). */
+  function inviteParts() {
     const code = latest.room.join_code;
     const url = location.origin + C.urls.join.replace(location.origin, '');
-    const text = `Join my Snakes & Liquor game${latest.room.name ? ' "' + latest.room.name + '"' : ''}! Code: ${code}`;
+    const host = (P(latest.room.host_player_id) || {}).name;
+    const mode = C.mode && C.mode.label ? ` (${C.mode.label} mode)` : '';
+    const text = `${host ? host + ' invited you to' : 'Join'} a game of Snakes & Liquor${latest.room.name ? ' "' + latest.room.name + '"' : ''}${mode}! Tap the link, or use code ${code}:`;
+    return { code, url, text };
+  }
+  function shareWhatsApp() {
+    const { url, text } = inviteParts();
+    window.open('https://wa.me/?text=' + encodeURIComponent(text + '\n' + url), '_blank', 'noopener');
+  }
+  async function shareInvite() {
+    const { code, url, text } = inviteParts();
     try {
       if (navigator.share) { await navigator.share({ title: 'Snakes & Liquor', text, url }); return; }
     } catch (_) { return; }

@@ -381,6 +381,24 @@
     html.lite .pcard .ember, html.lite .pcard .spark, html.lite .pcard .pc-rays, body.tv .pcard .ember, body.tv .pcard .spark, body.tv .pcard .pc-rays { display: none; }
     html.lite .board-wrap, body.tv .board-wrap { box-shadow: 0 0 0 2px rgba(255,255,255,.12); }
 
+    /* ═════ Accessibility (snl-compat.js sets these classes from Menu → Accessibility) ═════ */
+    html.a11y-t1 { --tscale: 1.15; } html.a11y-t2 { --tscale: 1.3; }
+    html.a11y-t1 .toasts, html.a11y-t2 .toasts { zoom: var(--tscale); width: calc(min(80cqw, 460px) / var(--tscale)); }
+    html.a11y-t1 .watch, html.a11y-t2 .watch { zoom: var(--tscale); width: calc(min(90cqw, 520px) / var(--tscale)); }
+    html.a11y-t1 .ov-card, html.a11y-t2 .ov-card { zoom: var(--tscale); width: calc(min(86cqw, 340px) / var(--tscale)); max-height: calc(92cqh / var(--tscale)); }
+    html.a11y-t1 .ov-card.wide, html.a11y-t2 .ov-card.wide { width: calc(min(92cqw, 430px) / var(--tscale)); }
+    .token .tnum, .pl .tnum { display: none; }
+    html.a11y-n .token .tnum { display: flex; position: absolute; top: -5px; left: -5px; z-index: 3; width: calc(var(--d) * .44); height: calc(var(--d) * .44); border-radius: 50%; align-items: center; justify-content: center; background: #fff; color: #111; font: 900 calc(var(--d) * .3)/1 Figtree, system-ui, sans-serif; font-style: normal; box-shadow: 0 1px 3px rgba(0,0,0,.6); }
+    html.a11y-n .pl .tnum { display: flex; position: absolute; top: -3px; left: -3px; z-index: 3; width: 1.05rem; height: 1.05rem; border-radius: 50%; align-items: center; justify-content: center; background: #fff; color: #111; font: 900 .62rem/1 Figtree, system-ui, sans-serif; font-style: normal; }
+    html.rm .pieces, html.rm .confetti, html.rm .pcard .ember, html.rm .pcard .spark, html.rm .pcard .pc-rays { display: none; }
+    html.rm .ambient, html.rm .pcard, html.rm .pcard::after, html.rm .token.landed, html.rm .die-badge { animation: none !important; }
+
+    /* big floating reactions on the TV (phones send them) */
+    .tvreact { position: absolute; z-index: 47; left: var(--x, 50%); bottom: 10%; display: flex; flex-direction: column; align-items: center; gap: .3rem; pointer-events: none; animation: tvReact 3.2s ease-out forwards; }
+    .tvreact .ic { font-size: clamp(2.4rem, 11cqh, 5rem); color: var(--c, #fbbf24); filter: drop-shadow(0 4px 10px rgba(0,0,0,.7)); }
+    .tvreact b { font-size: clamp(.7rem, 3cqh, 1.2rem); font-weight: 900; padding: .1em .7em; border-radius: 999px; background: rgba(8,7,16,.8); border: 2px solid var(--c, #fbbf24); }
+    @keyframes tvReact { 0% { opacity: 0; transform: translateY(20%) scale(.5); } 12% { opacity: 1; transform: translateY(-20%) scale(1.15); } 100% { opacity: 0; transform: translateY(-420%) scale(1.5); } }
+
     /* ═════ TV mode (/tv/CODE): big, readable from the sofa, and a clear focus ring for the remote ═════ */
     body.tv { cursor: none; }
     body.tv a:focus, body.tv button:focus { outline: 4px solid #34d399; outline-offset: 3px; }

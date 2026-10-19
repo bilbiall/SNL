@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Board;
+use App\Models\Room;
 use App\Support\Avatars;
 use Illuminate\Http\Request;
 
@@ -45,8 +46,22 @@ class HomeController extends Controller
 
     public function join(Request $request)
     {
+        $code = strtoupper((string) $request->query('code', ''));
+
+        // An invite link (/join?code=ABCDE): look the room up so the page — and the preview card WhatsApp builds from it — can say who invited you.
+        $invite = null;
+        if (preg_match('/^[A-Z0-9]{4,8}$/', $code) && ($room = Room::where('join_code', $code)->where('status', 'open')->first()) && $room->isOnline()) {
+            $invite = [
+                'host'    => (string) ($room->players()->where('id', $room->host_player_id)->value('name') ?: 'A friend'),
+                'mode'    => (string) config("snl.modes.{$room->content_mode}.label", ''),
+                'players' => $room->players()->where('status', 'active')->count(),
+                'max'     => (int) $room->max_players,
+            ];
+        }
+
         return view('join', [
-            'code' => strtoupper((string) $request->query('code', '')),
+            'invite' => $invite,
+            'code' => $code,
             'modes' => config('snl.modes'),
             'avatarDefault' => Avatars::default(random_int(0, 15)),
         ]);

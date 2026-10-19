@@ -12,6 +12,29 @@
   var weak = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 2);
   if (tvish || weak || /[?&]lite=1/.test(location.search)) root.classList.add('lite');
 
+  // Accessibility settings (Menu → Accessibility): text size 0/1/2, player numbers on/off, reduce motion auto/on/off.
+  // Applied here, before first paint, as classes on <html>; play-css.blade.php styles them.
+  var A_KEY = 'snl_a11y';
+  var a11yGet = function () { try { return JSON.parse(localStorage.getItem(A_KEY)) || {}; } catch (e) { return {}; } };
+  var a11yApply = function () {
+    var s = a11yGet(), t = s.t | 0;
+    root.classList.toggle('a11y-t1', t === 1);
+    root.classList.toggle('a11y-t2', t === 2);
+    root.classList.toggle('a11y-n', !!s.n);
+    var calm = s.m === undefined ? !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) : !!s.m;
+    root.classList.toggle('rm', calm);
+  };
+  window.SNLA11y = {
+    get: a11yGet,
+    set: function (patch) {
+      var s = a11yGet();
+      for (var k in patch) { if (patch[k] === null) delete s[k]; else s[k] = patch[k]; }
+      try { localStorage.setItem(A_KEY, JSON.stringify(s)); } catch (e) {}
+      a11yApply();
+    },
+  };
+  a11yApply();
+
   var cq = sup('width', '1cqw'), ar = sup('aspect-ratio', '1 / 1');
   if (cq && ar) return;
 

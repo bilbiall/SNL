@@ -230,6 +230,7 @@
             @if($apk)<a class="ga-b ga-main" id="gaApk" href="{{ route('app.android') }}" download><x-icon name="phone" /> Download for Android <small>v{{ $apk['versionName'] }} · {{ number_format($apk['sizeBytes'] / 1048576, 1) }} MB</small></a>
             <a class="ga-b" href="{{ route('app.page') }}">How to install</a>@endif
             @if(is_file(public_path('downloads/desktop-version.json')))<a class="ga-b" href="{{ route('app.windows') }}" download><x-icon name="play" /> Download for Windows</a>@endif
+            <button type="button" class="ga-b ga-main" id="gaIos" style="display:none;"><x-icon name="phone" /> Install on iPhone</button>
             <button type="button" class="ga-b" id="gaInstall" style="display:none;"><x-icon name="play" /> Install from browser</button>
         </div>
         <p class="ga-tip" id="gaTip"></p>
@@ -276,6 +277,11 @@ document.getElementById('faqLink').onclick = function () { var a = document.getE
     btn.onclick = function () { SNLPwa.install(); };
     if (window.SNLPwa) SNLPwa.onChange(sync);
     sync();
+    if (ios) { // iPhones can't install an .apk: swap the Android buttons for the guided "Add to Home Screen" sheet
+        document.querySelectorAll('#getApp .ga-btns a').forEach(function (a) { a.style.display = 'none'; });
+        var ib = document.getElementById('gaIos');
+        if (ib && window.SNLIosInstall) { ib.style.display = 'inline-flex'; ib.onclick = function () { SNLIosInstall.show(); }; }
+    }
 })();
 </script>
 

@@ -20,5 +20,6 @@
     @yield('body')
     <script src="{{ \App\Support\OfflineAssets::js('pwa.js') }}"></script>
     <script src="{{ \App\Support\OfflineAssets::js('app-update.js') }}"></script>
+    <script src="{{ \App\Support\OfflineAssets::js('ios-install.js') }}"></script>
 </body>
 </html>
