@@ -25,6 +25,17 @@
     @endforeach
 </div>
 
+{{-- Topic filter: show only the cards of one topic (e.g. "In the news", to review or switch off old stories) --}}
+<form method="GET" action="{{ route('gameset.cards.index') }}" class="flex flex-wrap items-center gap-2 mb-3">
+    <input type="hidden" name="mode" value="{{ $mode }}">@if($kind)<input type="hidden" name="kind" value="{{ $kind }}">@endif
+    <label class="gs-h" for="topicFilter">Show topic</label>
+    <select name="topic" id="topicFilter" class="gs-in" style="width:auto;" onchange="this.form.submit()">
+        <option value="">All cards</option>
+        <option value="none" {{ $topic === 'none' ? 'selected' : '' }}>General only (no topic)</option>
+        @foreach(config('snl.topics') as $tk => $tv)<option value="{{ $tk }}" {{ $topic === $tk ? 'selected' : '' }}>{{ $tv['label'] }}</option>@endforeach
+    </select>
+</form>
+
 {{-- Coverage: which kinds are well-stocked for this mode --}}
 <div class="flex flex-wrap gap-2 mb-5">
     <a href="{{ route('gameset.cards.index', ['mode' => $mode]) }}" class="gs-tab {{ !$kind ? 'on' : '' }}" style="border:1px solid rgba(255,255,255,.08);">All kinds</a>
@@ -46,6 +57,7 @@
             <div><label class="gs-h">Mode</label><select name="mode" class="gs-in">@foreach($modes as $k => $m)<option value="{{ $k }}" {{ $mode === $k ? 'selected' : '' }}>{{ $m['label'] }}</option>@endforeach</select></div>
             <div><label class="gs-h">Intensity</label><select name="intensity" class="gs-in">@foreach($levels as $n => $lv)<option value="{{ $n }}" {{ $n === 2 ? 'selected' : '' }}>{{ $lv['label'] }}</option>@endforeach</select></div>
             <div><label class="gs-h">Only on board</label><select name="board_id" class="gs-in"><option value="">Every board</option>@foreach($boards as $b)<option value="{{ $b->id }}">{{ $b->name }}</option>@endforeach</select></div>
+            <div class="col-span-2"><label class="gs-h">Topic (only for true/false, quickfire, group game, spotlight and bluff cards)</label><select name="topic" class="gs-in"><option value="">General (no topic)</option>@foreach(config('snl.topics') as $tk => $tv)<option value="{{ $tk }}">{{ $tv['label'] }}</option>@endforeach</select></div>
             <div class="col-span-2"><label class="gs-h">Card text</label><input name="text" class="gs-in" maxlength="220" placeholder="e.g. Recommend a movie for {scene}." required></div>
             <div class="only-fact col-span-2 grid grid-cols-2 gap-2" style="display:none;">
                 <div><label class="gs-h">Correct answer</label><select name="answer" class="gs-in"><option value="">— pick —</option><option value="true">True</option><option value="false">False</option></select></div>
@@ -65,6 +77,7 @@
             <div><label class="gs-h">Kind</label><select name="kind" class="gs-in kind-sel">@foreach($kinds as $k => $l)<option value="{{ $k }}" {{ $kind === $k ? 'selected' : '' }}>{{ $l }}</option>@endforeach</select></div>
             <div><label class="gs-h">Mode</label><select name="mode" class="gs-in">@foreach($modes as $k => $m)<option value="{{ $k }}" {{ $mode === $k ? 'selected' : '' }}>{{ $m['label'] }}</option>@endforeach</select></div>
             <div><label class="gs-h">Intensity</label><select name="intensity" class="gs-in">@foreach($levels as $n => $lv)<option value="{{ $n }}" {{ $n === 2 ? 'selected' : '' }}>{{ $lv['label'] }}</option>@endforeach</select></div>
+            <div class="col-span-3"><label class="gs-h">Topic (question-style kinds only)</label><select name="topic" class="gs-in"><option value="">General (no topic)</option>@foreach(config('snl.topics') as $tk => $tv)<option value="{{ $tk }}">{{ $tv['label'] }}</option>@endforeach</select></div>
             <div class="only-pen" style="display:none;"><label class="gs-h">Penalty</label><select name="penalty" class="gs-in"><option value="1">1 unit</option><option value="2">2 units</option></select></div>
             <div class="only-spot" style="display:none;"><label class="gs-h">Timer (s)</label><input type="number" name="timer" min="5" max="90" value="15" class="gs-in"></div>
             <div class="col-span-3">
@@ -92,6 +105,7 @@
             <button class="gs-btn soft">Save</button>
             <button type="submit" form="del-{{ $c->id }}" class="gs-btn del" onclick="return confirm('Delete this card?')">Delete</button>
         </div>
+        <div class="col-span-12 sm:col-span-4"><select name="topic" class="gs-in" title="Topic"><option value="">General (no topic)</option>@foreach(config('snl.topics') as $tk => $tv)<option value="{{ $tk }}" {{ $c->topic === $tk ? 'selected' : '' }}>{{ $tv['label'] }}</option>@endforeach</select></div>
         {{-- extras, only for the kinds that use them --}}
         <div class="only-fact col-span-12 grid grid-cols-12 gap-2" style="{{ $c->kind === 'fact' ? '' : 'display:none;' }}">
             <select name="answer" class="gs-in col-span-4 sm:col-span-2"><option value="true" {{ $c->answer === true ? 'selected' : '' }}>Answer: True</option><option value="false" {{ $c->answer === false ? 'selected' : '' }}>Answer: False</option></select>

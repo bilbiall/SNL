@@ -211,6 +211,13 @@
       }
       return true;
     });
+    // Topics: when the table picked some (not "Random"), the question-style kinds only draw from those topics; if a topic has
+    // nothing for this kind and mode, fall back to the general cards so a game never runs dry.
+    var topics = (room.topics || []).filter(function (t) { return t !== 'random'; });
+    if (topics.length && (this.cfg.topic_kinds || []).indexOf(kind) !== -1) {
+      var mine = base.filter(function (c) { return c.topic && topics.indexOf(c.topic) !== -1; });
+      base = mine.length ? mine : base.filter(function (c) { return !c.topic; });
+    }
     var ok = base.filter(function (c) { return c.intensity <= intensity; });
     var list = ok.length ? ok : base;
     if (!list.length) return null;
@@ -901,7 +908,7 @@
         current_player_id: room.current_player_id, winner_player_id: room.winner_player_id,
         host_player_id: room.host_player_id, max_players: room.max_players,
         tile_count: room.tile_count, event_seq: room.event_seq,
-        rematch_token: room.rematch_token, team_mode: !!room.team_mode, team_names: room.team_names || {},
+        rematch_token: room.rematch_token, team_mode: !!room.team_mode, team_names: room.team_names || {}, topics: room.topics || [],
         turn_seconds_left: null, pending_seconds_left: null,
       },
       players: players,
@@ -963,17 +970,25 @@
     return p;
   }
 
-  function newGame(pack, board, mode, intensity, maxPlayers, startShields, teams) {
+  function newGame(pack, board, mode, intensity, maxPlayers, startShields, teams, topics) {
     return {
       v: 1, packVersion: pack.version || null, nextPlayerId: 1, team_pos: {},
       room: {
         token: 'local', type: 'party', board_id: board.id, content_mode: mode, intensity: intensity,
         status: 'active', current_player_id: null, winner_player_id: null, host_player_id: null,
         round: 1, active_rule: null, event_seq: 0, rematch_token: null, join_code: null,
-        max_players: maxPlayers, tile_count: board.tile_count, start_shields: startShields, team_mode: !!teams,
+        max_players: maxPlayers, tile_count: board.tile_count, start_shields: startShields, team_mode: !!teams, topics: cleanTopics(pack, topics),
       },
       players: [], pending: null, actions: [],
     };
+  }
+
+  /** The topics a table picked: valid keys only; empty (or "random") means everything. */
+  function cleanTopics(pack, topics) {
+    var all = Object.keys((pack.config && pack.config.topics) || {});
+    var t = (topics || []).map(String).filter(function (k, i, a) { return k && a.indexOf(k) === i; });
+    if (!t.length || t.indexOf('random') !== -1) return [];
+    return t.filter(function (k) { return all.indexOf(k) !== -1; });
   }
 
   function assertTeamSize(pack, n) {
@@ -994,14 +1009,23 @@
     return out;
   }
 
-  function assignTeams(g, ordered) {
-    var teams = Math.floor(ordered.length / 2);
+  function assignTeams(g, ordered, assign) {
+    if (!assign) { // no choices made: pairs in the order given (1 & 2, 3 & 4 …)
+      assign = {};
+      ordered.forEach(function (p, i) { assign[p.id] = Math.floor(i / 2) + 1; });
+    }
+    var groups = {};
+    ordered.forEach(function (p) { var t = parseInt(assign[p.id], 10) || 0; (groups[t] = groups[t] || []).push(p); }); // members stay in seat order inside their team
+    var keys = Object.keys(groups).map(Number).sort(function (a, b) { return a - b; });
+    if (groups[0] || keys.length < 2 || keys.some(function (k) { return groups[k].length !== 2; })) throw new GameError('Every team needs exactly two players, and there must be at least two teams.');
+    var teams = keys.length;
     g.team_pos = {};
-    ordered.forEach(function (p, i) {
-      var t = Math.floor(i / 2);
-      p.team = t + 1;
-      p.turn_order = (i % 2) * teams + t;
-      p.color = ordered[t * 2].color;
+    keys.forEach(function (k, t) {
+      groups[k].forEach(function (p, j) {
+        p.team = t + 1;
+        p.turn_order = j * teams + t; // team 1's first player, team 2's first … then every team's second player
+        p.color = groups[k][0].color;
+      });
       g.team_pos[t + 1] = 0;
     });
   }
@@ -1014,9 +1038,13 @@
     if (entries.length < lim.min || entries.length > lim.max) throw new GameError('Party games need ' + lim.min + '–' + lim.max + ' players.');
     var sh = opts.startShields == null || opts.startShields === '' ? null : Math.max(0, Math.min(((pack.config.powers || {}).shield || { max: 5 }).max, parseInt(opts.startShields, 10) || 0));
     if (opts.teams) assertTeamSize(pack, entries.length);
-    var g = newGame(pack, board, mode, intensity, lim.max, sh, !!opts.teams);
+    var g = newGame(pack, board, mode, intensity, lim.max, sh, !!opts.teams, opts.topics);
     entries.forEach(function (e, i) { addPlayer(pack, g, e, i); });
-    if (opts.teams) { assignTeams(g, g.players.slice()); g.room.team_names = teamNamesFor(opts.teamNames, Math.floor(g.players.length / 2)); }
+    if (opts.teams) {
+      var assign = null;
+      if (entries.every(function (e) { return e.team; })) { assign = {}; g.players.forEach(function (p, i) { assign[p.id] = parseInt(entries[i].team, 10); }); } // the table chose who is on which team
+      assignTeams(g, g.players.slice(), assign);
+      g.room.team_names = teamNamesFor(opts.teamNames, Math.floor(g.players.length / 2)); }
     var first = g.players.slice().sort(function (a, b) { return a.turn_order - b.turn_order; })[0];
     g.room.current_player_id = first.id;
     g.room.host_player_id = first.id;
@@ -1028,7 +1056,7 @@
   function rematch(pack, old) {
     if (old.room.status !== 'completed') throw new GameError('The game is still going.');
     var board = validateSetup(pack, old.room.board_id, old.room.content_mode, old.room.intensity);
-    var g = newGame(pack, board, old.room.content_mode, old.room.intensity, old.room.max_players, old.room.start_shields, !!old.room.team_mode);
+    var g = newGame(pack, board, old.room.content_mode, old.room.intensity, old.room.max_players, old.room.start_shields, !!old.room.team_mode, old.room.topics);
     old.players.filter(function (p) { return p.status !== 'left'; })
       .sort(function (a, b) { return old.room.team_mode ? ((a.team || 0) - (b.team || 0) || a.turn_order - b.turn_order) : (a.turn_order - b.turn_order); }) // team games: back to pair order
       .forEach(function (p, i) { addPlayer(pack, g, { name: p.name, color: p.color, avatar: p.avatar }, i); });
@@ -1055,7 +1083,7 @@
     if (!board) throw new GameError('That board is not available.');
     var mode = pack.config.modes[rs.content_mode] ? rs.content_mode : 'family';
     var intensity = pack.config.intensities[rs.intensity] ? rs.intensity : 2;
-    var g = newGame(pack, board, mode, intensity, pack.config.players.max, null, !!rs.team_mode);
+    var g = newGame(pack, board, mode, intensity, pack.config.players.max, null, !!rs.team_mode, rs.topics);
     var map = {};
     onlineState.players.slice().sort(function (a, b) { return a.turn_order - b.turn_order; }).forEach(function (op, idx) {
       var np = {

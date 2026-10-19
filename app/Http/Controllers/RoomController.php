@@ -47,6 +47,10 @@ class RoomController extends Controller
             'teams'        => 'nullable|boolean',
             'team_names'   => 'nullable|array|max:6',
             'team_names.*' => 'nullable|string|max:20',
+            'topics'       => 'nullable|array|max:20',
+            'topics.*'     => 'in:random,' . implode(',', array_keys(config('snl.topics'))),
+            'team_of'      => 'nullable|array|max:12',
+            'team_of.*'    => 'nullable|integer|min:1|max:6',
             'room_name'    => 'required_if:public,1|nullable|string|min:3|max:40',
             'max_players'  => 'nullable|integer|min:2|max:' . config('snl.players.max'),
         ]);
@@ -60,14 +64,15 @@ class RoomController extends Controller
             if ($data['type'] === 'party') {
                 $entries = [];
                 foreach (array_values($data['names']) as $i => $name) {
-                    $entries[] = ['name' => (string) $name, 'color' => $data['colors'][$i] ?? null, 'avatar' => $data['avatars'][$i] ?? null];
+                    $entries[] = ['name' => (string) $name, 'color' => $data['colors'][$i] ?? null, 'avatar' => $data['avatars'][$i] ?? null,
+                        'team' => $request->boolean('teams') ? ($data['team_of'][$i] ?? null) : null]; // which team the table put this player on
                 }
-                $room = $this->engine->createParty($board, $entries, $data['content_mode'], (int) $data['intensity'], isset($data['start_shields']) ? (int) $data['start_shields'] : null, $request->boolean('teams'), array_values($data['team_names'] ?? []));
+                $room = $this->engine->createParty($board, $entries, $data['content_mode'], (int) $data['intensity'], isset($data['start_shields']) ? (int) $data['start_shields'] : null, $request->boolean('teams'), array_values($data['team_names'] ?? []), array_values($data['topics'] ?? []));
             } else {
                 [$room, $host] = $this->engine->createOnline(
                     $board, (string) $data['host_name'], $data['content_mode'], (int) $data['intensity'], (int) ($data['max_players'] ?? 8), $data['avatar'] ?? null,
                     isset($data['start_shields']) ? (int) $data['start_shields'] : null,
-                    $this->cleanRoomName($data['room_name'] ?? null), $request->boolean('public') && filled($data['room_name'] ?? null), $request->boolean('teams')
+                    $this->cleanRoomName($data['room_name'] ?? null), $request->boolean('public') && filled($data['room_name'] ?? null), $request->boolean('teams'), array_values($data['topics'] ?? [])
                 );
                 $this->rememberMe($request, $room, $host);
             }
@@ -133,7 +138,7 @@ class RoomController extends Controller
         }
         if ($room->isOnline() && !$me) {
             return redirect()->route('join', ['code' => $room->join_code])
-                ->withErrors(['code' => $room->status === 'open' ? 'Pop your name in to join this game.' : 'That game has already started.']);
+                ->withErrors(['code' => in_array($room->status, ['open', 'active'], true) && !($room->status === 'active' && $room->team_mode) ? 'Pop your name in to join this game.' : ($room->status === 'completed' ? 'That game has already finished.' : 'That team game has already started.')]);
         }
 
         $room->load('board');
@@ -228,9 +233,12 @@ class RoomController extends Controller
 
     public function start(Request $request, Room $room): JsonResponse
     {
-        $data = $request->validate(['team_names' => 'nullable|array|max:6', 'team_names.*' => 'nullable|string|max:20']);
+        $data = $request->validate([
+            'team_names' => 'nullable|array|max:6', 'team_names.*' => 'nullable|string|max:20',
+            'team_assign' => 'nullable|array|max:12', 'team_assign.*' => 'integer|min:1|max:6', // player id => team, chosen by the host in the lobby
+        ]);
 
-        return $this->act($request, $room, fn (?Player $me) => $this->engine->start($room, $this->requireMe($me)->id, array_values($data['team_names'] ?? [])));
+        return $this->act($request, $room, fn (?Player $me) => $this->engine->start($room, $this->requireMe($me)->id, array_values($data['team_names'] ?? []), $data['team_assign'] ?? null));
     }
 
     public function leave(Request $request, Room $room): JsonResponse

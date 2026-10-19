@@ -14,7 +14,7 @@
 
     <h1 class="snl-h text-2xl mb-1"><x-icon name="globe" /> Join a room</h1>
     @if(!empty($invite))
-        <p class="text-sm mb-5" style="font-weight:800;color:#fde68a;">{{ $invite['host'] }} invited you{{ $invite['mode'] ? ' · ' . $invite['mode'] . ' mode' : '' }} · {{ $invite['players'] }}/{{ $invite['max'] }} players in. Pop your name in to join.</p>
+        <p class="text-sm mb-5" style="font-weight:800;color:#fde68a;">{{ $invite['host'] }} invited you{{ !empty($invite['live']) ? ' · game in progress, you join at the start' : '' }}{{ $invite['mode'] ? ' · ' . $invite['mode'] . ' mode' : '' }} · {{ $invite['players'] }}/{{ $invite['max'] }} players in. Pop your name in to join.</p>
     @else
         <p class="snl-muted text-sm mb-5">Ask the host for the 5-letter code, then pop your name in.</p>
     @endif

@@ -75,6 +75,25 @@
             </div>
         </div>
 
+        {{-- Topics: what the questions are about --}}
+        @php $pickedTopics = (array) old('topics', ['random']); @endphp
+        <div class="snl-card">
+            <span class="snl-label">What should the questions be about?</span>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="topicGrid">
+                <label class="pill-opt">
+                    <input type="checkbox" name="topics[]" value="random" {{ in_array('random', $pickedTopics, true) || !$pickedTopics ? 'checked' : '' }}>
+                    <span><x-icon name="dice" style="font-size:1.5rem;" />Random<small>A bit of everything</small></span>
+                </label>
+                @foreach(config('snl.topics') as $tk => $tv)
+                <label class="pill-opt">
+                    <input type="checkbox" name="topics[]" value="{{ $tk }}" {{ in_array($tk, $pickedTopics, true) ? 'checked' : '' }}>
+                    <span><x-icon :name="$tv['icon']" style="font-size:1.5rem;" />{{ $tv['label'] }}<small>{{ \Illuminate\Support\Str::limit($tv['blurb'], 38) }}</small></span>
+                </label>
+                @endforeach
+            </div>
+            <p class="snl-muted text-xs mt-2" id="topicNote">Pick one or more topics for the true-or-false facts, quickfire lists, group games, spotlights and bluffs. The dares and forfeits still follow the mode you chose.</p>
+        </div>
+
         {{-- Board --}}
         @if($boards->count() > 1)
         <div class="snl-card">
@@ -127,6 +146,7 @@
                     </div>
                 </div>
                 <div id="playerRows" class="space-y-2"></div>
+                <div id="teamNamesBox"></div>
                 <p class="snl-muted text-xs mt-2">Tap an avatar to choose a look and skin shade. Names can be silly.</p>
             @else
                 <div class="grid grid-cols-3 gap-3">
@@ -195,6 +215,24 @@
         paint();
     })();
 
+    // Topics: Random and the specific topics exclude each other; nothing ticked means Random.
+    (function () {
+        const boxes = [...document.querySelectorAll('input[name="topics[]"]')], rnd = boxes.find((b) => b.value === 'random');
+        const names = @json(collect(config('snl.topics'))->map(fn ($t) => $t['label'])->all());
+        const note = document.getElementById('topicNote'), base = note.textContent;
+        const paint = () => {
+            const picked = boxes.filter((b) => b.checked && b.value !== 'random').map((b) => names[b.value]);
+            note.textContent = picked.length ? 'Questions will be about: ' + picked.join(', ') + '. Other cards still follow the mode.' : base;
+        };
+        boxes.forEach((b) => b.addEventListener('change', () => {
+            if (b === rnd && b.checked) boxes.forEach((x) => { if (x !== rnd) x.checked = false; });
+            else if (b !== rnd && b.checked) rnd.checked = false;
+            if (!boxes.some((x) => x.checked)) rnd.checked = true;
+            paint();
+        }));
+        paint();
+    })();
+
     function syncMode() {
         const r = form.querySelector('input[name=content_mode]:checked');
         document.getElementById('modeBlurb').textContent = r ? modes[r.value].blurb : '';
@@ -216,7 +254,19 @@
     const teamsBox = document.getElementById('teamsBox');
     const teamsOn = () => teamsBox.checked;
     const teamNameVals = @json(array_values(old('team_names', [])));
-    const keepTeamNames = () => rows.querySelectorAll('input[name="team_names[]"]').forEach((el, i) => teamNameVals[i] = el.value);
+    const teamOfVals = @json(array_map('intval', array_values(old('team_of', []))));
+    const keepTeamNames = () => {
+        document.querySelectorAll('#teamNamesBox input[name="team_names[]"]').forEach((el, i) => teamNameVals[i] = el.value);
+        rows.querySelectorAll('select[name="team_of[]"]').forEach((el, i) => teamOfVals[i] = +el.value);
+    };
+    /** Teams of exactly two: what is wrong with the current choices, or '' when they are fine. */
+    function teamProblem() {
+        if (!teamsOn()) return '';
+        const per = {};
+        rows.querySelectorAll('select[name="team_of[]"]').forEach((s) => { per[s.value] = (per[s.value] || 0) + 1; });
+        for (let t = 1; t <= count / 2; t++) if ((per[t] || 0) !== 2) return `Every team needs exactly two players. Team ${t} has ${per[t] || 0}.`;
+        return '';
+    }
     const minPlayers = () => (teamsOn() ? Math.max(4, limits.min) : limits.min);
     const step = () => (teamsOn() ? 2 : 1);
     let count = Math.max(limits.min, Math.min(limits.max, oldNames.length || 4));
@@ -236,21 +286,17 @@
                 <button type="button" class="avbtn" data-i="${i}" title="Choose avatar"><img src="${SNLAvatars.url(avs[i])}" alt=""></button>
                 <input type="hidden" name="avatars[]" value="${avs[i]}">
                 <input type="hidden" name="colors[]" value="${colors[i % colors.length]}">
-                ${teamsOn() ? `<span style="font-size:.62rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:${colors[(Math.floor(i / 2) * 2) % colors.length]};min-width:3.4rem;">Team ${Math.floor(i / 2) + 1}</span>` : ''}
+                ${teamsOn() ? `<select name="team_of[]" class="snl-input" title="Which team is this player on?" style="width:auto;min-width:5.6rem;padding:.4rem .5rem;font-size:.8rem;">${Array.from({ length: count / 2 }, (_, t) => `<option value="${t + 1}" ${((teamOfVals[i] > 0 && teamOfVals[i] <= count / 2 ? teamOfVals[i] : Math.floor(i / 2) + 1) === t + 1) ? 'selected' : ''}>Team ${t + 1}</option>`).join('')}</select>` : ''}
                 <input class="snl-input" name="names[]" maxlength="24" placeholder="Player ${i + 1}" value="${(names[i] || '').replace(/"/g, '&quot;')}" autocomplete="off" required>`;
             rows.appendChild(row);
-            if (teamsOn() && i % 2 === 1) {
-                const tn = document.createElement('div');
-                tn.className = 'flex items-center gap-3';
-                tn.style.cssText = 'margin:-.3rem 0 1rem 3.2rem;';
-                tn.innerHTML = `<input class="snl-input" name="team_names[]" maxlength="20" placeholder="Team ${Math.floor(i / 2) + 1} name (optional)" value="${(teamNameVals[Math.floor(i / 2)] || '').replace(/"/g, '&quot;')}" autocomplete="off" style="font-size:.85rem;padding:.4rem .7rem;">`;
-                rows.appendChild(tn);
-            }
         }
+        const tnb = document.getElementById('teamNamesBox');
+        tnb.innerHTML = teamsOn() ? `<div class="snl-label" style="margin-top:.8rem;">Team names (optional)</div>${Array.from({ length: count / 2 }, (_, t) => `<input class="snl-input" name="team_names[]" maxlength="20" placeholder="Team ${t + 1}" value="${(teamNameVals[t] || '').replace(/"/g, '&quot;')}" autocomplete="off" style="margin-bottom:.4rem;">`).join('')}<p id="teamProblem" class="text-xs" style="color:#fca5a5;margin:.2rem 0 0;">${teamProblem()}</p>` : '';
         document.getElementById('countLabel').textContent = count + ' players';
         document.getElementById('minusBtn').disabled = count - step() < minPlayers();
         document.getElementById('plusBtn').disabled = count + step() > limits.max;
     }
+    rows.addEventListener('change', e => { if (e.target.matches('select[name="team_of[]"]')) { const m = document.getElementById('teamProblem'); if (m) m.textContent = teamProblem(); } });
     rows.addEventListener('click', e => {
         const b = e.target.closest('.avbtn'); if (!b) return;
         const i = +b.dataset.i;
@@ -271,16 +317,18 @@
     };
     if (typeof SNLLocal !== 'undefined') SNLLocal.loadPack(); // make sure the game files are on the device
     form.addEventListener('submit', async (e) => {
+        const tp = teamProblem();
+        if (tp) { e.preventDefault(); showErr(tp); return; }
         if (typeof SNLLocal === 'undefined' || !SNLLocal.hasEngine()) return; // old browser → the server path below still works
         e.preventDefault();
         const fd = new FormData(form);
         const mode = fd.get('content_mode');
         if (modes[mode] && modes[mode].adult && !fd.get('adult')) { showErr('Please confirm that everyone playing is 18 or over for this mode.'); return; }
-        const nm = fd.getAll('names[]'), co = fd.getAll('colors[]'), av = fd.getAll('avatars[]');
+        const tof = fd.getAll('team_of[]'), nm = fd.getAll('names[]'), co = fd.getAll('colors[]'), av = fd.getAll('avatars[]');
         if (window.SNLAds) await SNLAds.show('new_game'); // a pause: the host is starting a game
         if (window.SNLLoader) SNLLoader.show();
         try {
-            await SNLLocal.create({ boardId: +fd.get('board_id'), mode: mode, intensity: +fd.get('intensity'), startShields: fd.get('start_shields'), teams: !!fd.get('teams'), teamNames: fd.getAll('team_names[]'), entries: nm.map((n, i) => ({ name: n, color: co[i], avatar: av[i] })) });
+            await SNLLocal.create({ boardId: +fd.get('board_id'), mode: mode, intensity: +fd.get('intensity'), startShields: fd.get('start_shields'), teams: !!fd.get('teams'), teamNames: fd.getAll('team_names[]'), topics: fd.getAll('topics[]'), entries: nm.map((n, i) => ({ name: n, color: co[i], avatar: av[i], team: tof[i] ? +tof[i] : undefined })) });
             location.href = @json(route('play.local'));
         } catch (err) {
             if (navigator.onLine && !(err && err.name === 'GameError')) { form.submit(); return; }

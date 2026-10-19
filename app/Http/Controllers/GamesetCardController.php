@@ -23,15 +23,20 @@ class GamesetCardController extends Controller
         $kind = $request->query('kind');
         $kind = isset(config('snl.card_kinds')[$kind]) ? $kind : null;
 
+        $topic = $request->query('topic');
+        $topic = $topic === 'none' || isset(config('snl.topics')[$topic]) ? $topic : null; // a topic, "none" (general cards only) or everything
+
         $cards = Card::where('mode', $mode)
             ->when($kind, fn ($q) => $q->where('kind', $kind))
+            ->when($topic === 'none', fn ($q) => $q->whereNull('topic'))
+            ->when($topic && $topic !== 'none', fn ($q) => $q->where('topic', $topic))
             ->orderBy('kind')->orderBy('intensity')->orderBy('id')->get();
 
         $counts = Card::selectRaw('mode, kind, count(*) as n')->where('is_active', true)->groupBy('mode', 'kind')->get()
             ->groupBy('mode')->map(fn ($g) => $g->pluck('n', 'kind'));
 
         return view('gameset.cards', [
-            'mode' => $mode, 'kind' => $kind, 'cards' => $cards, 'counts' => $counts,
+            'mode' => $mode, 'kind' => $kind, 'topic' => $topic, 'cards' => $cards, 'counts' => $counts,
             'modes' => config('snl.modes') + ['all' => ['label' => 'All modes', 'icon' => 'cards', 'enabled' => true]],
             'kinds' => config('snl.card_kinds'),
             'levels' => config('snl.intensities'), 'boards' => Board::orderBy('name')->get(),
@@ -58,6 +63,7 @@ class GamesetCardController extends Controller
             'penalty'   => 'nullable|integer|min:1|max:2',
             'timer'     => 'nullable|integer|min:5|max:90',
             'board_id'  => 'nullable|integer|exists:boards,id',
+            'topic'     => 'nullable|in:' . implode(',', array_keys(config('snl.topics'))),
             'lines'     => 'required|string|max:30000',
         ]);
         $added = 0;
@@ -81,7 +87,7 @@ class GamesetCardController extends Controller
                 continue;
             }
             Card::firstOrCreate(
-                ['kind' => $data['kind'], 'mode' => $data['mode'], 'text' => $line, 'board_id' => $data['board_id'] ?? null],
+                ['kind' => $data['kind'], 'mode' => $data['mode'], 'text' => $line, 'board_id' => $data['board_id'] ?? null, 'topic' => ($data['topic'] ?? null) ?: null],
                 ['intensity' => $data['intensity'], 'is_active' => true, 'penalty' => $data['penalty'] ?? 1, 'timer' => in_array($data['kind'], ['spotlight', 'quickfire'], true) ? ($data['timer'] ?? 15) : null] + $extra
             );
             $added++;
@@ -111,6 +117,7 @@ class GamesetCardController extends Controller
             'mode'      => 'required|in:' . implode(',', $this->modeKeys()),
             'intensity' => 'required|integer|min:1|max:3',
             'board_id'  => 'nullable|integer|exists:boards,id',
+            'topic'     => 'nullable|in:' . implode(',', array_keys(config('snl.topics'))),
             'text'      => 'required|string|max:220',
             'answer'    => 'nullable|in:true,false',
             'explain'   => 'nullable|string|max:220',
@@ -121,6 +128,7 @@ class GamesetCardController extends Controller
             abort(back()->withInput()->withErrors(['A True-or-False card needs an answer — pick True or False.']));
         }
         $data['board_id'] = $data['board_id'] ?? null;
+        $data['topic']    = in_array($data['kind'], (array) config('snl.topic_kinds'), true) ? (($data['topic'] ?? null) ?: null) : null; // only question-style kinds have a topic; blank = a general card
         $data['answer']   = $data['kind'] === 'fact' ? ($data['answer'] === 'true') : null;
         $data['explain']  = $data['kind'] === 'fact' ? ($data['explain'] ?? null) : null;
         $data['penalty']  = in_array($data['kind'], ['fact', 'bluff', 'spotlight', 'quickfire', 'vote'], true) ? ($data['penalty'] ?? 1) : 1;

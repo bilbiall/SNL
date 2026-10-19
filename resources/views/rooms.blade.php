@@ -67,8 +67,8 @@
     var cards = {}, animated = false;
     function cardHtml(r) {
         var avs = (r.avatars || []).map(function (a) { return '<img src="' + base + '/' + esc(a) + '.svg" alt="">'; }).join('');
-        var action = r.open && !r.full ? '<a class="rm-j" href="' + joinUrl + '?code=' + encodeURIComponent(r.code) + '">Join</a>'
-            : '<span class="rm-j off">' + (r.open ? 'Full' : 'In progress') + '</span>';
+        var action = r.joinable && !r.full ? '<a class="rm-j" href="' + joinUrl + '?code=' + encodeURIComponent(r.code) + '">' + (r.open ? 'Join' : 'Join in') + '</a>'
+            : '<span class="rm-j off">' + (r.joinable ? 'Full' : 'In progress') + '</span>';
         return '<div class="rm-av">' + avs + '</div>'
             + '<div><div class="rm-n">' + esc(r.name) + '</div><div class="rm-m">'
             + '<span class="chip2 ' + (r.open ? 'wait' : 'play') + '">' + (r.open ? 'Waiting for players' : 'Round ' + r.round) + '</span>'

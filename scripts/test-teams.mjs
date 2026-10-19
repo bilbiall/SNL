@@ -79,6 +79,24 @@ while (s2.room.status === 'active' && k++ < 2000) { if (s2.pending) { const [c, 
 const rm = E.rematch(pack, tg), rs = E.state(pack, rm);
 check('rematch keeps team mode and pairs', rs.room.team_mode && rs.players.every((p) => p.team) && rs.players.map((p) => p.name).join() !== '' && new Set(rs.players.map((p) => p.team)).size === 2);
 
+// chosen members: the table puts players on teams (not just 1&2, 3&4), and bad splits are refused
+const ents = (teams) => teams.map((t, i) => ({ name: 'M' + i, team: t }));
+const mk = (teams) => E.create(pack, { boardId: board.id, mode: 'family', intensity: 1, entries: ents(teams), teams: true });
+const chosen = mk([1, 2, 3, 1, 2, 3]); const cs = E.state(pack, chosen);
+const mates = (t) => cs.players.filter((p) => p.team === t).map((p) => p.name).sort().join('+');
+check('chosen members are teammates', mates(1) === 'M0+M3' && mates(2) === 'M1+M4' && mates(3) === 'M2+M5', [1, 2, 3].map(mates).join(' '));
+check('teammates share a colour (the team first player)', cs.players.filter((p) => p.team === 1).every((p) => p.color === pack.config.colors[0]));
+check('turn order alternates between the chosen teams', cs.players.slice(0, 3).map((p) => p.team).join() === '1,2,3', cs.players.map((p) => p.team).join());
+const msgBad = (teams) => t(() => mk(teams));
+check('3+1 split refused', (msgBad([1, 1, 1, 2]) || '').startsWith('Every team needs exactly two'), String(msgBad([1, 1, 1, 2])));
+check('one big team refused', (msgBad([1, 1, 1, 1]) || '').startsWith('Every team needs exactly two'));
+let sc = E.state(pack, chosen), kc = 0;
+while (sc.room.status === 'active' && kc++ < 2500) {
+  if (!sc.pending) for (const m of Object.values(groupBy(sc.players, 'team'))) if (new Set(m.map((p) => p.position)).size > 1) check('chosen teammates stay together', false, m.map((p) => p.position).join());
+  if (sc.pending) { const [c, x] = answerFor(sc); E.decide(pack, chosen, c, x); } else E.roll(pack, chosen); sc = E.state(pack, chosen);
+}
+check('a game with chosen teams finishes', sc.room.status === 'completed');
+
 // team names: typed, cleaned, defaulted, kept on rematch
 const named = E.create(pack, { boardId: board.id, mode: 'family', intensity: 1, entries: Array.from({ length: 4 }, (_, i) => ({ name: 'N' + i })), teams: true, teamNames: ['The Snakes', '  <b>Ladder</b>   Legends  '] });
 check('team names kept and cleaned', JSON.stringify(E.state(pack, named).room.team_names) === JSON.stringify({ 1: 'The Snakes', 2: 'Ladder Legends' }), JSON.stringify(E.state(pack, named).room.team_names));

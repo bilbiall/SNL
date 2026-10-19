@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Card extends Model
 {
-    protected $fillable = ['board_id', 'pack_id', 'kind', 'mode', 'intensity', 'text', 'answer', 'explain', 'penalty', 'timer', 'is_active'];
+    protected $fillable = ['board_id', 'pack_id', 'topic', 'kind', 'mode', 'intensity', 'text', 'answer', 'explain', 'penalty', 'timer', 'is_active'];
 
     protected $casts = ['is_active' => 'boolean', 'answer' => 'boolean'];
 
@@ -20,6 +20,17 @@ class Card extends Model
     public function pack(): BelongsTo
     {
         return $this->belongsTo(Pack::class);
+    }
+
+    /** The topics the table chose, as valid keys; an empty list means "Random" (everything). */
+    public static function topicsOf(Room $room): array
+    {
+        $t = array_values(array_filter((array) ($room->deck_state['topics'] ?? []), fn ($k) => is_string($k)));
+        if (!$t || in_array('random', $t, true)) {
+            return [];
+        }
+
+        return array_values(array_intersect($t, array_keys((array) config('snl.topics'))));
     }
 
     /** The next card of this kind for the room's mode (or "all" modes), never wilder than the room's intensity.
@@ -35,8 +46,19 @@ class Card extends Model
             ->when($kind === 'pick', fn ($q) => $q->where('text', $random ? 'like' : 'not like', '%{target}%'))
             ->where(fn ($q) => $q->whereNull('board_id')->orWhere('board_id', $room->board_id));
 
-        $pool = $base()->where('intensity', '<=', $room->intensity)->pluck('intensity', 'id')->all()
-            ?: $base()->pluck('intensity', 'id')->all();
+        // Topics: when the table picked some (not "Random"), the question-style kinds only draw from those topics; if a topic has nothing
+        // for this kind and mode, fall back to the general cards so a game never runs dry.
+        $topics = static::topicsOf($room);
+        $topical = $topics && in_array($kind, (array) config('snl.topic_kinds'), true);
+        $tries = $topical ? [fn ($q) => $q->whereIn('topic', $topics), fn ($q) => $q->whereNull('topic')] : [fn ($q) => $q];
+        $pool = [];
+        foreach ($tries as $scope) {
+            $pool = $scope($base())->where('intensity', '<=', $room->intensity)->pluck('intensity', 'id')->all()
+                ?: $scope($base())->pluck('intensity', 'id')->all();
+            if ($pool) {
+                break;
+            }
+        }
         if (!$pool) {
             return null;
         }

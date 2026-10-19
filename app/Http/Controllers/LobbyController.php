@@ -50,17 +50,19 @@ class LobbyController extends Controller
                 $active = $r->players->where('status', 'active');
                 $host = $r->players->firstWhere('id', $r->host_player_id);
                 $open = $r->status === 'open';
+                $joinable = $open || ($r->status === 'active' && !$r->team_mode); // friends can join a running game too (not a team game)
 
                 return [
                     'name'      => $r->name,
-                    'code'      => $open ? $r->join_code : null,       // only waiting rooms can be joined
+                    'code'      => $joinable ? $r->join_code : null,   // waiting rooms and running (non-team) games can be joined
                     'tv'        => $r->join_code,                       // anyone can watch a listed room on a TV
                     'open'      => $open,
+                    'joinable'  => $joinable,
                     'mode'      => ['label' => $modes[$r->content_mode]['label'] ?? $r->content_mode, 'icon' => $modes[$r->content_mode]['icon'] ?? 'cards', 'adult' => (bool) ($modes[$r->content_mode]['adult'] ?? false)],
                     'intensity' => ['label' => $levels[$r->intensity]['label'] ?? '', 'icon' => $levels[$r->intensity]['icon'] ?? 'star'],
                     'players'   => $active->count(),
                     'max'       => (int) $r->max_players,
-                    'full'      => $open && $active->count() >= $r->max_players,
+                    'full'      => $joinable && $active->count() >= $r->max_players,
                     'host'      => $host?->name,
                     'avatars'   => $active->take(6)->map(fn ($p) => $p->avatar)->values()->all(),
                     'round'     => (int) $r->round,

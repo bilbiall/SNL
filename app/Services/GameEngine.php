@@ -85,7 +85,7 @@ class GameEngine
     // ───────────────────────────── Room setup ─────────────────────────────
 
     /** One device, 2–12 named players, game starts immediately. */
-    public function createParty(Board $board, array $entries, string $mode, int $intensity, ?int $startShields = null, bool $teams = false, array $teamNames = []): Room
+    public function createParty(Board $board, array $entries, string $mode, int $intensity, ?int $startShields = null, bool $teams = false, array $teamNames = [], array $topics = []): Room
     {
         $this->validateSetup($board, $mode, $intensity);
         $cfg = config('snl.players');
@@ -96,16 +96,25 @@ class GameEngine
             $this->assertTeamSize(count($entries));
         }
 
-        return DB::transaction(function () use ($board, $entries, $mode, $intensity, $startShields, $teams, $teamNames) {
+        return DB::transaction(function () use ($board, $entries, $mode, $intensity, $startShields, $teams, $teamNames, $topics) {
             $room = Room::create([
                 'token' => Room::newToken(), 'board_id' => $board->id, 'type' => 'party',
                 'content_mode' => $mode, 'intensity' => $intensity, 'status' => 'active',
                 'max_players' => config('snl.players.max'), 'team_mode' => $teams,
-                'deck_state' => ['start_shields' => $this->clampShields($startShields)],
+                'deck_state' => ['start_shields' => $this->clampShields($startShields), 'topics' => $this->cleanTopics($topics)],
             ]);
             $this->seedPlayers($room, $entries);
             if ($teams) {
-                $this->assignTeams($room, Player::where('room_id', $room->id)->orderBy('turn_order')->get());
+                $ps = Player::where('room_id', $room->id)->orderBy('turn_order')->get();
+                $ents = array_values($entries);
+                $assign = null;
+                if (collect($ents)->every(fn ($e) => !empty($e['team']))) { // the table chose who is on which team
+                    $assign = [];
+                    foreach ($ps as $i => $p) {
+                        $assign[$p->id] = (int) $ents[$i]['team'];
+                    }
+                }
+                $this->assignTeams($room, $ps, $assign);
                 $this->setTeamNames($room, $teamNames, intdiv(count($entries), 2));
             }
             $first = $room->players()->orderBy('turn_order')->first();
@@ -118,18 +127,18 @@ class GameEngine
     }
 
     /** Online: creates a lobby with the host seated. @return array{0: Room, 1: Player} */
-    public function createOnline(Board $board, string $hostName, string $mode, int $intensity, int $max, ?string $hostAvatar = null, ?int $startShields = null, ?string $roomName = null, bool $public = false, bool $teams = false): array
+    public function createOnline(Board $board, string $hostName, string $mode, int $intensity, int $max, ?string $hostAvatar = null, ?int $startShields = null, ?string $roomName = null, bool $public = false, bool $teams = false, array $topics = []): array
     {
         $this->validateSetup($board, $mode, $intensity);
         $cfg = config('snl.players');
 
-        return DB::transaction(function () use ($board, $hostName, $mode, $intensity, $max, $cfg, $hostAvatar, $startShields, $roomName, $public, $teams) {
+        return DB::transaction(function () use ($board, $hostName, $mode, $intensity, $max, $cfg, $hostAvatar, $startShields, $roomName, $public, $teams, $topics) {
             $room = Room::create([
                 'token' => Room::newToken(), 'join_code' => Room::newJoinCode(), 'board_id' => $board->id, 'type' => 'online',
                 'name' => $roomName ? mb_substr(trim($roomName), 0, 40) : null, 'is_public' => $public && $roomName,
                 'content_mode' => $mode, 'intensity' => $intensity, 'status' => 'open',
                 'max_players' => max($cfg['min'], min($cfg['max'], $max)), 'team_mode' => $teams,
-                'deck_state' => ['start_shields' => $this->clampShields($startShields)],
+                'deck_state' => ['start_shields' => $this->clampShields($startShields), 'topics' => $this->cleanTopics($topics)],
             ]);
             $this->seedPlayers($room, [['name' => $hostName, 'avatar' => $hostAvatar]]);
             $host = $room->players()->first();
@@ -143,21 +152,32 @@ class GameEngine
     {
         return $this->locked($room, function () use ($name, $avatar) {
             $room = $this->room;
-            if ($room->status !== 'open') {
-                throw new GameException($room->status === 'completed' ? 'That game has already finished.' : 'That game has already started.');
+            if ($room->status === 'completed') {
+                throw new GameException('That game has already finished.');
+            }
+            // Friends can join a game that is already running (not a team game: its pairs are fixed when it starts).
+            if ($room->status === 'active' && $room->team_mode) {
+                throw new GameException('This is a team game, so teams were set when it started and nobody can join now.');
             }
             if ($this->players->where('status', 'active')->count() >= $room->max_players) {
                 throw new GameException('That room is full.');
             }
+            $p = $this->addPlayer($room, ['name' => $name, 'avatar' => $avatar]);
+            if ($room->status === 'active') {
+                // a late joiner starts on the first square, plays last in the order, and gets a secret mission like everyone else
+                $room->log(['type' => 'joined', 'player_id' => $p->id]);
+                $this->assignMission($p);
+                $p->save();
+            }
 
-            return $this->addPlayer($room, ['name' => $name, 'avatar' => $avatar]);
+            return $p;
         });
     }
 
     /** Host starts an online lobby once at least two people are in. */
-    public function start(Room $room, int $actorId, array $teamNames = []): void
+    public function start(Room $room, int $actorId, array $teamNames = [], ?array $teamAssign = null): void
     {
-        $this->locked($room, function () use ($actorId, $teamNames) {
+        $this->locked($room, function () use ($actorId, $teamNames, $teamAssign) {
             $room = $this->room;
             if ($room->status !== 'open') {
                 throw new GameException('This game has already started.');
@@ -171,7 +191,8 @@ class GameEngine
             }
             if ($room->team_mode) {
                 $this->assertTeamSize($active->count());
-                $this->assignTeams($room, $active); // pairs in join order: 1 & 2, 3 & 4 …
+                $assign = $teamAssign ? array_map('intval', $teamAssign) : null; // the host's choice (player id => team), else pairs in join order
+                $this->assignTeams($room, $active, $assign);
                 $this->setTeamNames($room, $teamNames, intdiv($active->count(), 2));
                 $active = $this->players->where('status', 'active')->sortBy('turn_order')->values();
             }
@@ -200,23 +221,40 @@ class GameEngine
      * (team 1's first player, team 2's first player … then each team's second player), so every team rolls equally often.
      * @param \Illuminate\Support\Collection<int, Player> $ordered
      */
-    private function assignTeams(Room $room, $ordered): void
+    private function assignTeams(Room $room, $ordered, ?array $assign = null): void
     {
         $ordered = $ordered->values();
-        $teams = intdiv($ordered->count(), 2);
-        $anchor = [];
-        foreach ($ordered as $i => $p) {
-            $t = intdiv($i, 2);
-            $p->team = $t + 1;
-            $p->turn_order = ($i % 2) * $teams + $t;
-            $p->color = $ordered[$t * 2]->color;
-            $p->save();
-            $anchor[$t + 1] = 0;
-            if (isset($this->players[$p->id])) { // keep the in-memory copy in step when called from inside a locked action
-                $this->players[$p->id]->team = $p->team;
-                $this->players[$p->id]->turn_order = $p->turn_order;
-                $this->players[$p->id]->color = $p->color;
+        if ($assign === null) { // no choices made: pairs in the order given (1 & 2, 3 & 4 …)
+            $assign = [];
+            foreach ($ordered as $i => $p) {
+                $assign[$p->id] = intdiv($i, 2) + 1;
             }
+        }
+        $groups = [];
+        foreach ($ordered as $p) {
+            $groups[(int) ($assign[$p->id] ?? 0)][] = $p; // members stay in seat order inside their team
+        }
+        ksort($groups);
+        if (isset($groups[0]) || count($groups) < 2 || collect($groups)->contains(fn ($g) => count($g) !== 2)) {
+            throw new GameException('Every team needs exactly two players, and there must be at least two teams.');
+        }
+        $teams = count($groups);
+        $anchor = [];
+        $t = 0;
+        foreach ($groups as $members) {
+            foreach ($members as $j => $p) {
+                $p->team = $t + 1;
+                $p->turn_order = $j * $teams + $t; // team 1's first player, team 2's first … then every team's second player
+                $p->color = $members[0]->color;
+                $p->save();
+                if (isset($this->players[$p->id])) { // keep the in-memory copy in step when called from inside a locked action
+                    $this->players[$p->id]->team = $p->team;
+                    $this->players[$p->id]->turn_order = $p->turn_order;
+                    $this->players[$p->id]->color = $p->color;
+                }
+            }
+            $anchor[$t + 1] = 0;
+            $t++;
         }
         $room->deck_state = array_merge($room->deck_state ?? [], ['team_pos' => $anchor]);
     }
@@ -399,7 +437,7 @@ class GameEngine
                 'board_id' => $old->board_id, 'type' => $old->type, 'content_mode' => $old->content_mode,
                 'intensity' => $old->intensity, 'max_players' => $old->max_players,
                 'status' => $old->isParty() ? 'active' : 'open', 'rematch_of' => $old->id, 'name' => $old->name, 'is_public' => $old->is_public, 'team_mode' => $old->team_mode,
-                'deck_state' => ['start_shields' => $old->deck_state['start_shields'] ?? null] + (isset($old->deck_state['team_names']) ? ['team_names' => $old->deck_state['team_names']] : []),
+                'deck_state' => ['start_shields' => $old->deck_state['start_shields'] ?? null, 'topics' => $old->deck_state['topics'] ?? []] + (isset($old->deck_state['team_names']) ? ['team_names' => $old->deck_state['team_names']] : []),
             ]);
 
             $keep = $old->players()->where('status', '!=', 'left')->get();
@@ -1501,7 +1539,7 @@ class GameEngine
                 'current_player_id' => $room->current_player_id, 'winner_player_id' => $room->winner_player_id,
                 'host_player_id' => $room->host_player_id, 'max_players' => $room->max_players,
                 'tile_count' => $room->board->tile_count, 'event_seq' => $room->event_seq,
-                'rematch_token' => $room->rematch_token, 'team_mode' => (bool) $room->team_mode, 'team_names' => (object) ($room->deck_state['team_names'] ?? []),
+                'rematch_token' => $room->rematch_token, 'team_mode' => (bool) $room->team_mode, 'topics' => \App\Models\Card::topicsOf($room), 'team_names' => (object) ($room->deck_state['team_names'] ?? []),
                 'turn_seconds_left' => $turnLeft, 'pending_seconds_left' => $pendingLeft,
             ],
             'players' => $players,
@@ -1570,6 +1608,17 @@ class GameEngine
         foreach (array_values($entries) as $i => $e) {
             $this->addPlayer($room, $e, $i);
         }
+    }
+
+    /** The topics a table picked: valid keys only; empty (or "random") means everything. */
+    private function cleanTopics(array $topics): array
+    {
+        $t = array_values(array_unique(array_filter(array_map('strval', $topics))));
+        if (!$t || in_array('random', $t, true)) {
+            return [];
+        }
+
+        return array_values(array_intersect($t, array_keys((array) config('snl.topics'))));
     }
 
     /** 0 … the shield cap; null = the default (1). */

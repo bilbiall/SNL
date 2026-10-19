@@ -50,12 +50,13 @@ class HomeController extends Controller
 
         // An invite link (/join?code=ABCDE): look the room up so the page — and the preview card WhatsApp builds from it — can say who invited you.
         $invite = null;
-        if (preg_match('/^[A-Z0-9]{4,8}$/', $code) && ($room = Room::where('join_code', $code)->where('status', 'open')->first()) && $room->isOnline()) {
+        if (preg_match('/^[A-Z0-9]{4,8}$/', $code) && ($room = Room::where('join_code', $code)->whereIn('status', ['open', 'active'])->first()) && $room->isOnline() && !($room->status === 'active' && $room->team_mode)) {
             $invite = [
                 'host'    => (string) ($room->players()->where('id', $room->host_player_id)->value('name') ?: 'A friend'),
                 'mode'    => (string) config("snl.modes.{$room->content_mode}.label", ''),
                 'players' => $room->players()->where('status', 'active')->count(),
                 'max'     => (int) $room->max_players,
+                'live'    => $room->status === 'active', // the game has started, but you can still jump in
             ];
         }
 

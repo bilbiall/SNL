@@ -54,6 +54,7 @@
 
   const ST = $('stage'), BOARD = $('boardWrap'), DIE = $('dieBtn'), CUBE = $('dieCube');
   let missionHinted = false;
+  const teamAssign = {};     // the host's team choices in the lobby: player id -> team number
   const teamNameVals = [];   // what the host has typed into the lobby's team-name boxes (survives the lobby redrawing)
   const players = () => latest.players;
   /** 1-based seat number (order of play) — the optional player-number badges use it so colour is never the only clue. */
@@ -298,8 +299,13 @@
     if (!ns || !ns.room) return;
     if (ns.room.event_seq < latest.room.event_seq) return; // an older response that lost the race
     const fresh = (ns.actions || []).filter((a) => a.seq > lastSeq);
-    if (fresh.length) { lastSeq = fresh[fresh.length - 1].seq; queue.push(...fresh); }
-    latest = ns;
+    latest = ns; // (set first: the reaction pop-up below looks the sender up in it)
+    if (fresh.length) {
+      lastSeq = fresh[fresh.length - 1].seq;
+      // Reactions are shown at once on everybody's screen, not queued behind a card or a long move that is still playing.
+      fresh.filter((a) => a.type === 'react').forEach(showReaction);
+      queue.push(...fresh.filter((a) => a.type !== 'react'));
+    }
     if (ns.mission && ns.mission.current && ns.room.status === 'active' && !missionHinted) { // a one-time nudge: everyone has a private goal
       missionHinted = true;
       setTimeout(() => toast(`${ic('mask')} You have a secret mission — tap the mask to see it`, 5200, '#a78bfa'), 2800);
@@ -521,7 +527,6 @@
       case 'left': toast(`${ic('exit')} ${esc(who.name)} left the game`, 2400); meme('wasted'); await sleep(350); break;
       case 'skip': toast(`${ic('clock')} ${esc(who.name)} ran out of time`, 2200); meme('timeout'); await sleep(250); break;
       case 'pass': toast(`${ic('check')} <b>${esc(who.name)}</b> passed — it doesn't apply`, 2400, '#34d399'); snd('arrive'); meme('neutral'); await sleep(350); break;
-      case 'react': floater(a.player_id, a.reaction); if (C.tv) bigReact(a.player_id, a.reaction); snd('reaction'); break;
       default: break;
     }
   }
@@ -693,7 +698,12 @@
     BOARD.appendChild(el);
     setTimeout(() => el.remove(), 1800);
   }
-  /** TV only: a big emoji with the sender's name drifts up the screen, so the room can see who is cheering. */
+  /** A reaction someone sent: a small icon over their token and a big one with their name drifting up every screen (phones and the TV). */
+  function showReaction(a) {
+    try { if (!P(a.player_id)) return; floater(a.player_id, a.reaction); bigReact(a.player_id, a.reaction); snd('reaction'); } catch (_) {}
+  }
+
+  /** A big emoji with the sender's name drifts up the screen, so the whole room can see who is cheering. */
   function bigReact(playerId, key) {
     if (ST.querySelectorAll('.tvreact').length >= 14) return;
     const p = P(playerId);
@@ -1123,14 +1133,27 @@
     waitRaf = requestAnimationFrame(frame);
   }
 
+  /** The host's team set-up in the online lobby: a team for every player, and a name for every team. */
+  function teamPanel(active, T, ok) {
+    const sel = active.map((p) => `<div style="display:flex;gap:.4rem;align-items:center;margin:.15rem 0;"><span style="flex:1;text-align:left;font-size:.8rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.name)}</span><select class="tm-sel" data-id="${p.id}" style="border-radius:.5rem;border:1px solid rgba(255,255,255,.2);background:#1b1733;color:#fff;padding:.25rem .4rem;font:inherit;font-size:.78rem;">${Array.from({ length: T }, (_, t) => `<option value="${t + 1}" ${teamAssign[p.id] === t + 1 ? 'selected' : ''}>Team ${t + 1}</option>`).join('')}</select></div>`).join('');
+    const names = Array.from({ length: T }, (_, i) => `<input class="tn-in" data-i="${i}" maxlength="20" placeholder="Team ${i + 1}" value="${esc(teamNameVals[i] || '')}" style="width:100%;box-sizing:border-box;margin:.12rem 0;border-radius:.5rem;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;padding:.3rem .5rem;font:inherit;font-size:.8rem;">`).join('');
+    return `<div class="ov-sub" style="text-align:left;color:#fde68a;">Teams of two: choose who is on which team.</div>${sel}<div class="ov-sub" style="text-align:left;margin-top:.4rem;">Team names (optional):</div>${names}${ok ? '' : '<div class="ov-sub" style="color:#fca5a5;">Every team needs exactly two players.</div>'}`;
+  }
+
   function renderLobby() {
     const r = S.room;
     if (r.status !== 'open') { hide('ovLobby'); lobbySig = null; cancelAnimationFrame(waitRaf); return; }
     const active = S.players.filter((p) => p.status === 'active');
     const iHost = r.host_player_id === C.meId;
-    const need = r.team_mode ? 4 : 2, canStart = active.length >= need && (!r.team_mode || active.length % 2 === 0); // teams of two: an even number, 4 or more
+    const need = r.team_mode ? 4 : 2, evenOk = !r.team_mode || active.length % 2 === 0;
+    // teams of two: the host puts every player on a team (default: pairs in join order); each team needs exactly two
+    const T = Math.floor(active.length / 2);
+    if (r.team_mode) active.forEach((p, i) => { if (!(teamAssign[p.id] >= 1 && teamAssign[p.id] <= T)) teamAssign[p.id] = Math.floor(i / 2) + 1; });
+    const perTeam = {}; if (r.team_mode) active.forEach((p) => { perTeam[teamAssign[p.id]] = (perTeam[teamAssign[p.id]] || 0) + 1; });
+    const teamsOk = !r.team_mode || (T >= 2 && Array.from({ length: T }, (_, t) => perTeam[t + 1] || 0).every((n) => n === 2));
+    const canStart = active.length >= need && evenOk && teamsOk;
     // Only redraw when something actually changed — a card that keeps re-drawing (and re-animating) can't be clicked.
-    const sig = JSON.stringify([r.join_code, r.name, r.is_public, r.max_players, r.host_player_id, C.meId, active.map((p) => [p.id, p.name, p.avatar])]);
+    const sig = JSON.stringify([r.join_code, r.name, r.is_public, r.max_players, r.host_player_id, C.meId, active.map((p) => [p.id, p.name, p.avatar]), r.team_mode ? teamAssign : null]);
     if (sig === lobbySig && $('ovLobby').classList.contains('show')) return;
     const first = lobbySig === null;
     lobbySig = sig;
@@ -1157,11 +1180,10 @@
       <div class="code-big">${esc(r.join_code)}</div>
       <div class="ov-sub">Friends open <b>${esc(location.host)}</b> → <b>Join</b>, or tap Share.</div>
       <div class="tgt-row">${active.map(chip).join('')}</div>
-      ${r.team_mode ? '<div class="ov-sub" style="color:#fde68a;">Teams of two: partners are paired in the order people join (1 &amp; 2, 3 &amp; 4 …). Needs 4, 6, 8, 10 or 12 players.</div>' : ''}
-      ${r.team_mode && iHost && canStart ? `<div class="ov-sub" style="text-align:left;">Name your teams (optional):</div>${Array.from({ length: active.length / 2 }, (_, i) => `<div style="display:flex;gap:.4rem;align-items:center;margin:.2rem 0;"><span style="font-size:.7rem;font-weight:900;color:#9ca3af;min-width:4.2rem;text-align:left;">${esc(active[i * 2].name)} &amp; ${esc(active[i * 2 + 1].name).slice(0, 10)}</span><input class="tn-in" data-i="${i}" maxlength="20" placeholder="Team ${i + 1}" value="${esc(teamNameVals[i] || '')}" style="flex:1;min-width:0;border-radius:.5rem;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;padding:.3rem .5rem;font:inherit;font-size:.8rem;"></div>`).join('')}` : ''}
+      ${r.team_mode ? (iHost ? (active.length >= need && evenOk ? teamPanel(active, T, teamsOk) : '<div class="ov-sub" style="color:#fde68a;">Teams of two: you will choose who is on which team once there are 4, 6, 8, 10 or 12 players (an even number).</div>') : '<div class="ov-sub" style="color:#fde68a;">Teams of two: the host is setting up the teams.</div>') : ''}
       <div class="wait"><div class="w-track" id="waitTrack">${tiles}<div class="w-tok" id="waitTok"><div><img id="waitAv" src="${C.avatarBase}/${(active[0] && AV.test(active[0].avatar || '')) ? active[0].avatar : 'f1-3'}.svg" alt=""></div></div></div>
-        <div class="w-txt">${active.length < need ? 'Waiting for players to join' : !canStart ? 'Teams of two need an even number of players' : (iHost ? 'Ready when you are' : 'Waiting for the host to start')}…</div></div>
-      <div class="ov-sub">${active.length} / ${r.max_players} players</div>
+        <div class="w-txt">${active.length < need ? 'Waiting for players to join' : !canStart ? (!evenOk ? 'Teams of two need an even number of players' : 'Every team needs exactly two players') : (iHost ? 'Ready when you are' : 'Waiting for the host to start')}…</div></div>
+      <div class="ov-sub">${active.length} / ${r.max_players} players${(r.topics && r.topics.length) ? ' · Questions: ' + r.topics.map((t) => esc((C.topicNames || {})[t] || t)).join(', ') : ''}</div>
       <div class="ov-sub" style="opacity:.8;">On a TV? Open <b>${esc(location.host)}/tv</b> and enter the code.</div>
       <div class="ov-btns">
         <button class="obtn ok" id="lobbyWa">${ic('phone')} WhatsApp</button>
@@ -1174,7 +1196,8 @@
     $('lobbyLeave').onclick = () => confirmLeave(C.meId);
     const st = $('lobbyStart');
     document.querySelectorAll('.tn-in').forEach((el) => { el.oninput = () => { teamNameVals[+el.dataset.i] = el.value; }; });
-    if (st) st.onclick = async () => { st.disabled = true; snd('toggle'); await post(C.urls.start, r.team_mode ? { team_names: Array.from({ length: Math.floor(active.length / 2) }, (_, i) => teamNameVals[i] || '') } : {}); };
+    document.querySelectorAll('.tm-sel').forEach((el) => { el.onchange = () => { teamAssign[+el.dataset.id] = +el.value; lobbySig = '~'; renderLobby(); }; });
+    if (st) st.onclick = async () => { st.disabled = true; snd('toggle'); await post(C.urls.start, r.team_mode ? { team_names: Array.from({ length: T }, (_, i) => teamNameVals[i] || ''), team_assign: Object.fromEntries(active.map((p) => [p.id, teamAssign[p.id]])) } : {}); };
     startWaitLoader();
   }
 
@@ -1250,10 +1273,12 @@
       <div class="ov-title" style="text-align:left;display:flex;align-items:center;justify-content:space-between;">Players${C.isParty && r.status === 'active' ? `<button class="obtn ok" id="addPlayerBtn" style="padding:.25rem .7rem;">${ic('team')} Add a player</button>` : ''}</div>${roster}
       ${C.isParty ? '<div class="ov-sub" style="text-align:left;">Someone had enough? Remove them — the game carries on.</div>' : ''}
       <div class="htp">${ic('speaker')}<span>Meme reactions: <a href="#" id="memeTgl" style="color:#f9a8d4;font-weight:800;">${(typeof SNLAudio !== 'undefined' && SNLAudio.memes) ? 'On' : 'Off'}</a> <span style="color:#9ca3af;">— funny sounds on picks, snakes, ladders, wins…</span></span></div>
+      ${(r.topics && r.topics.length) ? `<div class="htp">${ic('fact')}<span>Questions are about: <b>${r.topics.map((t) => esc((C.topicNames || {})[t] || t)).join(', ')}</b></span></div>` : ''}
       <div class="ov-title" style="text-align:left;">Accessibility</div>
       <div class="htp">${ic('info')}<span>Text size: <a href="#" id="a11yT" style="color:#f9a8d4;font-weight:800;"></a> <span style="color:#9ca3af;">— bigger pop-ups and messages</span></span></div>
       <div class="htp">${ic('team')}<span>Player numbers: <a href="#" id="a11yN" style="color:#f9a8d4;font-weight:800;"></a> <span style="color:#9ca3af;">— a number on each token, not just a colour</span></span></div>
       <div class="htp">${ic('clock')}<span>Reduce motion: <a href="#" id="a11yM" style="color:#f9a8d4;font-weight:800;"></a> <span style="color:#9ca3af;">— calmer effects</span></span></div>
+      ${!C.isParty && !C.tv && !r.team_mode && r.status === 'active' && S.players.filter((p) => p.status === 'active').length < r.max_players ? `<div class="htp">${ic('share')}<span>Friends can still join this game with code <b>${esc(r.join_code)}</b> — <a href="#" id="menuWa" style="color:#6ee7b7;font-weight:800;">WhatsApp</a> · <a href="#" id="menuShare" style="color:#f9a8d4;font-weight:800;">Share</a></span></div>` : ''}
       ${window.SNLVoice && SNLVoice.joined() ? `<div class="htp">${ic('mic')}<span>Voice chat: <a href="#" id="voiceLeave" style="color:#f9a8d4;font-weight:800;">Leave voice chat</a></span></div>` : ''}
       <div class="htp" id="appRow" style="display:none;margin-top:.4rem;">${ic('info')}<span>App version <b id="appVer">…</b> · <a href="#" id="chkUpd" style="color:#f9a8d4;font-weight:800;">Check for updates</a><span id="updMsg" style="display:block;color:#9ca3af;"></span></span></div>
       <div class="ov-sub" style="text-align:left;margin-top:.5rem;">${C.mode && C.mode.label === 'Drinks' ? 'Any drink can be swapped for water. Never drive after drinking.' : (C.mode && C.mode.adult ? 'Everything is optional. Skip anything you are not comfortable with.' : 'Have fun, be kind, and skip anything that is not for you.')}</div>
@@ -1261,6 +1286,8 @@
     $('menuClose').onclick = () => hide('ovMenu');
     const ap = $('addPlayerBtn'); if (ap) ap.onclick = openAddPlayer;
     const mt = $('memeTgl'); if (mt) mt.onclick = (ev) => { ev.preventDefault(); const on = !SNLAudio.memes; SNLAudio.setMemes(on); mt.textContent = on ? 'On' : 'Off'; if (on) SNLAudio.react('win'); };
+    const mw = $('menuWa'); if (mw) mw.onclick = (ev) => { ev.preventDefault(); shareWhatsApp(); };
+    const ms = $('menuShare'); if (ms) ms.onclick = (ev) => { ev.preventDefault(); shareInvite(); };
     const vl = $('voiceLeave'); if (vl) vl.onclick = (ev) => { ev.preventDefault(); SNLVoice.leave(); hide('ovMenu'); toast(`${ic('mic')} You left voice chat`, 2200); };
     if (window.SNLA11y) {                        // Accessibility: each link cycles its setting and saves it on this device
       const A = window.SNLA11y, sizes = ['Normal', 'Large', 'Extra large'], motion = ['Auto', 'On', 'Off'];

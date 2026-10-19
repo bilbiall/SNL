@@ -151,6 +151,7 @@ window.SNL = {
     iconUrl: @json(asset('icons.svg')),
     avatarBase: @json(asset('avatars')),
     iconKeys: @json(\App\Support\Icons::keys()),
+    topicNames: @json(collect(config('snl.topics'))->map(fn ($t) => $t['label'])->all()),
 };
 </script>
 <script src="{{ \App\Support\OfflineAssets::js('snl-engine.js') }}"></script>
@@ -208,6 +209,7 @@ window.SNL = {
     iconUrl: @json(asset('icons.svg')),
     avatarBase: @json(asset('avatars')),
     iconKeys: @json(\App\Support\Icons::keys()),
+    topicNames: @json(collect(config('snl.topics'))->map(fn ($t) => $t['label'])->all()),
 };
 </script>
 @if($tv ?? false)

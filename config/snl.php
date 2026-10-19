@@ -181,6 +181,27 @@ return [
         ],
     ],
 
+    /*
+    | Topics. A table can pick what the question-style cards are about when it creates a game (or "Random" for a bit of everything).
+    | Only these kinds of cards belong to a topic: the true/false facts, quickfire lists, group games, spotlights and bluffs.
+    | The dares, picks and rules are still chosen by mode. Topic cards live in GameSet → Cards (the Topic box).
+    */
+    'topic_kinds' => ['fact', 'quickfire', 'groupgame', 'spotlight', 'bluff'],
+    'topics' => [
+        'football'   => ['label' => 'Football',        'icon' => 'trophy',   'blurb' => 'Clubs, stars, World Cups and the rules of the game'],
+        'movies'     => ['label' => 'Movies & TV',     'icon' => 'movie',    'blurb' => 'Films, series, actors and famous scenes'],
+        'music'      => ['label' => 'Music',           'icon' => 'music',    'blurb' => 'Songs, artists, instruments and Kenyan sounds'],
+        'world'      => ['label' => 'World & news',    'icon' => 'globe',    'blurb' => 'Countries, capitals, organisations and current-affairs basics'],
+        'history'    => ['label' => 'History',         'icon' => 'hourglass','blurb' => 'People, empires, inventions and big moments'],
+        'didyouknow' => ['label' => 'Did you know?',   'icon' => 'sparkles', 'blurb' => 'Strange but true facts about animals and the world'],
+        'science'    => ['label' => 'Science & nature','icon' => 'bolt',     'blurb' => 'Space, the body, animals and how things work'],
+        'kenya'      => ['label' => 'Kenya & Africa',  'icon' => 'flag',     'blurb' => 'Places, food, athletes and the continent'],
+        'sports'     => ['label' => 'Other sports',    'icon' => 'fist',     'blurb' => 'Athletics, basketball, tennis, rugby and more'],
+        'tech'       => ['label' => 'Tech & gadgets',  'icon' => 'laptop',   'blurb' => 'Phones, apps, the internet and inventions'],
+        'news'       => ['label' => 'In the news',     'icon' => 'search',   'blurb' => 'Big stories of 2026: sport, film, music, space and the world'],
+        'food'       => ['label' => 'Food & drink',    'icon' => 'popcorn',  'blurb' => 'Dishes, ingredients, Kenyan favourites and snacks'],
+    ],
+
     'players' => ['min' => 2, 'max' => 12],
 
     /*

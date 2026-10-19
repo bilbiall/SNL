@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             FriendsModesSeeder::class,
             LoversModeSeeder::class,
             VoteCardsSeeder::class,
+            TopicCardsSeeder::class,
         ]);
     }
 }
