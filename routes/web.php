@@ -6,6 +6,7 @@ use App\Http\Controllers\ContentController;
 use App\Http\Controllers\LobbyController;
 use App\Http\Controllers\GamesetBoardController;
 use App\Http\Controllers\GamesetCardController;
+use App\Http\Controllers\GamesetPackController;
 use App\Http\Controllers\GamesetWordController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OfflineController;
@@ -89,6 +90,13 @@ Route::middleware(['auth', 'gameset'])->prefix('gameset')->name('gameset.')->gro
     Route::post('/cards/bulk', [GamesetCardController::class, 'bulk'])->name('cards.bulk');
     Route::put('/cards/{card}', [GamesetCardController::class, 'update'])->name('cards.update');
     Route::delete('/cards/{card}', [GamesetCardController::class, 'destroy'])->name('cards.destroy');
+
+    Route::get('/packs', [GamesetPackController::class, 'index'])->name('packs.index');
+    Route::post('/packs', [GamesetPackController::class, 'store'])->name('packs.store');
+    Route::put('/packs/{pack}', [GamesetPackController::class, 'update'])->name('packs.update');
+    Route::delete('/packs/{pack}', [GamesetPackController::class, 'destroy'])->name('packs.destroy');
+    Route::post('/packs/{pack}/cards', [GamesetPackController::class, 'addCards'])->name('packs.cards.store');
+    Route::delete('/packs/{pack}/cards/{card}', [GamesetPackController::class, 'destroyCard'])->name('packs.cards.destroy');
 
     Route::get('/words', [GamesetWordController::class, 'index'])->name('words.index');
     Route::post('/words', [GamesetWordController::class, 'store'])->name('words.store');

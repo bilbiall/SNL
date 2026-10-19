@@ -89,6 +89,19 @@
     <div class="watch" id="watch"></div>
     <div class="toasts" id="toasts"></div>
 
+    {{-- TV only: the live sponsors' logos along the bottom (rotating), and — with /tv/CODE?event=1 — a permanent "join here" badge for bars and events. --}}
+    @if(($tv ?? false) && !empty($sponsors))
+    <div class="sponsor-strip {{ ($event ?? false) ? 'big' : '' }}" id="sponsorStrip" aria-label="Sponsors">
+        @foreach($sponsors as $sp)
+        <div class="sp-item {{ $loop->first ? 'on' : '' }}">@if($sp['logo'])<img src="{{ $sp['logo'] }}" alt="">@endif<span><small>Presented by</small><b>{{ $sp['name'] }}</b>@if($sp['tagline'])<em>{{ $sp['tagline'] }}</em>@endif</span></div>
+        @endforeach
+    </div>
+    <script>(function(){var it=document.querySelectorAll('#sponsorStrip .sp-item');if(it.length<2)return;var i=0;setInterval(function(){it[i].classList.remove('on');i=(i+1)%it.length;it[i].classList.add('on');},6000);})();</script>
+    @endif
+    @if(($tv ?? false) && ($event ?? false))
+    <div class="join-badge"><small>Join in</small><b>{{ preg_replace('#^https?://#', '', rtrim(config('snl.public_url'), '/')) }}/join</b><span>{{ $room->join_code }}</span></div>
+    @endif
+
     {{-- Overlays: each is filled by JS --}}
     <div class="ov" id="ovCard"></div>
     <div class="ov" id="ovPrompt"></div>

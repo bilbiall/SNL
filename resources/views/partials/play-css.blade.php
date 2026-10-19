@@ -393,6 +393,24 @@
     html.rm .pieces, html.rm .confetti, html.rm .pcard .ember, html.rm .pcard .spark, html.rm .pcard .pc-rays { display: none; }
     html.rm .ambient, html.rm .pcard, html.rm .pcard::after, html.rm .token.landed, html.rm .die-badge { animation: none !important; }
 
+    .pcard .pc-foot .pc-sp { color: #fde68a; opacity: 1; letter-spacing: .1em; }
+
+    /* TV: sponsor strip + event join badge */
+    .sponsor-strip { position: absolute; left: 1.4cqw; bottom: 1.6cqh; z-index: 35; width: 30cqw; height: clamp(34px, 9cqh, 64px); pointer-events: none; }
+    .sponsor-strip .sp-item { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: .7rem; padding: 0 1.1rem; border-radius: 999px; background: rgba(8,7,16,.78); border: 1.5px solid rgba(255,255,255,.2); opacity: 0; transition: opacity .6s; white-space: nowrap; }
+    .sponsor-strip .sp-item.on { opacity: 1; }
+    .sponsor-strip img { max-height: 70%; max-width: 9rem; object-fit: contain; border-radius: .4rem; }
+    .sponsor-strip span { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
+    .sponsor-strip small { font-size: clamp(.5rem, 1.7cqh, .7rem); color: #9ca3af; letter-spacing: .12em; text-transform: uppercase; font-weight: 800; }
+    .sponsor-strip b { font-size: clamp(.8rem, 3.2cqh, 1.35rem); font-weight: 900; }
+    .sponsor-strip em { font-style: normal; font-size: clamp(.55rem, 2cqh, .85rem); color: #cbd5e1; }
+    .sponsor-strip.big { height: clamp(48px, 13cqh, 96px); width: 34cqw; }
+    .sponsor-strip.big b { font-size: clamp(1rem, 4.4cqh, 1.9rem); }
+    .join-badge { position: absolute; z-index: 36; right: 1.4cqw; bottom: 1.6cqh; display: flex; flex-direction: column; align-items: center; padding: .5rem 1rem; border-radius: 1rem; background: rgba(8,7,16,.82); border: 2px solid #fbbf24; pointer-events: none; }
+    .join-badge small { font-size: clamp(.5rem, 1.8cqh, .75rem); color: #9ca3af; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; }
+    .join-badge b { font-size: clamp(.7rem, 2.6cqh, 1.15rem); font-weight: 800; }
+    .join-badge span { font: 900 clamp(1.2rem, 6cqh, 2.4rem)/1 Figtree, system-ui, sans-serif; letter-spacing: .25em; padding-left: .25em; color: #fbbf24; }
+
     /* big floating reactions on the TV (phones send them) */
     .tvreact { position: absolute; z-index: 47; left: var(--x, 50%); bottom: 10%; display: flex; flex-direction: column; align-items: center; gap: .3rem; pointer-events: none; animation: tvReact 3.2s ease-out forwards; }
     .tvreact .ic { font-size: clamp(2.4rem, 11cqh, 5rem); color: var(--c, #fbbf24); filter: drop-shadow(0 4px 10px rgba(0,0,0,.7)); }

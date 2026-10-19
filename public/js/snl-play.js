@@ -339,6 +339,9 @@
       case 'extra_turn': return [`${ic('dice')} ${n(who)} rolls again`, '#38bdf8'];
       case 'joined': return [`${ic('team')} ${n(who)} joined the game`, '#34d399'];
       case 'factcheck': return [`${ic(a.correct ? 'check' : 'cross')} ${n(who)} said <b>${a.guess ? 'TRUE' : 'FALSE'}</b> — ${a.correct ? 'right' : 'wrong'}, it's <b>${a.answer ? 'TRUE' : 'FALSE'}</b>`, a.correct ? '#34d399' : '#f87171'];
+      case 'vote_result': return a.winners.length
+        ? [`${ic('pick')} The vote: <b>${a.winners.map((id) => esc(P(id).name)).join(' & ')}</b> ${a.winners.length > 1 ? 'tie' : 'won'} — ${clip(a.text, 50)}`, kindColor('vote')]
+        : [`${ic('pick')} Nobody voted — nobody pays`, kindColor('vote')];
       case 'bluff_said': return [`${ic('jester')} ${n(who)} made a claim`, '#14b8a6'];
       case 'bluff_pass': return [`${ic('check')} Nobody doubted ${n(who)}`, '#34d399'];
       case 'bluff_called':
@@ -440,6 +443,7 @@
       }
 
       case 'factcheck': await factResultOverlay(a); break;
+      case 'vote_result': await voteResultOverlay(a); break;
 
       case 'random_pick': await randomPickOverlay(a); break;
 
@@ -517,7 +521,7 @@
   const EMBERS = Array.from({ length: 9 }, (_, i) => `<i class="ember" style="left:${8 + i * 10.5}%;--d:${(i * 0.37) % 2.4}s;--s:${0.5 + (i % 3) * 0.25}"></i>`).join('');
 
   /** The one card shell every pop-up uses: foil border, corner indices, watermark icon, intensity pips, footer. */
-  function cardShell({ color, head, icon, who = '', text = '', sub = '', extra = '', buttons = '', intensity = 0, mid = '', cls = '' }) {
+  function cardShell({ color, head, icon, who = '', text = '', sub = '', extra = '', buttons = '', intensity = 0, mid = '', cls = '', sponsor = '' }) {
     if (!cls && (String(buttons).match(/<button/g) || []).length >= 2) cls = 'fit';   // answer cards: a compact layout that always fits
     const pips = intensity ? `<div class="pc-pips" title="Intensity">${[1, 2, 3].map((i) => `<i class="${i <= intensity ? 'on' : ''}"></i>`).join('')}</div>` : '';
     return `<div class="pcard ${cls}" style="--k:${color}">
@@ -533,15 +537,15 @@
           ${extra}
         </div>
         <div class="ov-btns">${buttons}</div>
-        <div class="pc-foot">${pips}<span>Snakes &amp; Liquor</span></div>
+        <div class="pc-foot">${pips}<span class="${sponsor ? 'pc-sp' : ''}">${sponsor ? 'Presented by ' + esc(sponsor) : 'Snakes &amp; Liquor'}</span></div>
       </div></div>`;
   }
 
-  function holdCard(id, { color = '#f59e0b', head, icon, who = '', text, sub = '', seconds = 7, intensity = 0 }) {
+  function holdCard(id, { color = '#f59e0b', head, icon, who = '', text, sub = '', seconds = 7, intensity = 0, sponsor = '' }) {
     return new Promise((resolve) => {
       try { SNLAudio.duck(true); } catch (_) {}
       const auto = !C.isParty;
-      show(id, cardShell({ color, head, icon, who, text, sub, intensity,
+      show(id, cardShell({ color, head, icon, who, text, sub, intensity, sponsor,
         buttons: '<button class="obtn" data-ok>Got it</button>',
         extra: auto ? `<div class="autobar" style="width:100%;animation-duration:${seconds}s"></div>` : '' }));
       let timer = null;
@@ -571,7 +575,7 @@
     }
     snd(a.kind === 'heart' ? 'heart' : (a.kind === 'everyone' || a.kind === 'groupgame') ? (C.mode.label === 'Drinks' ? 'cheers' : 'sparkle') : a.kind === 'fact' ? 'notify' : (a.kind === 'self' || a.kind === 'pick') ? (C.mode.label === 'Drinks' ? 'clink' : 'decisionPing') : 'mystery');
     if (!a.random) meme(a.kind === 'pick' ? 'pick' : (a.kind === 'everyone' || a.kind === 'groupgame') ? 'everyone' : a.kind === 'self' || a.icon === 'fire' ? 'shot' : a.kind === 'heart' ? 'heart' : null);
-    return holdCard('ovCard', { color: a.kind === 'blank' || a.spin ? kindColor('spin') : kindColor(a.kind), head, icon: a.icon || 'cards', who, text: a.text, intensity: a.intensity || 0 });
+    return holdCard('ovCard', { color: a.kind === 'blank' || a.spin ? kindColor('spin') : kindColor(a.kind), head, icon: a.icon || 'cards', who, text: a.text, intensity: a.intensity || 0, sponsor: a.sponsor || '' });
   }
 
   /** The wheel spins over everyone's avatar and slows to a stop on the victim. */
@@ -615,6 +619,22 @@
       text: `${a.text}`,
       sub: `${said}The answer is <b>${a.answer ? 'TRUE' : 'FALSE'}</b>.${a.explain ? '<br>Why: ' + esc(a.explain) : ''}`,
       seconds: 10,
+    });
+  }
+
+  /** The vote is in: who won, how many votes each player got, and what they owe. */
+  function voteResultOverlay(a) {
+    snd(a.winners.length ? 'sparkle' : 'close'); if (a.winners.length) meme('pick');
+    const names = a.winners.map((id) => esc(P(id).name)).join(' & ');
+    const tally = (a.tally || []).map((t) => `${esc(P(t.id).name)} <b>${t.count}</b>`).join(' · ');
+    return holdCard('ovCard', {
+      color: kindColor('vote'),
+      head: a.winners.length ? (a.winners.length > 1 ? "It's a tie!" : 'The vote is in!') : 'No votes',
+      icon: a.icon || 'pick',
+      who: a.winners.map((id) => chip(P(id))).join(''),
+      text: a.text,
+      sub: a.winners.length ? `${names}: ${esc(a.penalty || '')}<br>${tally}` : 'Nobody voted, so nobody pays.',
+      seconds: 8,
     });
   }
 
@@ -817,7 +837,7 @@
     } else if (S.pending) {
       const who = P(S.pending.actor_id);
       const verb = {
-        pick: 'choosing', shield: 'deciding on a Shield', reroll: 'deciding on a Reroll', tf: 'making the call',
+        pick: 'choosing', shield: 'deciding on a Shield', reroll: 'deciding on a Reroll', tf: 'making the call', vote: 'running a vote',
         bluff_say: 'making a claim', bluff_call: 'waiting for a challenger', bluff_verdict: 'waiting for a ruling', spot: 'in the spotlight',
       }[S.pending.type] || 'deciding';
       html = canAct(S.pending) && !C.isParty ? 'Your move!' : `${ic('hourglass')} <b>${esc(who.name)}</b> is ${verb}…`;
@@ -854,7 +874,7 @@
   // ── prompts that wait on a player ──
   /** A card-shaped prompt with answer buttons — the same standard card as every pop-up. */
   function promptCard({ color, head, icon, who = '', text, sub = '', buttons = '', extra = '', cls = '' }) {
-    return cardShell({ color, head, icon, who, text, sub, extra, buttons, cls });
+    return cardShell({ color, head, icon, who, text, sub, extra, buttons, cls, sponsor: (S.pending && S.pending.card && S.pending.card.sponsor) || '' });
   }
 
   /** A slim, non-blocking card for everyone who isn't the one being asked (online): what's being decided, and by whom. */
@@ -863,17 +883,18 @@
     const card = p.card;
     const who = P(p.actor_id);
     const heads = {
-      tf: 'True or false?', bluff_say: 'Fact or bluff', bluff_call: 'Call bluff?', bluff_verdict: 'Was it proven?', spot: (p.card && p.card.kind === 'quickfire') ? 'Quickfire!' : 'Spotlight',
+      vote: 'Vote!', tf: 'True or false?', bluff_say: 'Fact or bluff', bluff_call: 'Call bluff?', bluff_verdict: 'Was it proven?', spot: (p.card && p.card.kind === 'quickfire') ? 'Quickfire!' : 'Spotlight',
     };
     if (!card || !heads[p.type]) { w.classList.remove('show'); return; }
     const status = {
+      vote: `${(p.voted || []).length} of ${p.actors.length} have voted${(p.voted || []).includes(C.meId) ? ' — you have voted' : ''}…`,
       tf: `${esc(who.name)} is deciding: true or false?`,
       bluff_say: `${esc(who.name)} is about to make a claim…`,
       bluff_call: p.actors && p.actors.includes(C.meId) ? 'Think they\'re bluffing?' : `Waiting for challengers…`,
       bluff_verdict: `${esc(P(p.caller_id).name)} called bluff on ${esc(who.name)} — judges are deciding…`,
       spot: `${esc(who.name)} is on the clock…`,
     }[p.type];
-    w.style.setProperty('--k', kindColor(p.type === 'tf' ? 'fact' : p.type === 'spot' ? (card.kind === 'quickfire' ? 'quickfire' : 'spotlight') : 'bluff'));
+    w.style.setProperty('--k', kindColor(p.type === 'vote' ? 'vote' : p.type === 'tf' ? 'fact' : p.type === 'spot' ? (card.kind === 'quickfire' ? 'quickfire' : 'spotlight') : 'bluff'));
     w.innerHTML = `<div class="w-ic">${ic(card.icon || 'cards')}</div><div class="w-tx"><b>${heads[p.type]}</b>
       <div>${p.type === 'bluff_verdict' ? '' : esc(card.text)}</div>
       ${p.type === 'tf' ? `<div class="w-ch"><i class="t">${ic('check')} True</i><em>or</em><i class="f">${ic('cross')} False</i></div>` : ''}
@@ -902,11 +923,12 @@
   function renderPrompt() {
     const p = S.pending;
     if (!p || S.room.status !== 'active') { hide('ovPrompt'); promptSig = null; $('watch').classList.remove('show'); return; }
-    if (!canAct(p)) { hide('ovPrompt'); promptSig = null; renderWatch(p); return; }
+    if (!canAct(p) || (p.type === 'vote' && (p.voted || []).includes(C.meId))) { hide('ovPrompt'); promptSig = null; renderWatch(p); return; }
     $('watch').classList.remove('show');
     const actor = P(p.actor_id);
     // a poll brings the same question again — leave the card exactly as it is (re-dealing it makes it move and unclickable)
-    const sig = JSON.stringify([p, actor.powers, C.meId]);
+    // (for a vote, other people's votes arriving must not re-deal the card while you are choosing)
+    const sig = JSON.stringify([p.type === 'vote' ? { ...p, voted: [] } : p, actor.powers, C.meId]);
     if (sig === promptSig && $('ovPrompt').classList.contains('show')) return;
     promptSig = sig;
     try { SNLAudio.think(); } catch (_) {}                        // a longer clip while they decide (stops when answered)
@@ -949,6 +971,21 @@
         extra: `<div class="pgrid">${tiles}</div>`, cls: 'wide',
       }));
       $('ovPrompt').querySelectorAll('[data-id]').forEach((b) => (b.onclick = () => answer({ choice: 'target', target_id: +b.dataset.id })));
+      return;
+    }
+
+    // ── Vote: "most likely to…" — everyone taps a player on their own phone ──
+    if (p.type === 'vote') {
+      const tiles = p.eligible.filter((id) => id !== C.meId).map((id, i) => {
+        const t = P(id);
+        return `<button class="ptile" data-id="${id}" style="--c:${t.color};--i:${i}"><span class="pav">${avatar(t)}</span><b>${esc(t.name)}</b></button>`;
+      }).join('');
+      show('ovPrompt', promptCard({
+        color: kindColor('vote'), head: 'Vote! Tap who it is', icon: p.card.icon || 'pick', text: p.card.text,
+        sub: `Most votes pays. Everyone votes at once.${!C.isParty && pendingLeft !== null ? ` (<span data-secs>${Math.max(0, pendingLeft)}</span>s)` : ''}`,
+        extra: `<div class="pgrid">${tiles}</div>`, cls: 'wide',
+      }));
+      $('ovPrompt').querySelectorAll('[data-id]').forEach((b) => (b.onclick = () => answer({ choice: 'vote', target_id: +b.dataset.id })));
       return;
     }
 
@@ -1133,6 +1170,7 @@
       <div class="ov-btns">
         <button class="obtn" id="winAgain">${ic('replay')} ${r.rematch_token ? 'Join rematch' : 'Play again'}</button>
         <button class="obtn vio" id="winShare">${ic('share')} Share</button>
+        <button class="obtn ok" id="winCard">${ic('trophy')} Result card</button>
         <a class="obtn alt" href="${C.urls.home}">${ic('home')} Home</a>
       </div>
       <div class="ov-sub" style="margin-top:.5rem;">Thanks for playing — drink responsibly and never drive after drinking.</div></div>`);
@@ -1141,6 +1179,11 @@
       const data = { title: 'Snakes & Liquor', text: `${w.name} just won our game of Snakes & Liquor! Play free on your phone:`, url: location.origin + '/' };
       try { if (navigator.share) { await navigator.share(data); return; } } catch (_) { return; }
       try { await navigator.clipboard.writeText(`${data.text} ${data.url}`); toast(`${ic('check')} Link copied — paste it anywhere`, 2600, '#34d399'); } catch (_) { toast(esc(data.url), 5000); }
+    };
+    $('winCard').onclick = async () => {
+      const b = $('winCard'); b.disabled = true;
+      try { await shareResultCard(); } catch (e) { console.error(e); toast(`${ic('info')} Could not make the card`, 2600, '#f87171'); }
+      b.disabled = false;
     };
     $('winAgain').onclick = async () => {
       if (r.rematch_token) { location.href = C.urls.base + '/' + r.rematch_token; return; }
@@ -1301,6 +1344,76 @@
       const res = await post(C.urls.leave, { player_id: id });
       if (self && res) location.href = C.urls.home;
     };
+  }
+
+  /** A 1080×1920 "story" picture of the finished game (winner, ranking, awards) to post on WhatsApp / Instagram. Drawn on a canvas, no server. */
+  async function shareResultCard() {
+    const rc = S.recap || { ranking: [], awards: [], rounds: S.room.round };
+    const W = 1080, H = 1920, cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    const g = cv.getContext('2d');
+    try { await document.fonts.ready; } catch (_) {}
+    const FONT = "'Figtree', system-ui, sans-serif", DISPLAY = "'Bungee', 'Figtree', sans-serif";
+    const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#3b1a6e'); bg.addColorStop(.55, '#1a1033'); bg.addColorStop(1, '#0b0a16');
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    const glow = g.createRadialGradient(W / 2, 520, 40, W / 2, 520, 620); glow.addColorStop(0, 'rgba(245,158,11,.38)'); glow.addColorStop(1, 'rgba(245,158,11,0)');
+    g.fillStyle = glow; g.fillRect(0, 0, W, 1100);
+    const text = (s, x, y, size, color = '#fff', weight = 800, align = 'center', font = FONT) => { g.font = `${weight} ${size}px ${font}`; g.fillStyle = color; g.textAlign = align; g.fillText(s, x, y); };
+    const fit = (s, max) => { let t = String(s); while (t.length > 3 && g.measureText(t).width > max) t = t.slice(0, -2); return t === String(s) ? t : t + '…'; };
+    const img = (src) => new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+
+    text('SNAKES & LIQUOR', W / 2, 150, 78, '#fbbf24', 400, 'center', DISPLAY);
+    text(`${(C.mode && C.mode.label) || 'Party'} mode · ${rc.rounds || S.room.round} rounds`, W / 2, 215, 38, '#c4b5fd', 700);
+
+    const winner = S.room.winner_player_id ? P(S.room.winner_player_id) : null;
+    text(winner ? 'WINNER' : 'GAME OVER', W / 2, 330, 46, '#fde68a', 900);
+    if (winner) {
+      const av = AV.test(winner.avatar || '') ? await img(`${C.avatarBase}/${winner.avatar}.svg`) : null;
+      g.beginPath(); g.arc(W / 2, 520, 150, 0, Math.PI * 2); g.fillStyle = winner.color; g.fill();
+      g.save(); g.beginPath(); g.arc(W / 2, 520, 138, 0, Math.PI * 2); g.clip(); g.fillStyle = '#14121f'; g.fillRect(W / 2 - 140, 380, 280, 280);
+      if (av) g.drawImage(av, W / 2 - 138, 382, 276, 276); g.restore();
+      g.font = `900 92px ${FONT}`;
+      text(fit(winner.name, 900), W / 2, 760, 92, '#fff', 900);
+    } else text('That\'s a wrap!', W / 2, 560, 92, '#fff', 900);
+
+    // ranking (top 5)
+    let y = 860;
+    text('FINAL STANDINGS', W / 2, y, 34, '#9ca3af', 800); y += 30;
+    for (const [i, p] of rc.ranking.slice(0, 5).entries()) {
+      y += 88;
+      g.fillStyle = 'rgba(255,255,255,.07)'; g.beginPath(); g.roundRect ? g.roundRect(90, y - 62, W - 180, 76, 22) : g.rect(90, y - 62, W - 180, 76); g.fill();
+      text(String(i + 1), 150, y - 8, 44, i === 0 ? '#fbbf24' : '#e5e7eb', 900);
+      g.fillStyle = p.color; g.beginPath(); g.arc(230, y - 24, 16, 0, Math.PI * 2); g.fill();
+      g.font = `800 42px ${FONT}`;
+      text(fit(p.name, 480), 270, y - 8, 42, '#fff', 800, 'left');
+      text(p.status === 'won' ? 'finish' : p.status === 'left' ? 'left' : 'sq ' + p.position, W - 130, y - 8, 36, '#9ca3af', 700, 'right');
+    }
+
+    // awards (up to 4)
+    y += 70;
+    if (rc.awards.length) {
+      text('AWARDS', W / 2, y, 34, '#9ca3af', 800); y += 14;
+      for (const a of rc.awards.slice(0, 4)) {
+        y += 76;
+        g.font = `900 40px ${FONT}`;
+        text(fit(a.title, 520), 110, y, 40, '#fde68a', 900, 'left');
+        text(fit(a.name, 330) + ' · ' + a.value, W - 110, y, 40, '#fff', 800, 'right');
+      }
+    }
+
+    text('Play free on your phone', W / 2, H - 150, 44, '#fff', 900);
+    text(location.host, W / 2, H - 90, 40, '#f9a8d4', 800);
+
+    const blob = await new Promise((res) => cv.toBlob(res, 'image/png'));
+    if (!blob) throw new Error('no image');
+    const file = new File([blob], 'snakes-and-liquor-result.png', { type: 'image/png' });
+    const msg = `${winner ? winner.name + ' won' : 'We played'} Snakes & Liquor! Play free: ${location.origin}`;
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Snakes & Liquor', text: msg }); return; }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast(`${ic('check')} Result card saved — share it from your gallery`, 3200, '#34d399');
   }
 
   /** The invite message + one-tap join link (the link's preview card names the host — see join.blade.php). */

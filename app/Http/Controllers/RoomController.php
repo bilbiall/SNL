@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Board;
+use App\Models\Pack;
 use App\Models\Player;
 use App\Models\Room;
 use App\Services\GameEngine;
@@ -163,6 +164,9 @@ class RoomController extends Controller
             'state'     => $this->engine->state($room, null),
             'meId'      => null,
             'tv'        => true,
+            'event'     => $request->boolean('event'),
+            'sponsors'  => Pack::live()->whereNotNull('sponsor')->get()->filter(fn ($p) => $p->appliesTo($room->content_mode))
+                ->map(fn ($p) => ['name' => $p->sponsor, 'tagline' => $p->tagline, 'logo' => $p->logo ? asset(ltrim($p->logo, '/')) : null])->values()->all(),
             'mode'      => config("snl.modes.{$room->content_mode}"),
             'tileKinds' => $this->tileKindsOnBoard($room->board),
             'reactions' => config('snl.reactions'),

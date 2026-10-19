@@ -45,6 +45,8 @@
     { key: 'bluffs_won', icon: 'jester', title: 'Best poker face' },
     { key: 'bluffs_caught', icon: 'search', title: 'Lie detector' },
     { key: 'spots_nailed', icon: 'mic', title: 'Crowd favourite' },
+    { key: 'sixes', icon: 'dice', title: 'Luckiest roller' },
+    { key: 'votes_won', icon: 'crown', title: 'Voted most likely' },
   ];
 
   function GameError(message) {
@@ -270,12 +272,15 @@
       penalty: parseInt(drawn && drawn.penalty ? drawn.penalty : 1, 10) || 1,
       timer: drawn ? (drawn.timer == null ? null : drawn.timer) : null,
       intensity: drawn && drawn.intensity != null ? drawn.intensity : room.intensity,
+      sponsor: drawn && drawn.sponsor ? drawn.sponsor : null, // "Presented by …" for sponsored packs
     };
   };
 
   /** What clients may see of a card: never the answer or the explanation. */
   P.publicCard = function (card) {
-    return { kind: card.kind, text: card.text, icon: card.icon, spin: card.spin || false, intensity: card.intensity != null ? card.intensity : this.g.room.intensity };
+    var out = { kind: card.kind, text: card.text, icon: card.icon, spin: card.spin || false, intensity: card.intensity != null ? card.intensity : this.g.room.intensity };
+    if (card.sponsor) out.sponsor = card.sponsor;
+    return out;
   };
 
   P.penaltyText = function (units) {
@@ -316,11 +321,13 @@
       if (card.kind !== 'heart' && card.kind !== 'groupgame') self.bump(t, 'buzz', Math.max(1, parseInt(card.units || 1, 10) || 1));   // the Buzz Meter
     });
     if ((card.kind === 'pick' || card.kind === 'duel') && !(targets.length === 1 && targets[0].id === source.id)) this.bump(source, 'picks');
-    this.log({
+    var entry = {
       type: 'card', kind: card.kind, text: card.text, icon: card.icon, spin: card.spin || false,
       intensity: card.intensity != null ? card.intensity : this.g.room.intensity, random: card.random || false,
       source_id: source.id, target_ids: targets.map(function (t) { return t.id; }), tile: tile == null ? null : tile,
-    });
+    };
+    if (card.sponsor) entry.sponsor = card.sponsor;
+    this.log(entry);
   };
 
   // ───────────────────────────── roll resolution ─────────────────────────────
@@ -364,6 +371,7 @@
       actor.position = target;
     }
     this.bump(actor, 'rolls');
+    if (value === 6) this.bump(actor, 'sixes');
     this.log({ type: 'roll', player_id: actor.id, roll: value, from: from, hop_path: hop, to: actor.position, overshoot: overshoot });
 
     if (actor.position >= n) { this.win(actor); return; }

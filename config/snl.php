@@ -93,6 +93,7 @@ return [
         'groupgame' => 'Group game (everyone plays, on a free square)',
         'gift'      => 'Free gift (flavour line when a Shield drops in)',
         'rollagain' => 'Roll again (flavour line)',
+        'vote'      => 'Vote: "Most likely to…" (online, 3+ players)',
     ],
 
     /*
@@ -102,8 +103,12 @@ return [
     */
     'free_event_chance' => 40,
     'free_events' => ['quickfire' => 4, 'rollagain' => 2, 'gift' => 2, 'groupgame' => 3],
-    'event_icons' => ['quickfire' => 'clock', 'rollagain' => 'dice', 'gift' => 'sparkles', 'groupgame' => 'team'],
-    'event_colors' => ['quickfire' => '#f97316', 'groupgame' => '#22c55e', 'gift' => '#eab308', 'rollagain' => '#38bdf8'],
+    'event_icons' => ['quickfire' => 'clock', 'rollagain' => 'dice', 'gift' => 'sparkles', 'groupgame' => 'team', 'vote' => 'pick'],
+    'event_colors' => ['quickfire' => '#f97316', 'groupgame' => '#22c55e', 'gift' => '#eab308', 'rollagain' => '#38bdf8', 'vote' => '#ec4899'],
+
+    // "Most likely to…" votes (online rooms, 3+ players): the chance an Everyone square becomes a vote, and how long players have to vote.
+    'vote_chance' => (int) env('SNL_VOTE_CHANCE', 30),
+    'vote_seconds' => 25,
 
     /*
     | Powers. Players start with `start` of each; Power-up tiles add more (cap `max`).
