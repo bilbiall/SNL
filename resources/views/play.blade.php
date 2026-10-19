@@ -14,6 +14,7 @@
     @include('partials.pieces-css')
     @include('partials.play-css')
     @include('partials.brand-css')
+    <script src="{{ \App\Support\OfflineAssets::js('snl-compat.js') }}"></script>
 </head>
 <body class="{{ ($tv ?? false) ? 'tv' : '' }}">
 @include('partials.loader', ['wait' => 1])

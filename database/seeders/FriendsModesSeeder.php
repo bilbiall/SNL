@@ -11,9 +11,12 @@ use Illuminate\Database\Seeder;
  */
 class FriendsModesSeeder extends Seeder
 {
+    /** The data file in database/seeders/data (LoversModeSeeder points this at lovers-mode.php). */
+    protected string $file = 'friends-modes.php';
+
     public function run(): void
     {
-        $d = require __DIR__ . '/data/friends-modes.php';
+        $d = require __DIR__ . '/data/' . $this->file;
         $new = ['board_id' => null, 'is_active' => true];
 
         foreach ($d['cards'] as $kind => $modes) {

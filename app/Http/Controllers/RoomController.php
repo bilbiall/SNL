@@ -173,7 +173,24 @@ class RoomController extends Controller
 
     public function state(Request $request, Room $room): JsonResponse
     {
-        return response()->json($this->engine->state($room, $this->meFor($request, $room)?->id));
+        $meId = $this->meFor($request, $room)?->id;
+
+        // Long poll (the TV screen): with ?since=<last event number>&wait=<seconds>, hold the request until something happens
+        // (or up to 8 s) so a roll on a phone reaches the big screen straight away instead of at the next poll tick.
+        $since = $request->query('since');
+        if (is_numeric($since)) {
+            $request->session()->save(); // don't keep the session busy while we wait
+            $until = microtime(true) + min(8.0, max(0.0, (float) $request->query('wait', 0)));
+            while (microtime(true) < $until && !connection_aborted()) {
+                $now = Room::whereKey($room->id)->value('event_seq');
+                if ($now === null || (int) $now !== (int) $since) {
+                    break;
+                }
+                usleep(200000);
+            }
+        }
+
+        return response()->json($this->engine->state($room, $meId));
     }
 
     public function roll(Request $request, Room $room): JsonResponse

@@ -374,6 +374,13 @@
         .stage.feed-mini .fi { font-size: clamp(.5rem, 2cqh, .66rem); padding: .22rem .4rem; border-radius: .5rem; line-height: 1.25; }
         .stage.feed-mini .fi:nth-last-child(n+6) { display: none; }
     }
+    /* ═════ Lite mode: TVs and weak screens (snl-compat.js adds html.lite). Same game, far less for the GPU to do. ═════ */
+    html.lite .ambient, body.tv .ambient { animation: none; filter: blur(16px) saturate(1.3) brightness(.5); transform: scale(1.1); }
+    html.lite *, body.tv * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+    html.lite .pieces, body.tv .pieces { display: none; }
+    html.lite .pcard .ember, html.lite .pcard .spark, html.lite .pcard .pc-rays, body.tv .pcard .ember, body.tv .pcard .spark, body.tv .pcard .pc-rays { display: none; }
+    html.lite .board-wrap, body.tv .board-wrap { box-shadow: 0 0 0 2px rgba(255,255,255,.12); }
+
     /* ═════ TV mode (/tv/CODE): big, readable from the sofa, and a clear focus ring for the remote ═════ */
     body.tv { cursor: none; }
     body.tv a:focus, body.tv button:focus { outline: 4px solid #34d399; outline-offset: 3px; }

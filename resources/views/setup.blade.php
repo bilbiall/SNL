@@ -58,7 +58,7 @@
 
             <label id="adultBox" class="flex items-start gap-2 mt-3 text-sm font-bold" style="display:none;">
                 <input type="checkbox" name="adult" value="1" {{ old('adult') ? 'checked' : '' }} class="mt-1" style="width:1.1rem;height:1.1rem;">
-                <span>Everyone playing is <b>18 or over</b>. <span class="snl-muted font-semibold">Any drink can be swapped for water — it's your game, your pace.</span></span>
+                <span>Everyone playing is <b>18 or over</b>. <span class="snl-muted font-semibold" id="adultNote">Any drink can be swapped for water — it's your game, your pace.</span></span>
             </label>
         </div>
 
@@ -191,6 +191,9 @@
         const r = form.querySelector('input[name=content_mode]:checked');
         document.getElementById('modeBlurb').textContent = r ? modes[r.value].blurb : '';
         document.getElementById('adultBox').style.display = (r && r.dataset.adult === '1') ? 'flex' : 'none';
+        document.getElementById('adultNote').textContent = (r && r.value === 'lovers')
+            ? "Everything is optional — skip any card you're not comfortable with."
+            : "Any drink can be swapped for water — it's your game, your pace.";
     }
     form.querySelectorAll('input[name=content_mode]').forEach(i => i.addEventListener('change', syncMode));
     syncMode();

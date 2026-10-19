@@ -371,13 +371,14 @@
       case 'start': toast(`${ic('flag')} Game on!`, 2200, '#f59e0b'); snd('notify'); meme('start'); try { window.snlTrack && snlTrack('game_start', { mode: C.mode && C.mode.label, players: latest.players.length, party: !!C.isParty }); } catch (_) {} await sleep(450); break;
 
       case 'roll': {
+        const k = (C.tv || queue.length) ? 0.5 : 1; // the big screen is only watching, and a backlog should catch up: shorter pauses
         spinDie();
         snd('roll');
-        await sleep(620);
+        await sleep(620 * k);
         settleDie(a.roll);
         rollPop(a.player_id, a.roll);
         meme(a.roll === 6 ? 'six' : a.roll === 1 ? 'one' : null);
-        await sleep(560);
+        await sleep(560 * k);
         await hop(a.player_id, a.hop_path || []);
         { const end = (a.hop_path || []).slice(-1)[0]; if (end && S.room && end >= S.room.tile_count - 10) meme('close'); }
         if (a.overshoot) { toast(`Needed exactly ${a.overshoot.needed} — bounced back to ${a.overshoot.bounced_to}`, 2400); await sleep(500); }
@@ -1345,13 +1346,20 @@
 
   // ───────────────────────── polling & clocks ─────────────────────────
   async function poll() {
+    let next = null;
     if (!C.isParty) {
       try {
-        const r = await fetch(C.urls.state, { headers: { Accept: 'application/json' } });
-        if (r.ok) { netBack(); ingest(await r.json()); }
+        const seq = latest.room.event_seq, t0 = Date.now();
+        // The TV holds each request open until something happens, so moves arrive the moment they are made.
+        const r = await fetch(C.tv ? `${C.urls.state}?since=${seq}&wait=7` : C.urls.state, { headers: { Accept: 'application/json' } });
+        if (r.ok) {
+          netBack(); ingest(await r.json());
+          // the server may not know "since" (older build): only go straight back when it really waited or something changed
+          if (C.tv && (Date.now() - t0 > 300 || latest.room.event_seq !== seq)) next = 40;
+        }
       } catch (_) { if (++netFails >= 3) netLost(); /* a missed poll is fine — the next one catches up from the log */ }
     }
-    setTimeout(poll, document.hidden ? 4000 : (latest.room.status === 'completed' ? 4000 : 1400));
+    setTimeout(poll, next !== null ? next : document.hidden ? 4000 : (latest.room.status === 'completed' ? 4000 : C.tv ? 900 : 1400));
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden && !C.isParty) fetch(C.urls.state, { headers: { Accept: 'application/json' } }).then((r) => r.json()).then(ingest).catch(() => {}); });
 

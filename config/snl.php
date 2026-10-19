@@ -30,8 +30,8 @@ return [
                      'blurb' => 'Guys together: banter, football talk, dares and push-up forfeits. No alcohol.'],
         'girlies' => ['label' => 'Girlies', 'icon' => 'sparkles', 'adult' => false, 'enabled' => true,
                      'blurb' => 'Girls and their friends: hype, confessions, dares and runway forfeits. No alcohol.'],
-        'lovers' => ['label' => 'Lovers', 'icon' => 'heart',    'adult' => true,  'enabled' => false,
-                     'blurb' => 'For couples. Coming soon.'],
+        'lovers' => ['label' => 'Lovers', 'icon' => 'heart',    'adult' => true,  'enabled' => true,
+                     'blurb' => 'For couples: questions, memories and guesses that help you know each other better. 18+ and always optional, skip anything you like.'],
     ],
 
     'intensities' => [
@@ -67,6 +67,7 @@ return [
         'family' => ['self' => 'party', 'everyone' => 'balloons'],
         'boyz' => ['self' => 'fist', 'everyone' => 'team', 'pick' => 'crown'],
         'girlies' => ['self' => 'sparkles', 'everyone' => 'party', 'pick' => 'crown'],
+        'lovers' => ['self' => 'heart', 'everyone' => 'hands', 'pick' => 'ace-hearts'],
     ],
 
     // What a Mystery spin can turn into (kind => weight).
@@ -138,6 +139,11 @@ return [
             1 => [1 => 'Strike three model poses.', 2 => 'Do a full runway walk.'],
             2 => [1 => 'Do a runway walk with a dramatic turn.', 2 => 'Sing the chorus of a throwback song.'],
             3 => [1 => 'Give an Oscar speech for winning nothing.', 2 => 'Do your best diva exit and re-entrance.'],
+        ],
+        'lovers' => [
+            1 => [1 => 'Give your partner a compliment.', 2 => 'Give your partner a 20-second shoulder rub.'],
+            2 => [1 => 'Whisper something sweet to your partner.', 2 => 'Tell your partner your favourite memory of them.'],
+            3 => [1 => 'Sing the chorus of a love song to your partner.', 2 => 'Slow-dance with your partner for 30 seconds.'],
         ],
     ],
 
